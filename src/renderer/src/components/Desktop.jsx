@@ -7,6 +7,7 @@ import NotificationCenter from './NotificationCenter'
 import Widgets from './Widgets'
 import horsemenLogo from '../assets/raxx-logo.png'
 import { WALLPAPERS, getSettings } from '../theme'
+import HorsemenWallpaper from './HorsemenWallpaper'
 
 export default function Desktop() {
   const { windows, addNotification } = useOSStore()
@@ -48,9 +49,12 @@ export default function Desktop() {
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       </div>
 
+      {/* Four Horsemen — live 3D wallpaper over the nebula sky; paused while windows cover it */}
+      <HorsemenWallpaper paused={hasWindows} />
+
       {/* Desktop center — "Revelations" + horsemen logo, hidden when windows open */}
       <div style={{
-        position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+        position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         opacity: hasWindows ? 0 : 1,
         transition: 'opacity 0.4s ease',
