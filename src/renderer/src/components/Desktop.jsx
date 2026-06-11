@@ -6,17 +6,21 @@ import WindowManager from './WindowManager'
 import NotificationCenter from './NotificationCenter'
 import Widgets from './Widgets'
 import horsemenLogo from '../assets/raxx-logo.png'
+import { WALLPAPERS, getSettings } from '../theme'
 
 export default function Desktop() {
   const { windows, addNotification } = useOSStore()
   const [contextMenu, setContextMenu] = useState(null)
+  const [wallpaper, setWallpaper] = useState(() => getSettings().wallpaper || 'nebula')
   const hasWindows = windows.filter(w => !w.minimized).length > 0
 
   useEffect(() => {
     const t = setTimeout(() => {
       addNotification({ title: 'Welcome to Revelations OS', body: 'Your secure business desktop is ready.', type: 'success' })
     }, 1500)
-    return () => clearTimeout(t)
+    const onSettings = (e) => { if (e.detail?.wallpaper) setWallpaper(e.detail.wallpaper) }
+    window.addEventListener('revos:settings-changed', onSettings)
+    return () => { clearTimeout(t); window.removeEventListener('revos:settings-changed', onSettings) }
   }, [])
 
   const handleContextMenu = (e) => {
@@ -37,7 +41,7 @@ export default function Desktop() {
       {/* Animated blue gradient wallpaper */}
       <div className="desktop-bg" style={{
         position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
-        background: 'linear-gradient(135deg, #000428, #00235a, #003a8c, #001f4d, #000c2e, #001a5c, #000428)',
+        background: WALLPAPERS[wallpaper] || WALLPAPERS.nebula,
         backgroundSize: '400% 400%',
         animation: 'bgShift 24s ease infinite',
       }}>
@@ -91,7 +95,7 @@ export default function Desktop() {
 
       {contextMenu && (
         <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }}>
-          <div className="context-menu-item" onClick={() => { addNotification({ title: 'Wallpaper', body: 'Wallpaper options coming soon', type: 'info' }); setContextMenu(null) }}>
+          <div className="context-menu-item" onClick={() => { useOSStore.getState().openWindow({ appId: 'settings', title: 'Settings' }); setContextMenu(null) }}>
             🖼 Change Wallpaper
           </div>
           <div className="context-menu-item" onClick={() => { addNotification({ title: 'New Folder', body: 'Created on Desktop', type: 'success' }); setContextMenu(null) }}>

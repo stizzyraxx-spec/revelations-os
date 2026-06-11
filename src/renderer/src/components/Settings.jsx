@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Monitor, Volume2, Bluetooth, Wifi, Keyboard, Mouse, Bell, Clock, Globe, Battery, Users, Shield, Palette, HardDrive, Info, RefreshCw, Lock } from 'lucide-react'
 import { useOSStore } from '../store'
+import { applyAccent } from '../theme'
 
 const PANELS = [
   { id: 'appearance', label: 'Appearance', icon: Palette, group: 'General' },
@@ -40,7 +41,13 @@ function useSettings() {
     try { return JSON.parse(localStorage.getItem('revos_settings') || 'null') || defaults() } catch { return defaults() }
   })
   const update = (key, val) => {
-    setS((prev) => { const n = { ...prev, [key]: val }; localStorage.setItem('revos_settings', JSON.stringify(n)); return n })
+    setS((prev) => {
+      const n = { ...prev, [key]: val }
+      localStorage.setItem('revos_settings', JSON.stringify(n))
+      if (key === 'accentColor') applyAccent(val)
+      window.dispatchEvent(new CustomEvent('revos:settings-changed', { detail: n }))
+      return n
+    })
   }
   return [s, update]
 }

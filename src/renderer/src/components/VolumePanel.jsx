@@ -109,7 +109,7 @@ export default function VolumePanel() {
         <button
           onClick={handleMute}
           style={{
-            width: '100%', padding: '12px', borderRadius: 12, border: 'none', cursor: 'pointer',
+            width: '100%', padding: '12px', borderRadius: 12, cursor: 'pointer',
             background: muted ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)',
             border: `1px solid ${muted ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.08)'}`,
             color: muted ? '#f87171' : 'var(--text-secondary)',

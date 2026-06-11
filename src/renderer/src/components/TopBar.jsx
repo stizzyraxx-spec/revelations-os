@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import {
-  Bell, Wifi, Battery, Volume2, Bluetooth, Search, ChevronDown, LogOut,
+  Bell, Wifi, WifiOff, Battery, BatteryCharging, Volume2, Bluetooth, Search, ChevronDown, LogOut,
   Power, Settings2, Shield, User, X, Globe
 } from 'lucide-react'
+import { getAppIcon } from './appIcons'
 
 export default function TopBar() {
   const {
@@ -18,8 +19,32 @@ export default function TopBar() {
   const [now, setNow] = useState(new Date())
   const searchRef = useRef(null)
 
+  const [battery, setBattery] = useState(null) // { level, charging }
+  const [online, setOnline] = useState(navigator.onLine)
+
   useEffect(() => {
     window.nexus?.getSystemInfo().then(setSysInfo).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    let batt
+    const sync = () => batt && setBattery({ level: Math.round(batt.level * 100), charging: batt.charging })
+    navigator.getBattery?.().then((b) => {
+      batt = b
+      sync()
+      b.addEventListener('levelchange', sync)
+      b.addEventListener('chargingchange', sync)
+    }).catch(() => {})
+    const onUp = () => setOnline(true)
+    const onDown = () => setOnline(false)
+    window.addEventListener('online', onUp)
+    window.addEventListener('offline', onDown)
+    return () => {
+      batt?.removeEventListener('levelchange', sync)
+      batt?.removeEventListener('chargingchange', sync)
+      window.removeEventListener('online', onUp)
+      window.removeEventListener('offline', onDown)
+    }
   }, [])
 
   useEffect(() => {
@@ -82,13 +107,15 @@ export default function TopBar() {
             </div>
             {searchResults.length > 0 ? (
               <div style={{ padding:6 }}>
-                {searchResults.map(app => (
+                {searchResults.map(app => {
+                  const AppIcon = getAppIcon(app.icon)
+                  return (
                   <button key={app.id} onClick={()=>handleSearchApp(app)} style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'none', border:'none', cursor:'pointer', borderRadius:10, color:'var(--text-primary)' }}
                     onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
                     onMouseLeave={e=>e.currentTarget.style.background='none'}
                   >
                     <div style={{ width:32,height:32,borderRadius:9,background:`linear-gradient(135deg,${app.color}44,${app.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
-                      <Globe size={16} color={app.color}/>
+                      <AppIcon size={16} color={app.color}/>
                     </div>
                     <div style={{ flex:1, textAlign:'left' }}>
                       <div style={{ fontSize:'0.82rem', fontWeight:500 }}>{app.name}</div>
@@ -96,7 +123,8 @@ export default function TopBar() {
                     </div>
                     {!app.free && <span style={{fontSize:'0.65rem',color:'var(--accent-gold)'}}>{app.price}</span>}
                   </button>
-                ))}
+                  )
+                })}
               </div>
             ) : searchQuery ? (
               <div style={{ padding:'16px', textAlign:'center', color:'var(--text-muted)', fontSize:'0.82rem' }}>No apps found</div>
@@ -146,15 +174,19 @@ export default function TopBar() {
         <button onClick={() => openWindow({ appId: 'bluetooth', title: 'Bluetooth' })} title="Bluetooth" style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
           <Bluetooth size={13} style={{ color:'var(--text-muted)' }}/>
         </button>
-        <button onClick={() => openWindow({ appId: 'wifi', title: 'Wi-Fi' })} title="Wi-Fi" style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
-          <Wifi size={13} style={{ color:'var(--text-muted)' }}/>
+        <button onClick={() => openWindow({ appId: 'wifi', title: 'Wi-Fi' })} title={online ? 'Wi-Fi — Connected' : 'Wi-Fi — Offline'} style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
+          {online
+            ? <Wifi size={13} style={{ color:'var(--text-muted)' }}/>
+            : <WifiOff size={13} style={{ color:'#f59e0b' }}/>}
         </button>
         <button onClick={() => openWindow({ appId: 'volume', title: 'Volume' })} title="Volume" style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
           <Volume2 size={13} style={{ color:'var(--text-muted)' }}/>
         </button>
-        <button onClick={() => openWindow({ appId: 'battery', title: 'Battery' })} title="Battery" style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center', gap:3 }}>
-          <Battery size={13} style={{ color:'#22c55e' }}/>
-          <span style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>78%</span>
+        <button onClick={() => openWindow({ appId: 'battery', title: 'Battery' })} title={battery?.charging ? 'Battery — Charging' : 'Battery'} style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center', gap:3 }}>
+          {battery?.charging
+            ? <BatteryCharging size={13} style={{ color:'#22c55e' }}/>
+            : <Battery size={13} style={{ color: battery && battery.level <= 20 ? '#ef4444' : '#22c55e' }}/>}
+          <span style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{battery ? `${battery.level}%` : '—'}</span>
         </button>
 
         {/* Notification bell */}

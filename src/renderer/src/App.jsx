@@ -4,6 +4,7 @@ import LoginScreen from './components/LoginScreen'
 import Desktop from './components/Desktop'
 import ExitOSModal from './components/ExitOSModal'
 import SubscriptionModal from './components/SubscriptionModal'
+import UpdateBanner from './components/UpdateBanner'
 
 export default function App() {
   const { user, addNotification, pendingUpdate, setPendingUpdate } = useOSStore()
@@ -57,6 +58,7 @@ export default function App() {
           <LoginScreen />
         </div>
       )}
+      {user.loggedIn && <UpdateBanner />}
       <ExitOSModal />
       <SubscriptionModal />
     </>

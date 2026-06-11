@@ -210,9 +210,11 @@ export default function Terminal() {
       case 'help':
         addLine(HELP_TEXT, 'html')
         break
-      case 'neofetch':
-        addLine(NEOFETCH_ART(userName, window.nexus?.platform || 'darwin'), 'html')
+      case 'neofetch': {
+        const friendly = { darwin: 'macOS (Darwin)', win32: 'Windows', linux: 'Linux' }
+        addLine(NEOFETCH_ART(userName, friendly[window.nexus?.platform] || window.nexus?.platform || 'macOS (Darwin)'), 'html')
         break
+      }
       case 'whoami':
         addLine(userName)
         break
@@ -247,7 +249,7 @@ export default function Terminal() {
             addLine(`\x1b[31mError: ${err.message}\x1b[0m`, 'html')
           }
         } else {
-          addLine('\x1b[31mProverbs CLI unavailable — package app to enable IPC.\x1b[0m', 'html')
+          addLine('\x1b[33mProverbs CLI unavailable in dev mode — package the app to enable IPC.\x1b[0m', 'html')
         }
         setBusy(false)
         setBusyLabel('')

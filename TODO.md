@@ -804,19 +804,21 @@
 ## KNOWN ISSUES
 
 > Items confirmed broken or not yet implemented. Update as bugs are found during testing.
+> 2026-06-11: all 15 issues resolved or verified — see notes per item.
 
-- [ ] **ISS-01** Battery percentage in TopBar is hardcoded at "78%" — does not reflect actual device battery.
-- [ ] **ISS-02** Status icons (Wifi, Bluetooth, Volume) in TopBar are purely cosmetic — no real system state.
-- [ ] **ISS-03** Wallpaper selection in Settings (cosmos/aurora/void) saves the preference but does NOT change the actual desktop wallpaper — only "nebula" is rendered.
-- [ ] **ISS-04** Accent color selection in Settings does NOT hot-reload CSS custom properties — requires OS restart to see effect.
-- [ ] **ISS-05** `window.nexus.platform` returns the platform string but is not used to switch neofetch CPU info correctly — always shows the raw `process.platform` string, not a friendly model name.
-- [ ] **ISS-06** Notepad has no "unsaved changes" guard on tab close — content is autosaved but the close action doesn't warn the user if autosave hasn't fired yet (800ms debounce).
-- [ ] **ISS-07** Celestia's XLSX rendering uses `require('xlsx')` inside a React component — this is a CommonJS call in an ESM context and may fail depending on bundler config. Verify xlsx lazy import path works correctly.
-- [ ] **ISS-08** File Manager file right-click context menu items (open, copy path) are placeholder — no actual OS action is taken.
-- [ ] **ISS-09** App Store FeaturedCard renders `app.icon` as emoji text (`{app.icon || '📦'}`) but `app.icon` in APP_REGISTRY is a Lucide icon name string (e.g., "Calculator") — cards render the string literally instead of the icon component.
-- [ ] **ISS-10** Monday update check: `pendingUpdate` state is set but there is no UI element in the current build to display the update prompt to the user.
-- [ ] **ISS-11** Ephesians browser history is stored in localStorage but there is no history viewer UI — the HISTORY_KEY data is written but never read back.
-- [ ] **ISS-12** AppStore search uses `app.description` as a Fuse key but APP_REGISTRY uses `desc` (not `description`) — fuzzy search by description field will always miss.
-- [ ] **ISS-13** The `require` call inside Celestia's `SheetData` component (`const { utils } = require('xlsx')`) is synchronous CommonJS inside a Vite/ESM build — this will throw in the renderer. The `parseXLSX` lazy import at the top is correct; `SheetData` should use the already-imported wb instead.
-- [ ] **ISS-14** `proverbs` command in Terminal outputs nothing visible if `window.nexus.runProverbs` is undefined (dev mode) — error message says "not available in dev mode" which is correct, but the error style is `type: 'error'` (red) which may be confusing.
-- [ ] **ISS-15** SubscriptionModal "Launch" button opens a window with `appId: raxx_<id>` but `WindowManager` checks `win.appId.startsWith('raxx_')` — this works, however the `props` object passed includes `appId` (the short id) and `appName`, not the full app registry entry, so `RAXXAppViewer` receives those props correctly. Verify no missing `liveUrl` prop on RAXXLiveApp render path.
+- [x] **ISS-01** ~~Battery hardcoded at "78%"~~ FIXED — TopBar now uses `navigator.getBattery()` with live level/charging state; red icon ≤ 20%, BatteryCharging icon when plugged in.
+- [x] **ISS-02** ~~Status icons cosmetic~~ FIXED — Wifi icon reflects `navigator.onLine` (amber WifiOff when offline); Bluetooth/Volume/Battery icons open their respective panel windows.
+- [x] **ISS-03** ~~Wallpaper selection not applied~~ FIXED — `theme.js` WALLPAPERS map (nebula/cosmos/aurora/void gradients); Desktop listens to `revos:settings-changed` and swaps live.
+- [x] **ISS-04** ~~Accent color requires restart~~ FIXED — `applyAccent()` hot-swaps `--accent`, `--accent-2`, `--accent-hover`, `--accent-glow`, `--border-accent`; applied on boot from saved settings via `applySavedTheme()` in main.jsx.
+- [x] **ISS-05** ~~Raw process.platform in neofetch~~ FIXED — friendly map (darwin → "macOS (Darwin)", win32 → "Windows", linux → "Linux").
+- [x] **ISS-06** ~~No unsaved-changes guard on Notepad tab close~~ FIXED — confirm dialog when closing a modified tab with content; tab list flushed to localStorage immediately on close.
+- [x] **ISS-07** VERIFIED FIXED — Celestia caches the lazy-imported xlsx module in `_xlsxModule`; no `require()` remains.
+- [x] **ISS-08** ~~File Manager context menu placeholder~~ FIXED — Copy Name/Copy Path use clipboard; Open navigates dirs and notifies for files; Get Info shows size/date/category/path notification.
+- [x] **ISS-09** ~~FeaturedCard renders icon name as text~~ FIXED — shared `appIcons.js` (`getAppIcon`) resolves Lucide components; applied in FeaturedCard, AppRow, AppDetail, and TopBar search results.
+- [x] **ISS-10** ~~No UI for pendingUpdate~~ FIXED — new `UpdateBanner.jsx` rendered when logged in: version display, Install button (calls `nexus.applyUpdate`), dismiss.
+- [x] **ISS-11** VERIFIED FIXED — HistoryPanel.jsx is imported and rendered in EphesiansBrowser; reads and clears HISTORY_KEY.
+- [x] **ISS-12** VERIFIED FIXED — Fuse keys are `['name', 'desc', 'category']`.
+- [x] **ISS-13** VERIFIED FIXED — no synchronous `require` in Celestia; SheetData uses the cached module.
+- [x] **ISS-14** ~~Red error for proverbs in dev mode~~ FIXED — now amber system-style message: "Proverbs CLI unavailable in dev mode — package the app to enable IPC."
+- [x] **ISS-15** VERIFIED — SubscriptionModal passes `props: { liveUrl, appId, appName }`; WindowManager's RAXXLiveApp forwards `url={liveUrl}` to RAXXAppViewer. No missing prop.
+- [x] **ISS-16** (found 2026-06-11) Duplicate `border` key in VolumePanel mute-button style — dead `border: 'none'` removed; build is warning-free.

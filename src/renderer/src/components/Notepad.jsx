@@ -43,14 +43,19 @@ export default function Notepad() {
   }
 
   const closeTab = (id) => {
+    const tab = tabs.find((t) => t.id === id)
+    if (tab?.modified && tab.content.trim() && !window.confirm(`"${tab.title}" has unsaved changes. Close anyway?`)) return
     if (tabs.length === 1) {
-      setTabs([{ id: 1, title: 'Untitled', content: '', modified: false }])
+      const fresh = [{ id: 1, title: 'Untitled', content: '', modified: false }]
+      setTabs(fresh)
       setActiveId(1)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh))
       return
     }
     const idx = tabs.findIndex((t) => t.id === id)
     const newTabs = tabs.filter((t) => t.id !== id)
     setTabs(newTabs)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newTabs.map((t) => ({ ...t, modified: false }))))
     if (id === activeId) setActiveId(newTabs[Math.max(0, idx - 1)]?.id || newTabs[0].id)
   }
 

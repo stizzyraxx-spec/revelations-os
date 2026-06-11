@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Home, ChevronRight, Folder, File, ArrowLeft, ArrowRight, RefreshCw, Grid, List, Search, HardDrive, Download, Music, Image, Video, FileText } from 'lucide-react'
 import { categorizeFile, sortFiles } from '../ai/LocalAI'
+import { useOSStore } from '../store'
 
 const QUICK_ACCESS = [
   { label: 'Home', path: '~', icon: Home },
@@ -248,11 +249,24 @@ export default function FileManager() {
       {/* Context menu */}
       {contextMenu && (
         <div className="context-menu" style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 9999 }}>
-          <div className="context-menu-item" onClick={() => { if (contextMenu.entry.type === 'dir') goTo(`${path}/${contextMenu.entry.name}`); setContextMenu(null) }}>Open</div>
+          <div className="context-menu-item" onClick={() => {
+            const e = contextMenu.entry
+            if (e.type === 'dir') goTo(`${path}/${e.name}`)
+            else useOSStore.getState().addNotification({ title: e.name, body: `${e.cat || 'File'} • ${formatSize(e.size)} — preview not yet supported`, type: 'info' })
+            setContextMenu(null)
+          }}>Open</div>
           <div className="context-menu-item" onClick={() => { navigator.clipboard?.writeText(contextMenu.entry.name); setContextMenu(null) }}>Copy Name</div>
           <div className="context-menu-separator" />
           <div className="context-menu-item" onClick={() => { navigator.clipboard?.writeText(`${path}/${contextMenu.entry.name}`); setContextMenu(null) }}>Copy Path</div>
-          <div className="context-menu-item" onClick={() => setContextMenu(null)}>Get Info</div>
+          <div className="context-menu-item" onClick={() => {
+            const e = contextMenu.entry
+            useOSStore.getState().addNotification({
+              title: `Info: ${e.name}`,
+              body: `${e.type === 'dir' ? 'Folder' : e.cat || 'File'} • ${formatSize(e.size)} • Modified ${formatDate(e.modified)} • ${path}/${e.name}`,
+              type: 'info',
+            })
+            setContextMenu(null)
+          }}>Get Info</div>
         </div>
       )}
     </div>
