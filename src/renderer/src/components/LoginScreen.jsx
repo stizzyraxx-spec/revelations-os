@@ -1,40 +1,43 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useOSStore } from '../store'
 import raxxLogo from '../assets/raxx-logo.png'
+import LoginCinematic from './LoginCinematic'
 
+// Phases:
+//  0 — cinematic runs (horses sweep R→L, fireballs)
+//  1 — horses reach center, pause (~0.5s), logo fades in
+//  2 — logo visible briefly, then login fires and Desktop fades in
 export default function LoginScreen() {
   const login = useOSStore(s => s.login)
-  const [visible, setVisible] = useState(false)
+  const [phase, setPhase] = useState(0) // 0=running, 1=arrived, 2=done
+  const [logoVisible, setLogoVisible] = useState(false)
 
-  useEffect(() => {
-    // Frame 1: trigger fade-in
-    const show = requestAnimationFrame(() => setVisible(true))
-    // 2.4s: start fade-out
-    const fadeOut = setTimeout(() => setVisible(false), 2400)
-    // 3.2s: load into OS
-    const done = setTimeout(() => login('User'), 3200)
-    return () => { cancelAnimationFrame(show); clearTimeout(fadeOut); clearTimeout(done) }
-  }, [])
+  const handleArrived = () => {
+    setPhase(1)
+    setTimeout(() => setLogoVisible(true), 100)
+    setTimeout(() => setPhase(2), 900)
+    setTimeout(() => login('User'), 1200)
+  }
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0,
-      background: '#000',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      opacity: visible ? 1 : 0,
-      transition: 'opacity 0.8s ease',
-    }}>
-      <img
-        src={raxxLogo}
-        alt="RAXX Beats Studios"
-        style={{
-          width: '420px',
-          maxWidth: '70vw',
-          userSelect: 'none',
-          pointerEvents: 'none',
-          draggable: false,
-        }}
-      />
+    <div style={{ position: 'fixed', inset: 0, background: '#000', overflow: 'hidden' }}>
+      {/* Cinematic canvas layer */}
+      <LoginCinematic onArrived={handleArrived} phase={phase} />
+
+      {/* RAXX logo fades in when horses arrive */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 10,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        pointerEvents: 'none',
+        opacity: logoVisible ? 1 : 0,
+        transition: 'opacity 0.6s ease',
+      }}>
+        <img
+          src={raxxLogo}
+          alt="RAXX Beats Studios"
+          style={{ width: '420px', maxWidth: '70vw', userSelect: 'none', pointerEvents: 'none' }}
+        />
+      </div>
     </div>
   )
 }

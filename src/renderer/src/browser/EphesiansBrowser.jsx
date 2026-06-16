@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import {
   Plus, X, RotateCcw, ArrowLeft, ArrowRight, Home, Bookmark, BookmarkCheck,
   Lock, Globe, Star, Download, Settings, Clock, Search, WifiOff,
@@ -41,21 +41,34 @@ function getHomePage() {
   return localStorage.getItem('ephesians_home') || 'https://www.google.com'
 }
 
+// In-memory cache — avoids JSON.parse on every keystroke
+let _bookmarksCache = null
+let _historyCache = null
+
 function loadBookmarks() {
-  try { return JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]') } catch { return [] }
+  if (_bookmarksCache) return _bookmarksCache
+  try { _bookmarksCache = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]') } catch { _bookmarksCache = [] }
+  return _bookmarksCache
 }
-function saveBookmarks(bm) { localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bm)) }
+function saveBookmarks(bm) {
+  _bookmarksCache = bm
+  localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bm))
+}
 
 function addHistory(url, title) {
   try {
-    const h = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
+    const h = getHistory()
     h.unshift({ url, title, ts: Date.now() })
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, 500)))
+    const trimmed = h.slice(0, 500)
+    _historyCache = trimmed
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed))
   } catch (_) {}
 }
 
 function getHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') } catch { return [] }
+  if (_historyCache) return _historyCache
+  try { _historyCache = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') } catch { _historyCache = [] }
+  return _historyCache
 }
 
 export default function EphesiansBrowser() {
@@ -81,6 +94,7 @@ export default function EphesiansBrowser() {
   const urlInputRef = useRef(null)
   const progressTimers = useRef({})
   const suggestionsRef = useRef(null)
+  const suggestDebounce = useRef(null)
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0]
   const activeWebviewRef = useRef(null)
@@ -228,23 +242,26 @@ export default function EphesiansBrowser() {
     const val = e.target.value
     setUrlInput(val)
     setActiveSuggestion(-1)
+    clearTimeout(suggestDebounce.current)
     if (val.length >= 2) {
-      const h = getHistory().slice(0, 500)
-      const bm = loadBookmarks()
-      const q = val.toLowerCase()
-      const seen = new Set()
-      const results = []
-      for (const item of [...h, ...bm]) {
-        const url = item.url || ''
-        const title = item.title || ''
-        if (!seen.has(url) && (url.toLowerCase().includes(q) || title.toLowerCase().includes(q))) {
-          seen.add(url)
-          results.push({ url, title })
-          if (results.length >= 6) break
+      suggestDebounce.current = setTimeout(() => {
+        const h = getHistory()
+        const bm = loadBookmarks()
+        const q = val.toLowerCase()
+        const seen = new Set()
+        const results = []
+        for (const item of [...h, ...bm]) {
+          const url = item.url || ''
+          const title = item.title || ''
+          if (!seen.has(url) && (url.toLowerCase().includes(q) || title.toLowerCase().includes(q))) {
+            seen.add(url)
+            results.push({ url, title })
+            if (results.length >= 6) break
+          }
         }
-      }
-      setUrlSuggestions(results)
-      setShowSuggestions(results.length > 0)
+        setUrlSuggestions(results)
+        setShowSuggestions(results.length > 0)
+      }, 200)
     } else {
       setUrlSuggestions([])
       setShowSuggestions(false)

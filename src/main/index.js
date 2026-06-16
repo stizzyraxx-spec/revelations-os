@@ -108,24 +108,26 @@ ipcMain.handle('fs:scanDirectory', async (event, dirPath) => {
   if (!rateOk('scandir')) return []
   const home = os.homedir()
   const resolved = path.resolve(dirPath || home)
-  // Security: allow home dir, /Applications, /tmp, /
   const allowed = [home, '/Applications', '/tmp', '/Users', '/']
   if (!allowed.some(p => resolved.startsWith(p))) return []
   try {
-    const entries = fs.readdirSync(resolved, { withFileTypes: true })
-    return entries
-      .filter(e => !e.name.startsWith('.') || dirPath === home)
-      .map(e => {
-        let size = 0, modified = ''
-        try { const s = fs.statSync(path.join(resolved, e.name)); size = s.size; modified = s.mtime.toISOString() } catch {}
-        return {
-          name: e.name,
-          type: e.isDirectory() ? 'folder' : 'file',
-          ext: path.extname(e.name).slice(1).toLowerCase(),
-          size, modified,
-          fullPath: path.join(resolved, e.name),
-        }
-      })
+    const entries = await fs.promises.readdir(resolved, { withFileTypes: true })
+    const filtered = entries.filter(e => !e.name.startsWith('.') || dirPath === home)
+    return await Promise.all(filtered.map(async e => {
+      let size = 0, modified = ''
+      try {
+        const s = await fs.promises.stat(path.join(resolved, e.name))
+        size = s.size
+        modified = s.mtime.toISOString()
+      } catch {}
+      return {
+        name: e.name,
+        type: e.isDirectory() ? 'folder' : 'file',
+        ext: path.extname(e.name).slice(1).toLowerCase(),
+        size, modified,
+        fullPath: path.join(resolved, e.name),
+      }
+    }))
   } catch { return [] }
 })
 
@@ -135,9 +137,9 @@ ipcMain.handle('fs:readFile', async (event, filePath) => {
   const resolved = path.resolve(filePath)
   if (!resolved.startsWith(home)) return null
   try {
-    const stat = fs.statSync(resolved)
-    if (stat.size > 10 * 1024 * 1024) return null // 10MB limit
-    return fs.readFileSync(resolved)
+    const stat = await fs.promises.stat(resolved)
+    if (stat.size > 10 * 1024 * 1024) return null
+    return await fs.promises.readFile(resolved)
   } catch { return null }
 })
 
@@ -190,11 +192,14 @@ function parseBTJson(json) {
   } catch { return { powered: false, devices: [] } }
 }
 
+let _blueutilPath = undefined
 async function findBlueutil() {
+  if (_blueutilPath !== undefined) return _blueutilPath
   for (const p of ['/usr/local/bin/blueutil', '/opt/homebrew/bin/blueutil']) {
     const { code } = await runCmd(p, ['--version'])
-    if (code === 0) return p
+    if (code === 0) { _blueutilPath = p; return p }
   }
+  _blueutilPath = null
   return null
 }
 
@@ -226,6 +231,14 @@ ipcMain.handle('bt:disconnect', async (event, address) => {
   return { ok: code === 0, error: err }
 })
 
+// ─── Short-lived caches ───────────────────────────────────────────────────────
+const _cache = new Map()
+function cached(key, ttlMs, fn) {
+  const hit = _cache.get(key)
+  if (hit && Date.now() < hit.exp) return Promise.resolve(hit.val)
+  return fn().then(val => { _cache.set(key, { val, exp: Date.now() + ttlMs }); return val })
+}
+
 // ─── Battery IPC ─────────────────────────────────────────────────────────────
 function parseIOReg(out) {
   const get = key => { const m = out.match(new RegExp(`"${key}"\\s*=\\s*(\\S+)`)); return m ? m[1] : null }
@@ -240,7 +253,7 @@ function parseIOReg(out) {
   }
 }
 
-ipcMain.handle('battery:status', async () => {
+ipcMain.handle('battery:status', () => cached('battery', 5000, async () => {
   const [pmOut, ioOut] = await Promise.all([
     runCmd('pmset', ['-g', 'batt']),
     runCmd('ioreg', ['-rn', 'AppleSmartBattery']),
@@ -256,10 +269,10 @@ ipcMain.handle('battery:status', async () => {
     onAC,
     ...extra,
   }
-})
+}))
 
 // ─── Volume IPC ──────────────────────────────────────────────────────────────
-ipcMain.handle('volume:get', async () => {
+ipcMain.handle('volume:get', () => cached('volume', 3000, async () => {
   const [volOut, muteOut] = await Promise.all([
     runCmd('osascript', ['-e', 'output volume of (get volume settings)']),
     runCmd('osascript', ['-e', 'output muted of (get volume settings)']),
@@ -268,17 +281,19 @@ ipcMain.handle('volume:get', async () => {
     volume: parseInt(volOut.out.trim()) || 0,
     muted: muteOut.out.trim() === 'true',
   }
-})
+}))
 
 ipcMain.handle('volume:set', async (event, level) => {
   const clamped = Math.max(0, Math.min(100, Math.round(level)))
   await runCmd('osascript', ['-e', `set volume output volume ${clamped}`])
+  _cache.delete('volume')
   return { ok: true, volume: clamped }
 })
 
 ipcMain.handle('volume:mute', async (event, mute) => {
   const cmd = mute ? 'set volume with output muted' : 'set volume without output muted'
   await runCmd('osascript', ['-e', cmd])
+  _cache.delete('volume')
   return { ok: true }
 })
 
