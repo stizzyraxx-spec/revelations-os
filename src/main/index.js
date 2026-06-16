@@ -62,6 +62,28 @@ function createWindow() {
 
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
 
+  // Download handler — must be inside app.whenReady / createWindow
+  session.defaultSession.on('will-download', (event, item) => {
+    const id = ++_dlId
+    const dl = {
+      id, filename: item.getFilename(), url: item.getURL(),
+      totalBytes: item.getTotalBytes(), receivedBytes: 0,
+      state: 'progressing',
+      savePath: path.join(os.homedir(), 'Downloads', item.getFilename()),
+    }
+    item.setSavePath(dl.savePath)
+    _downloads.set(id, dl)
+    item.on('updated', (_, state) => {
+      dl.receivedBytes = item.getReceivedBytes()
+      dl.state = state
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('download:update', { ...dl })
+    })
+    item.on('done', (_, state) => {
+      dl.state = state; dl.receivedBytes = item.getTotalBytes()
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('download:done', { ...dl })
+    })
+  })
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
   })
@@ -358,26 +380,6 @@ const _downloads = new Map()
 let _dlId = 0
 
 app.on('browser-window-created', () => {})
-session.defaultSession.on('will-download', (event, item) => {
-  const id = ++_dlId
-  const dl = {
-    id, filename: item.getFilename(), url: item.getURL(),
-    totalBytes: item.getTotalBytes(), receivedBytes: 0,
-    state: 'progressing',
-    savePath: path.join(os.homedir(), 'Downloads', item.getFilename()),
-  }
-  item.setSavePath(dl.savePath)
-  _downloads.set(id, dl)
-  item.on('updated', (_, state) => {
-    dl.receivedBytes = item.getReceivedBytes()
-    dl.state = state
-    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('download:update', { ...dl })
-  })
-  item.on('done', (_, state) => {
-    dl.state = state; dl.receivedBytes = item.getTotalBytes()
-    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('download:done', { ...dl })
-  })
-})
 ipcMain.handle('download:list', () => Array.from(_downloads.values()))
 ipcMain.handle('download:open', (_, p) => shell.openPath(p))
 ipcMain.handle('download:reveal', (_, p) => shell.showItemInFolder(p))
