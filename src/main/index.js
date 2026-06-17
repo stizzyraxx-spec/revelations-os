@@ -553,6 +553,25 @@ ipcMain.handle('rev:rebuild', async () => {
   })
 })
 
+// Adult content block-list — applies to all webviews (Ephesians + app viewers)
+const BLOCKED_DOMAINS = [
+  'onlyfans.com', 'pornhub.com', 'xvideos.com', 'xnxx.com', 'redtube.com',
+  'youporn.com', 'tube8.com', 'spankbang.com', 'xhamster.com', 'tnaflix.com',
+  'slutload.com', 'beeg.com', 'drtuber.com', 'nuvid.com', 'txxx.com',
+  'hclips.com', 'hdtube.porn', 'brazzers.com', 'bangbros.com', 'realitykings.com',
+  'mofos.com', 'naughtyamerica.com', 'digitalplayground.com', 'teamskeet.com',
+  'porndig.com', 'porn.com', 'sex.com', 'adult.com', 'livejasmincams.com',
+  'chaturbate.com', 'stripchat.com', 'bongacams.com', 'myfreecams.com',
+  'livejasmin.com', 'cam4.com', 'camsoda.com', 'flirt4free.com',
+]
+
+function isBlockedUrl(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '')
+    return BLOCKED_DOMAINS.some(d => host === d || host.endsWith('.' + d))
+  } catch { return false }
+}
+
 // Block permission escalation on all webcontents
 app.on('web-contents-created', (_, contents) => {
   const type = contents.getType()
@@ -562,6 +581,14 @@ app.on('web-contents-created', (_, contents) => {
       if (!url.startsWith('http://localhost') && !url.startsWith('file://')) {
         event.preventDefault()
       }
+    })
+  } else {
+    // Block adult sites in webviews (Ephesians browser + app viewers)
+    contents.on('will-navigate', (event, url) => {
+      if (isBlockedUrl(url)) event.preventDefault()
+    })
+    contents.on('will-frame-navigate', (event) => {
+      if (isBlockedUrl(event.url)) event.preventDefault()
     })
   }
   // Prevent permission requests (camera, mic, etc.) without user approval

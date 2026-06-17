@@ -7,6 +7,56 @@ import {
 } from 'lucide-react'
 import { getAppIcon } from './appIcons'
 
+const VERSES = [
+  { text: 'For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.', ref: 'John 3:16' },
+  { text: 'I can do all this through him who gives me strength.', ref: 'Philippians 4:13' },
+  { text: 'The Lord is my shepherd, I lack nothing.', ref: 'Psalm 23:1' },
+  { text: 'Trust in the Lord with all your heart and lean not on your own understanding.', ref: 'Proverbs 3:5' },
+  { text: 'Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.', ref: 'Joshua 1:9' },
+  { text: 'And we know that in all things God works for the good of those who love him.', ref: 'Romans 8:28' },
+  { text: 'The Lord is my light and my salvation — whom shall I fear?', ref: 'Psalm 27:1' },
+  { text: 'Come to me, all you who are weary and burdened, and I will give you rest.', ref: 'Matthew 11:28' },
+  { text: 'Do not be anxious about anything, but in every situation, by prayer and petition, present your requests to God.', ref: 'Philippians 4:6' },
+  { text: 'But seek first his kingdom and his righteousness, and all these things will be given to you as well.', ref: 'Matthew 6:33' },
+  { text: 'For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you.', ref: 'Jeremiah 29:11' },
+  { text: 'The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you.', ref: 'Zephaniah 3:17' },
+  { text: 'Even though I walk through the darkest valley, I will fear no evil, for you are with me.', ref: 'Psalm 23:4' },
+  { text: 'No weapon forged against you will prevail.', ref: 'Isaiah 54:17' },
+  { text: 'Cast all your anxiety on him because he cares for you.', ref: '1 Peter 5:7' },
+  { text: 'The name of the Lord is a fortified tower; the righteous run to it and are safe.', ref: 'Proverbs 18:10' },
+  { text: 'Greater is he that is in you, than he that is in the world.', ref: '1 John 4:4' },
+  { text: 'I am the way and the truth and the life. No one comes to the Father except through me.', ref: 'John 14:6' },
+  { text: 'But those who hope in the Lord will renew their strength. They will soar on wings like eagles.', ref: 'Isaiah 40:31' },
+  { text: 'For the Lord gives wisdom; from his mouth come knowledge and understanding.', ref: 'Proverbs 2:6' },
+]
+
+const INTERVAL_MS = 30 * 60 * 1000 // 30 minutes
+
+function useBibleVerse() {
+  const [idx, setIdx] = useState(() => Math.floor(Date.now() / INTERVAL_MS) % VERSES.length)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    // Align to the next 30-minute boundary
+    const msUntilNext = INTERVAL_MS - (Date.now() % INTERVAL_MS)
+    const tick = () => {
+      setVisible(false)
+      setTimeout(() => {
+        setIdx(i => (i + 1) % VERSES.length)
+        setVisible(true)
+      }, 600)
+    }
+    const t1 = setTimeout(() => {
+      tick()
+      const t2 = setInterval(tick, INTERVAL_MS)
+      return () => clearInterval(t2)
+    }, msUntilNext)
+    return () => clearTimeout(t1)
+  }, [])
+
+  return { verse: VERSES[idx], visible }
+}
+
 export default function TopBar() {
   const {
     user, windows, notifications, currentTime, notificationPanelOpen, toggleNotificationPanel,
@@ -18,6 +68,7 @@ export default function TopBar() {
   const [sysInfo, setSysInfo] = useState(null)
   const [now, setNow] = useState(new Date())
   const searchRef = useRef(null)
+  const { verse, visible } = useBibleVerse()
 
   const [battery, setBattery] = useState(null) // { level, charging }
   const [online, setOnline] = useState(navigator.onLine)
@@ -140,6 +191,22 @@ export default function TopBar() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Bible verse — centered */}
+      <div style={{
+        position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+        maxWidth: 420, textAlign: 'center', pointerEvents: 'none',
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.6s ease',
+        WebkitAppRegion: 'drag',
+      }}>
+        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.55)', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
+          "{verse.text}"
+        </span>
+        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em' }}>
+          — {verse.ref}
+        </span>
       </div>
 
       {/* Open app indicators */}
