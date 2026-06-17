@@ -8,11 +8,12 @@ const IDLE_PAUSE     = 0.4
 
 // Biblical Four Horsemen — color, emissive, name
 // White=Conquest, Red=War, Black=Famine, Pale=Death
+// Colors matched exactly to the logo: white, red, dark-gray, lime-green
 const HORSEMEN = [
-  { color: 0xf0f0e0, emissive: 0xffffff, emInt: 0.18, name: 'white',  x: -4.8, z:  0.8, scale: 1.00, delay: 0.00, animOff: 0.00 },
-  { color: 0xaa0000, emissive: 0xff2200, emInt: 0.25, name: 'red',    x: -1.6, z:  0.0, scale: 1.08, delay: 0.10, animOff: 0.33 },
-  { color: 0x0d0d0d, emissive: 0x4466ff, emInt: 0.20, name: 'black',  x:  1.6, z:  0.4, scale: 1.04, delay: 0.06, animOff: 0.66 },
-  { color: 0x3a5c3a, emissive: 0x88ff88, emInt: 0.15, name: 'pale',   x:  4.8, z: -0.4, scale: 0.96, delay: 0.14, animOff: 0.50 },
+  { color: 0xf0f0f0, emissive: 0xffffff, emInt: 0.30, name: 'white',  x: -4.8, z:  0.8, scale: 1.00, delay: 0.00, animOff: 0.00 },
+  { color: 0xee0000, emissive: 0xff2200, emInt: 0.35, name: 'red',    x: -1.6, z:  0.0, scale: 1.08, delay: 0.10, animOff: 0.33 },
+  { color: 0x555555, emissive: 0x888888, emInt: 0.20, name: 'black',  x:  1.6, z:  0.4, scale: 1.04, delay: 0.06, animOff: 0.66 },
+  { color: 0x90e020, emissive: 0xaaff00, emInt: 0.40, name: 'pale',   x:  4.8, z: -0.4, scale: 0.96, delay: 0.14, animOff: 0.50 },
 ]
 
 const START_X = 32
@@ -128,8 +129,8 @@ export default function LoginCinematic({ onArrived, phase }) {
 
     // Colored point lights matching each horseman — positioned at their rest X
     const hLights = HORSEMEN.map(h => {
-      const l = new THREE.PointLight(new THREE.Color(h.emissive), 0, 12)
-      l.position.set(h.x, 3, h.z + 2)
+      const l = new THREE.PointLight(new THREE.Color(h.emissive), 0, 16)
+      l.position.set(h.x, 4, h.z + 3)
       scene.add(l)
       return l
     })
