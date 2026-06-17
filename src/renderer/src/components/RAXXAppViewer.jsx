@@ -66,6 +66,7 @@ export default function RAXXAppViewer({ url, title, appId }) {
             ref={setupListeners}
             src={url}
             partition={`persist:raxx_${appId}`}
+            useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
             webpreferences="allowRunningInsecureContent=no"
           />

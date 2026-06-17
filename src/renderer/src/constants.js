@@ -1,6 +1,6 @@
 export const APP_REGISTRY = [
   // SYSTEM — free, no subscription
-  { id: 'bible', name: 'Bible', icon: 'BookOpen', color: '#7c3aed', category: 'system', free: true, desc: 'The Holy Bible', liveUrl: 'https://syllabus-script-space.vercel.app' },
+  { id: 'bible', name: 'Bible', icon: 'BookOpen', color: '#7c3aed', category: 'system', free: true, desc: 'The Holy Bible', liveUrl: 'https://theconditionofman.com' },
   { id: 'ephesians', name: 'Ephesians', icon: 'Globe', color: '#2563eb', category: 'system', free: true, desc: 'Revelations OS Web Browser — Chromium-powered' },
   { id: 'files', name: 'Files', icon: 'Folder', color: '#d97706', category: 'system', free: true, desc: 'File Manager' },
   { id: 'settings', name: 'Settings', icon: 'Settings2', color: '#6d28d9', category: 'system', free: true, desc: 'System Preferences' },
