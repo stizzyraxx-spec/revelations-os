@@ -59,7 +59,7 @@ function defaults() {
     volume: 70, micVolume: 60, outputDevice: 'Built-in Speakers', inputDevice: 'Built-in Microphone', soundEffects: true,
     notifications: true, notifSound: true, doNotDisturb: false,
     bluetoothEnabled: true,
-    wifiEnabled: true, wifiNetwork: 'RAXX_NET',
+    wifiEnabled: true, wifiNetwork: 'HomeNetwork',
     keyRepeatRate: 5, keyDelay: 3, shortcutHints: true,
     mouseSpeed: 5, mouseNatural: true, tapToClick: true,
     reduceMotion: false, highContrast: false, largeText: false, screenReader: false, colorBlindMode: 'none',
@@ -194,7 +194,7 @@ export default function Settings() {
             {settings.wifiEnabled && (
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>AVAILABLE NETWORKS</div>
-                {['RAXX_NET', 'HomeNetwork_5G', 'Office_Wifi', 'Guest_Network'].map((n) => (
+                {['HomeNetwork', 'HomeNetwork_5G', 'Office_Wifi', 'Guest_Network'].map((n) => (
                   <div key={n} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: 8, background: n === settings.wifiNetwork ? 'rgba(109,40,217,0.2)' : 'rgba(255,255,255,0.04)', marginBottom: 4, border: n === settings.wifiNetwork ? '1px solid rgba(109,40,217,0.4)' : '1px solid transparent' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontSize: 13 }}>
                       <Wifi size={14} style={{ color: n === settings.wifiNetwork ? 'var(--accent)' : 'var(--text-muted)' }} />
@@ -392,7 +392,7 @@ function AboutPanel() {
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Revelations OS</div>
           <div style={{ color: 'var(--text-muted)', marginTop: 4 }}>Version 1.0.0</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>© 2025 RAXX Beats Studios LLC</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>© 2025 Revelations OS</div>
         </div>
       </div>
       <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -401,7 +401,7 @@ function AboutPanel() {
           ['Runtime', 'Node.js + Chromium'],
           ['Security', 'AES-256-GCM + contextIsolation'],
           ['Developer', 'Shane Bedasee'],
-          ['Company', 'RAXX Beats Studios LLC'],
+          ['Company', 'Revelations OS'],
           ['UEI', 'QHGHVKNDMQ33'],
           ['CAGE', '19WS9'],
         ].map(([k, v]) => (

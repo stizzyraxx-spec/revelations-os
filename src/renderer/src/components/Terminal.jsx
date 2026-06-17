@@ -32,7 +32,7 @@ const HELP_TEXT = `\x1b[33mSystem Commands:\x1b[0m
   rev update        Describe an issue — Proverbs fixes it across repos + OS
   rev update <msg>  Fix described issue inline
   rev rebuild       Rebuild Revelations OS from source + reinstall
-  rev repos         List all RAXX app repositories
+  rev repos         List all app repositories
   rev status        Show last rev run result`
 
 const REV_HELP = `\x1b[35m[rev]\x1b[0m Proverbs-powered OS repair system
@@ -41,7 +41,7 @@ const REV_HELP = `\x1b[35m[rev]\x1b[0m Proverbs-powered OS repair system
   \x1b[36mrev update\x1b[0m              Enter interactive issue description mode
   \x1b[36mrev update <message>\x1b[0m    Fix the described issue immediately
   \x1b[36mrev rebuild\x1b[0m             Rebuild Revelations OS source + install to /Applications
-  \x1b[36mrev repos\x1b[0m               List all registered RAXX app repos and their status
+  \x1b[36mrev repos\x1b[0m               List all registered app repos and their status
   \x1b[36mrev status\x1b[0m              Show results from the last rev update run
 
 \x1b[33mHow it works:\x1b[0m
@@ -63,7 +63,7 @@ const NEOFETCH_ART = (user, platform) => `\x1b[35m
                  /  |  \\         \x1b[37m${user}\x1b[35m@\x1b[37mrevelations-os\x1b[0m
                 /   |   \\        \x1b[35m─────────────────────\x1b[0m
                /    |    \\       \x1b[35mOS:\x1b[0m     Revelations OS 1.0
-              / ████████  \\      \x1b[35mHost:\x1b[0m   RAXX Beats Studios LLC
+              / ████████  \\      \x1b[35mHost:\x1b[0m   Revelations OS
              /  ██  ████   \\     \x1b[35mKernel:\x1b[0m Electron 29 + Node.js
             /  ████   ██    \\    \x1b[35mShell:\x1b[0m  Revelations Terminal
            / ██   █████      \\   \x1b[35mDE:\x1b[0m     Glass Morphism UI
@@ -316,13 +316,13 @@ export default function Terminal() {
   const handleRevRepos = async () => {
     if (!window.nexus?.revListRepos) {
       // Fallback list
-      addLine('\x1b[35m[rev]\x1b[0m RAXX App Repositories:', 'html')
+      addLine('\x1b[35m[rev]\x1b[0m App Repositories:', 'html')
       addLine(['taxflow-pro', 'bowdwn', 'automix', 'legalvault-pro', 'fema-platform', 'genmed-clinical-sync', 'rals-unified', 'liquor-ledger', 'leadforge', 'proverbs', 'IdeaPlanner', 'freepost', 'cloutkiller', 'grow-clout-hub', 'syllabus-script-space', 'artistmanager', 'petsitter-pro', 'groomtrack-pro', 'mobile-massage', 'mobile-barber', 'mobile-salon', 'tradeiqdesk', 'vybe-engine', 'business-software-management-services', 'black-wall-street-legacy', 'school-manager', 'contractor-os', 'tuffbets', 'command-hq', 'dealerflow-pro', 'govcoreerp', 'olive', 'admin-center', 'pcscanfix', 'revelations-os'].map(r => `  ~/` + r).join('\n'))
       return
     }
     try {
       const repos = await window.nexus.revListRepos()
-      addLine('\x1b[35m[rev]\x1b[0m RAXX App Repositories:', 'html')
+      addLine('\x1b[35m[rev]\x1b[0m App Repositories:', 'html')
       const lines = repos.map(r => {
         const exists = r.exists ? '\x1b[32m✓\x1b[0m' : '\x1b[31m✗\x1b[0m'
         return `  ${exists} ~/` + r.name

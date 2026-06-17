@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react'
 import { RotateCcw, X, ExternalLink, ArrowLeft, ArrowRight, Lock, Globe } from 'lucide-react'
 
-// This component renders any RAXX app as a live webview pointing to its production URL.
-// Updates to the live site are automatically reflected — no copy needed.
+
 export default function RAXXAppViewer({ url, title, appId }) {
   const [loading, setLoading] = useState(true)
   const [currentUrl, setCurrentUrl] = useState(url)

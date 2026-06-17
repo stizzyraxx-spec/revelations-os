@@ -6,9 +6,9 @@ export const APP_REGISTRY = [
   { id: 'terminal', name: 'Terminal', icon: 'TerminalSquare', color: '#059669', category: 'system', free: true, desc: 'Developer Terminal + Proverbs' },
   { id: 'notepad', name: 'Notepad', icon: 'FileText', color: '#64748b', category: 'system', free: true, desc: 'Text Editor' },
   { id: 'pcscanfix', name: 'PCFixScan', icon: 'Shield', color: '#16a34a', category: 'system', free: true, desc: 'System Cleaner — FREE' },
-  { id: 'appstore', name: 'App Store', icon: 'Store', color: '#7c3aed', category: 'system', free: true, desc: 'RAXX App Marketplace' },
+  { id: 'appstore', name: 'App Store', icon: 'Store', color: '#7c3aed', category: 'system', free: true, desc: 'App Marketplace' },
   { id: 'celestia', name: 'Celestia', icon: 'FileStack', color: '#0e7490', category: 'system', free: true, desc: 'Office Suite — Word, Excel, PowerPoint, PDF' },
-  // RAXX APPS — subscription (liveUrl = embedded webview; updates auto-sync from live deployment)
+  // Subscription apps (liveUrl = embedded webview; updates auto-sync from live deployment)
   { id: 'taxflow', name: 'TaxFlow Pro', icon: 'Calculator', color: '#0284c7', category: 'finance', price: '$29/mo', trial: '14 days', free: false, desc: 'AI-powered tax preparation and bookkeeping', liveUrl: 'https://taxflow-pro.vercel.app' },
   { id: 'bowdwn', name: 'BowDwn', icon: 'ShoppingBag', color: '#ea580c', category: 'commerce', price: '$14.99/mo', trial: '7 days', free: false, desc: 'Christian streetwear ecommerce platform', liveUrl: 'https://bowdwn.vercel.app' },
   { id: 'automix', name: 'AutoMix', icon: 'Music2', color: '#7c3aed', category: 'media', price: '$9.99/mo', trial: '7 days', free: false, desc: 'Auto-mix dry vocals to production quality', liveUrl: 'https://automix.cloutkiller.com' },
@@ -41,10 +41,10 @@ export const APP_REGISTRY = [
   { id: 'tradeauto', name: 'Trade Auto', icon: 'Car', color: '#374151', category: 'automotive', price: '$49/mo', trial: '14 days', free: false, desc: 'Dealership management SaaS', liveUrl: 'https://tradeauto.govcoresolutions.net' },
   { id: 'govcoreerp', name: 'GovcoreERP', icon: 'Building2', color: '#1f2937', category: 'enterprise', price: '$99/mo', trial: '14 days', free: false, desc: 'All-in-one ERP with 22 modules', liveUrl: 'https://govcoresolutions.net/erp' },
   { id: 'olive', name: 'Olive POS', icon: 'ShoppingCart', color: '#3f6212', category: 'pos', price: '$49/mo', trial: '14 days', free: false, desc: 'Multi-tenant POS and inventory SaaS', liveUrl: 'https://olive.vercel.app' },
-  { id: 'admincenter', name: 'Admin Center', icon: 'LayoutDashboard', color: '#4f46e5', category: 'admin', price: 'Internal', trial: 'N/A', free: true, desc: 'RAXX app metrics dashboard', liveUrl: 'https://admin-center.vercel.app' },
+  { id: 'admincenter', name: 'Admin Center', icon: 'LayoutDashboard', color: '#4f46e5', category: 'admin', price: 'Internal', trial: 'N/A', free: true, desc: 'App metrics dashboard', liveUrl: 'https://admin-center.vercel.app' },
 ]
 
 export const SYSTEM_APPS = APP_REGISTRY.filter(a => a.category === 'system')
 export const RAXX_APPS = APP_REGISTRY.filter(a => a.category !== 'system')
 export const OS_VERSION = '1.0.0'
-export const RAXX_BRAND = 'RAXX Beats Studios LLC'
+export const OS_BRAND = 'Revelations OS'

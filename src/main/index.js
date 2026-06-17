@@ -457,7 +457,7 @@ ipcMain.handle('rev:update', async (event, issue) => {
     `ISSUE REPORTED BY USER: ${issue}`,
     ``,
     `CONTEXT:`,
-    `- You are running inside Revelations OS, the RAXX Beats Studios desktop platform`,
+    `- You are running inside Revelations OS`,
     `- The OS source is at ~/revelations-os`,
     `- Target repositories: ${targetRepos.join(', ')}`,
     ``,

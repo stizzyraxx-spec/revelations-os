@@ -40,8 +40,8 @@ export default function AppStore() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#080812' }}>
       {/* Hero */}
       <div style={{ padding: '20px 24px 16px', background: 'linear-gradient(135deg, rgba(109,40,217,0.2) 0%, rgba(30,64,175,0.2) 100%)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>RAXX App Store</div>
-        <div style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 14 }}>Business-grade software by RAXX Beats Studios LLC</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>App Store</div>
+        <div style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 14 }}>Business-grade software for Revelations OS</div>
         {/* Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 14px', maxWidth: 420 }}>
           <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />

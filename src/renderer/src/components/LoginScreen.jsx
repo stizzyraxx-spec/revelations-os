@@ -39,7 +39,7 @@ export default function LoginScreen() {
       }}>
         <img
           src={raxxLogo}
-          alt="RAXX Beats Studios"
+          alt="Revelations OS"
           style={{
             width: '420px', maxWidth: '70vw',
             userSelect: 'none', pointerEvents: 'none',

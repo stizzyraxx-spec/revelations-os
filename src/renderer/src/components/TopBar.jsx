@@ -211,7 +211,7 @@ export default function TopBar() {
             <div className="glass-strong animate-fade-in-down" style={{ position:'absolute', right:0, top:32, width:210, borderRadius:14, overflow:'hidden', boxShadow:'var(--shadow-lg)', zIndex:9000 }}>
               <div style={{ padding:'12px 14px 10px', borderBottom:'1px solid var(--border)' }}>
                 <div style={{ fontWeight:600, fontSize:'0.85rem' }}>{user.name}</div>
-                <div style={{ color:'var(--text-muted)', fontSize:'0.72rem' }}>RAXX Beats Studios</div>
+                <div style={{ color:'var(--text-muted)', fontSize:'0.72rem' }}>Revelations OS</div>
               </div>
               {[
                 { icon: User, label: 'My Account', action: ()=>openWindow({appId:'settings',title:'Settings'}) },

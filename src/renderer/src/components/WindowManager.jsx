@@ -50,7 +50,6 @@ export default function WindowManager() {
   return (
     <div style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
       {visibleWindows.map(win => {
-        // RAXX live apps — rendered as webview pointing to production URL
         if (win.appId.startsWith('raxx_')) {
           const ContentComp = (props) => <RAXXLiveApp {...props} {...win.props} />
           return <AppWindow key={win.id} win={win} ContentComponent={ContentComp} />

@@ -103,7 +103,7 @@ export default function SubscriptionModal() {
             style={{ flex:1, height:48, fontSize:'0.95rem' }}
             onClick={() => {
               // Open as live webview inside Revelations OS — updates sync automatically
-              const liveUrl = app.liveUrl || `https://raxxbeats.com/apps/${app.id}`
+              const liveUrl = app.liveUrl || `https://apps.revelationsos.com/${app.id}`
               useOSStore.getState().openWindow({
                 appId: `raxx_${app.id}`,
                 title: app.name,
