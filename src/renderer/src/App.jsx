@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useOSStore } from './store'
 import LoginScreen from './components/LoginScreen'
 import Desktop from './components/Desktop'
@@ -6,14 +6,15 @@ import ExitOSModal from './components/ExitOSModal'
 import SubscriptionModal from './components/SubscriptionModal'
 import UpdateBanner from './components/UpdateBanner'
 
-// Keep both screens mounted during transition so Desktop is ready to cross-fade in.
-// loginVisible  — controls LoginScreen opacity (1 → 0)
-// desktopVisible — controls Desktop opacity   (0 → 1)
 export default function App() {
   const { user, addNotification, pendingUpdate, setPendingUpdate } = useOSStore()
-  const [showLogin, setShowLogin]     = useState(!user.loggedIn)
-  const [loginVisible, setLoginVisible]   = useState(true)
-  const [desktopVisible, setDesktopVisible] = useState(false)
+  // showLogin — whether LoginScreen is in the DOM
+  // loginOpacity — CSS opacity of LoginScreen (1 fades out to 0)
+  const [showLogin, setShowLogin] = useState(true)
+  const [loginOpacity, setLoginOpacity] = useState(1)
+  const timers = useRef([])
+
+  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
 
   useEffect(() => {
     if (!window.nexus?.onNotification) return
@@ -21,20 +22,19 @@ export default function App() {
     return unsub
   }, [])
 
-  // When login() fires in the store, orchestrate the cross-fade
+  // React to login state — fade out LoginScreen, show Desktop
   useEffect(() => {
     if (!user.loggedIn) return
-
-    // Start fading Desktop in immediately
-    setDesktopVisible(true)
-    // Start fading Login out after a short beat so both are briefly visible together
-    const t1 = setTimeout(() => setLoginVisible(false), 200)
-    // Unmount LoginScreen after its fade-out is complete (1.2s fade + 200ms delay)
-    const t2 = setTimeout(() => setShowLogin(false), 1600)
-
-    return () => { clearTimeout(t1); clearTimeout(t2) }
+    clearTimers()
+    // Begin fading login screen out
+    const t1 = setTimeout(() => setLoginOpacity(0), 50)
+    // Remove login from DOM after fade completes
+    const t2 = setTimeout(() => setShowLogin(false), 1400)
+    timers.current = [t1, t2]
+    return clearTimers
   }, [user.loggedIn])
 
+  // Inactivity lock — 5 minutes
   useEffect(() => {
     if (!user.loggedIn) return
     let timer
@@ -43,7 +43,8 @@ export default function App() {
       timer = setTimeout(() => {
         useOSStore.getState().logout()
         addNotification({ title: 'Screen Locked', body: 'Session locked due to inactivity', type: 'security' })
-        setShowLogin(true); setLoginVisible(true); setDesktopVisible(false)
+        setShowLogin(true)
+        setLoginOpacity(1)
       }, 300000)
     }
     window.addEventListener('mousemove', reset)
@@ -60,29 +61,21 @@ export default function App() {
     }
   }, [user.loggedIn])
 
-  const FADE = 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)'
-
   return (
     <>
-      {/* Desktop always mounted so it's ready to fade in — just invisible until login */}
-      <div style={{
-        position: 'fixed', inset: 0,
-        opacity: desktopVisible ? 1 : 0,
-        transition: FADE,
-        willChange: 'opacity',
-        pointerEvents: desktopVisible ? 'all' : 'none',
-      }}>
+      {/* Desktop always in DOM, always fully visible — LoginScreen sits on top */}
+      <div style={{ position: 'fixed', inset: 0 }}>
         <Desktop />
       </div>
 
-      {/* LoginScreen sits on top, fades out */}
+      {/* LoginScreen overlays on top, fades out on login */}
       {showLogin && (
         <div style={{
           position: 'fixed', inset: 0,
-          opacity: loginVisible ? 1 : 0,
-          transition: FADE,
+          opacity: loginOpacity,
+          transition: 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'opacity',
-          pointerEvents: loginVisible ? 'all' : 'none',
+          pointerEvents: loginOpacity > 0 ? 'all' : 'none',
         }}>
           <LoginScreen />
         </div>
