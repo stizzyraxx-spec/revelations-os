@@ -78,7 +78,7 @@ export default function AppWindow({ win, ContentComponent }) {
         backdropFilter:'var(--blur-heavy)',
         WebkitBackdropFilter:'var(--blur-heavy)',
         border: `1px solid ${win.focused ? 'var(--border-accent)' : 'var(--border)'}`,
-        boxShadow: win.focused ? 'var(--shadow-lg)' : '0 8px 32px rgba(0,0,0,0.6)',
+        boxShadow: win.focused ? 'var(--shadow-lg), var(--shadow-glow)' : '0 8px 32px rgba(0,0,0,0.6)',
         pointerEvents:'all',
         transition:'box-shadow 0.2s, border-color 0.2s',
       }}
@@ -91,7 +91,7 @@ export default function AppWindow({ win, ContentComponent }) {
         onMouseDown={handleTitleMouseDown}
         style={{
           height:36, display:'flex', alignItems:'center', padding:'0 12px',
-          background: win.focused ? 'linear-gradient(180deg, rgba(109,40,217,0.12), var(--bg-tertiary))' : 'var(--bg-tertiary)',
+          background: win.focused ? 'linear-gradient(180deg, rgba(255,255,255,0.06), var(--bg-tertiary))' : 'var(--bg-tertiary)',
           borderBottom:'1px solid var(--border)',
           cursor: maximized ? 'default' : 'grab',
           userSelect:'none', flexShrink:0,
