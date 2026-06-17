@@ -50,7 +50,8 @@ export default function WindowManager() {
   return (
     <div style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
       {visibleWindows.map(win => {
-        if (win.appId.startsWith('raxx_')) {
+        // External webview apps (subscription apps + free liveUrl apps like Bible)
+        if (win.appId.startsWith('raxx_') || win.props?.liveUrl) {
           const ContentComp = (props) => <RAXXLiveApp {...props} {...win.props} />
           return <AppWindow key={win.id} win={win} ContentComponent={ContentComp} />
         }

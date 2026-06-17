@@ -47,7 +47,7 @@ export default function OrbLauncher() {
 
   const handleAppClick = (app) => {
     if (app.free) {
-      openWindow({ appId: app.id, title: app.name })
+      openWindow({ appId: app.id, title: app.name, props: app.liveUrl ? { liveUrl: app.liveUrl, appId: app.id, appName: app.name } : {} })
     } else {
       openSubscription(app)
     }
@@ -58,33 +58,47 @@ export default function OrbLauncher() {
 
   return (
     <>
-      {/* Tab button — horsemen logo, vertically centered on right edge */}
+      {/* Tab — thin black strip, 90% screen height, "REVELATIONS" vertical text */}
       <button
         onClick={toggleOrbLauncher}
         title="Applications"
         style={{
           position: 'fixed',
           right: 0,
-          top: '50%',
-          width: 88,
-          height: 110,
-          background: '#ffffff',
+          top: '5vh',
+          width: 22,
+          height: '90vh',
+          background: '#080808',
           border: 'none',
-          borderRadius: '16px 0 0 16px',
+          borderRadius: '6px 0 0 6px',
           cursor: 'pointer',
-          overflow: 'hidden',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.55)',
+          boxShadow: '-2px 0 12px rgba(0,0,0,0.7)',
           zIndex: 995,
           padding: 0,
-          transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
-          transform: orbLauncherOpen ? 'translate(88px, -50%)' : 'translateY(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1), background 0.2s',
+          transform: orbLauncherOpen ? 'translateX(22px)' : 'translateX(0)',
         }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#111' }}
+        onMouseLeave={e => { e.currentTarget.style.background = '#080808' }}
       >
-        <img
-          src={horsemenLogo}
-          alt="Revelations"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', pointerEvents: 'none', userSelect: 'none', display: 'block' }}
-        />
+        <span style={{
+          color: '#ffffff',
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          fontFamily: '"Times New Roman", Times, serif',
+          writingMode: 'vertical-rl',
+          textOrientation: 'mixed',
+          transform: 'rotate(180deg)',
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+        }}>
+          Revelations
+        </span>
       </button>
 
       {/* Backdrop */}
