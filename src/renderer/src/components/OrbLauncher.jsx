@@ -8,7 +8,9 @@ import {
   Microscope, Wine, Target, BookOpen, Lightbulb, Send, TrendingUp, Search,
   LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
   Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
-  Building2, ShoppingCart, Waves, BookHeart, X,
+  Building2, ShoppingCart, Waves, BookHeart,
+  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
+  MessageSquare, UserCircle, ScrollText, DollarSign, X,
 } from 'lucide-react'
 
 const ICON_MAP = {
@@ -18,9 +20,11 @@ const ICON_MAP = {
   LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
   Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
   Building2, ShoppingCart, Waves, BookHeart,
+  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
+  MessageSquare, UserCircle, ScrollText, DollarSign,
 }
 
-const CATEGORIES = ['All', 'system', 'finance', 'commerce', 'media', 'legal', 'health', 'marketing', 'dev', 'productivity', 'music', 'pets', 'wellness', 'beauty', 'sports', 'enterprise', 'community', 'education', 'trades', 'faith', 'admin', 'business', 'automotive', 'pos', 'gov']
+const CATEGORIES = ['All', 'faith', 'system', 'finance', 'commerce', 'media', 'legal', 'health', 'marketing', 'dev', 'productivity', 'music', 'pets', 'wellness', 'beauty', 'sports', 'enterprise', 'community', 'education', 'trades', 'admin', 'business', 'automotive', 'pos', 'gov']
 
 export default function OrbLauncher() {
   const { orbLauncherOpen, toggleOrbLauncher, openWindow, openSubscription } = useOSStore()

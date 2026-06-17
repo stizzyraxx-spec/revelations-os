@@ -8,6 +8,8 @@ import {
   LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
   Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
   Building2, ShoppingCart, Waves, BookHeart,
+  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
+  MessageSquare, UserCircle, ScrollText, DollarSign,
 } from 'lucide-react'
 
 const ICON_MAP = {
@@ -17,6 +19,8 @@ const ICON_MAP = {
   LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
   Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
   Building2, ShoppingCart, Waves, BookHeart,
+  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
+  MessageSquare, UserCircle, ScrollText, DollarSign,
 }
 
 const STORAGE_KEY = 'revos_dock_pinned'
