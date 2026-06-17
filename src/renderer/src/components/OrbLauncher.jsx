@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import horsemenLogo from '../assets/raxx-logo.png'
