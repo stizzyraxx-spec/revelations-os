@@ -9,6 +9,9 @@ export default function AppWindow({ win, ContentComponent }) {
   const dragRef = useRef(null)
   const resizeRef = useRef(null)
 
+  const DOCK_W = 0   // dock auto-hides, windows use full width
+  const TAB_W  = 0   // tab auto-hides, windows use full width
+
   const handleTitleMouseDown = useCallback((e) => {
     if (e.target.closest('[data-no-drag]')) return
     if (maximized) return
@@ -17,7 +20,7 @@ export default function AppWindow({ win, ContentComponent }) {
     const startX = e.clientX - win.x
     const startY = e.clientY - win.y
     const onMove = (me) => {
-      const nx = Math.max(0, Math.min(me.clientX - startX, window.innerWidth - win.width))
+      const nx = Math.max(DOCK_W, Math.min(me.clientX - startX, window.innerWidth - TAB_W - win.width))
       const ny = Math.max(40, Math.min(me.clientY - startY, window.innerHeight - 60))
       moveWindow(win.id, nx, ny)
     }
@@ -51,8 +54,8 @@ export default function AppWindow({ win, ContentComponent }) {
       setMaximized(false)
     } else {
       setPreMaxState({ x: win.x, y: win.y, width: win.width, height: win.height })
-      moveWindow(win.id, 0, 40)
-      resizeWindow(win.id, window.innerWidth, window.innerHeight - 40)
+      moveWindow(win.id, DOCK_W, 40)
+      resizeWindow(win.id, window.innerWidth - DOCK_W - TAB_W, window.innerHeight - 40)
       setMaximized(true)
     }
     focusWindow(win.id)
@@ -64,7 +67,7 @@ export default function AppWindow({ win, ContentComponent }) {
   }
 
   const style = maximized
-    ? { position:'fixed', top:40, left:0, width:'100vw', height:'calc(100vh - 40px)', zIndex: win.zIndex }
+    ? { position:'fixed', top:40, left:DOCK_W, width:`calc(100vw - ${DOCK_W + TAB_W}px)`, height:'calc(100vh - 40px)', zIndex: win.zIndex }
     : { position:'absolute', top: win.y, left: win.x, width: win.width, height: win.height, zIndex: win.zIndex }
 
   return (

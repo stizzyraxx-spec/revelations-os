@@ -33,11 +33,35 @@ function savePinned(ids) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ids))
 }
 
+const EDGE_THRESHOLD = 4   // px from left edge to start timer
+const REVEAL_DELAY   = 2000 // ms held at edge before showing
+
 export default function Dock() {
   const { windows, focusWindow, closeWindow, restoreWindow, minimizeWindow } = useOSStore()
   const [pinned, setPinned] = useState(loadPinned)
-  const [menu, setMenu] = useState(null) // { winId, appId, x, y }
+  const [menu, setMenu] = useState(null)
+  const [visible, setVisible] = useState(false)
   const menuRef = useRef(null)
+  const timerRef = useRef(null)
+  const dockRef = useRef(null)
+
+  // Show dock when cursor is held at left edge for 2s
+  useEffect(() => {
+    const onMove = (e) => {
+      if (e.clientX <= EDGE_THRESHOLD) {
+        if (!timerRef.current) {
+          timerRef.current = setTimeout(() => setVisible(true), REVEAL_DELAY)
+        }
+      } else {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+        // Hide if mouse leaves the dock area
+        if (e.clientX > 60) setVisible(false)
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    return () => { window.removeEventListener('mousemove', onMove); clearTimeout(timerRef.current) }
+  }, [])
 
   // Dismiss context menu on outside click
   useEffect(() => {
@@ -89,13 +113,13 @@ export default function Dock() {
   return (
     <>
       {/* Left dock strip */}
-      <div style={{
+      <div ref={dockRef} style={{
         position: 'fixed',
         left: 0,
         top: 40,
         width: 60,
         height: 'calc(100vh - 40px)',
-        background: 'rgba(6,6,10,0.92)',
+        background: 'rgba(6,6,10,0.96)',
         borderRight: '1px solid rgba(255,255,255,0.06)',
         backdropFilter: 'blur(16px)',
         zIndex: 500,
@@ -107,6 +131,9 @@ export default function Dock() {
         gap: 6,
         overflowY: 'auto',
         scrollbarWidth: 'none',
+        transform: visible ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+        pointerEvents: visible ? 'all' : 'none',
       }}>
         {dockItems.map((item) => {
           const reg = APP_REGISTRY.find(a => a.id === item.appId)

@@ -26,10 +26,36 @@ const ICON_MAP = {
 
 const CATEGORIES = ['All', 'faith', 'system', 'finance', 'commerce', 'media', 'legal', 'health', 'marketing', 'dev', 'productivity', 'music', 'pets', 'wellness', 'beauty', 'sports', 'enterprise', 'community', 'education', 'trades', 'admin', 'business', 'automotive', 'pos', 'gov']
 
+const TAB_EDGE_THRESHOLD = 4
+const TAB_REVEAL_DELAY   = 2000
+
 export default function OrbLauncher() {
   const { orbLauncherOpen, toggleOrbLauncher, openWindow, openSubscription } = useOSStore()
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
+  const [tabVisible, setTabVisible] = useState(false)
+  const tabTimerRef = useRef(null)
+
+  // Auto-hide tab — reveal when cursor held at right edge for 2s
+  useEffect(() => {
+    const onMove = (e) => {
+      const atEdge = e.clientX >= window.innerWidth - TAB_EDGE_THRESHOLD
+      if (atEdge) {
+        if (!tabTimerRef.current) {
+          tabTimerRef.current = setTimeout(() => setTabVisible(true), TAB_REVEAL_DELAY)
+        }
+      } else {
+        clearTimeout(tabTimerRef.current)
+        tabTimerRef.current = null
+        if (!orbLauncherOpen && e.clientX < window.innerWidth - 22) setTabVisible(false)
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    return () => { window.removeEventListener('mousemove', onMove); clearTimeout(tabTimerRef.current) }
+  }, [orbLauncherOpen])
+
+  // Keep tab visible while drawer is open
+  useEffect(() => { if (orbLauncherOpen) setTabVisible(true) }, [orbLauncherOpen])
 
   // Close on Escape
   useEffect(() => {
@@ -82,8 +108,9 @@ export default function OrbLauncher() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1), background 0.2s',
-          transform: orbLauncherOpen ? 'translateX(22px)' : 'translateX(0)',
+          transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1), background 0.2s',
+          transform: orbLauncherOpen ? 'translateX(22px)' : tabVisible ? 'translateX(0)' : 'translateX(22px)',
+          pointerEvents: tabVisible || orbLauncherOpen ? 'all' : 'none',
         }}
         onMouseEnter={e => { e.currentTarget.style.background = '#111' }}
         onMouseLeave={e => { e.currentTarget.style.background = '#080808' }}
