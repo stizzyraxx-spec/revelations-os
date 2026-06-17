@@ -18,6 +18,12 @@ import ClockAlarm from './ClockAlarm'
 import MusicPlayer from './MusicPlayer'
 import CalendarApp from './CalendarApp'
 import PrivacySupport from './PrivacySupport'
+import StickyNotes from './StickyNotes'
+import MailClient from './MailClient'
+import MeetingsApp from './MeetingsApp'
+import NotificationsManager from './NotificationsManager'
+import CalendarConnector from './CalendarConnector'
+import IdeaPlanner from './IdeaPlanner'
 
 function PrivacyApp(props) { return <PrivacySupport {...props} initialTab="privacy" /> }
 function SupportApp(props) { return <PrivacySupport {...props} initialTab="support" /> }
@@ -41,6 +47,12 @@ const APP_COMPONENTS = {
   calendar: CalendarApp,
   privacy: PrivacyApp,
   support: SupportApp,
+  stickynotes: StickyNotes,
+  mail: MailClient,
+  meetings: MeetingsApp,
+  notifications: NotificationsManager,
+  calconnect: CalendarConnector,
+  ideaplanner: IdeaPlanner,
 }
 
 function RAXXLiveApp({ appId, liveUrl, appName }) {

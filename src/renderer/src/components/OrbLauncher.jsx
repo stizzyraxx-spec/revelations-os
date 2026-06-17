@@ -11,7 +11,7 @@ import {
   Building2, ShoppingCart, Waves, BookHeart,
   Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
   MessageSquare, UserCircle, ScrollText, DollarSign, X,
-  Clock, Calendar, HelpCircle,
+  Clock, Calendar, HelpCircle, Mail, Video, StickyNote, Bell, CalendarDays,
 } from 'lucide-react'
 
 const ICON_MAP = {
@@ -23,7 +23,7 @@ const ICON_MAP = {
   Building2, ShoppingCart, Waves, BookHeart,
   Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
   MessageSquare, UserCircle, ScrollText, DollarSign,
-  Clock, Calendar, HelpCircle,
+  Clock, Calendar, HelpCircle, Mail, Video, StickyNote, Bell, CalendarDays,
 }
 
 const CATEGORIES = ['All', 'faith', 'system', 'finance', 'commerce', 'media', 'legal', 'health', 'marketing', 'dev', 'productivity', 'music', 'pets', 'wellness', 'beauty', 'sports', 'enterprise', 'community', 'education', 'trades', 'admin', 'business', 'automotive', 'pos', 'gov']
