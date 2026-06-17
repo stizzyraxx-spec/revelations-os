@@ -35,17 +35,18 @@ export default function LoginCinematic({ onArrived, phase }) {
 
     let renderer
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', precision: 'highp' })
     } catch { return }
 
     const W = mount.clientWidth  || window.innerWidth
     const H = mount.clientHeight || window.innerHeight
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    // Use full device pixel ratio so horses are crisp on Retina displays
+    renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(W, H)
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type    = THREE.PCFSoftShadowMap
     renderer.toneMapping       = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.15
+    renderer.toneMappingExposure = 1.4
     // Style the canvas so we can fade it out via CSS
     renderer.domElement.style.transition = 'opacity 1.1s ease'
     renderer.domElement.style.opacity    = '1'
@@ -103,34 +104,27 @@ export default function LoginCinematic({ onArrived, phase }) {
     ground.receiveShadow = true
     scene.add(ground)
 
-    // Ground crack glow lines — emissive orange strips
-    for (let i = 0; i < 8; i++) {
-      const g = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.06 + Math.random()*0.08, 18 + Math.random()*12),
-        new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.3 + Math.random()*0.3 })
-      )
-      g.rotation.x = -Math.PI/2
-      g.rotation.z = (Math.random()-0.5)*0.6
-      g.position.set((Math.random()-0.5)*30, 0.01, (Math.random()-0.5)*10 - 5)
-      scene.add(g)
-    }
-
     // ── Lighting ──────────────────────────────────────────────────────────────
     scene.add(new THREE.AmbientLight(0x330808, 3.0))
 
-    const sun = new THREE.DirectionalLight(0xff3300, 4.5)
-    sun.position.set(10, 18, 8)
+    const sun = new THREE.DirectionalLight(0xff4411, 6.0)
+    sun.position.set(10, 22, 10)
     sun.castShadow = true
-    sun.shadow.mapSize.set(2048, 2048)
-    sun.shadow.camera.near = 0.5; sun.shadow.camera.far  = 100
-    sun.shadow.camera.left = -22; sun.shadow.camera.right = 22
-    sun.shadow.camera.top  =  14; sun.shadow.camera.bottom = -6
-    sun.shadow.bias = -0.001
+    sun.shadow.mapSize.set(4096, 4096)
+    sun.shadow.camera.near = 0.5; sun.shadow.camera.far  = 120
+    sun.shadow.camera.left = -28; sun.shadow.camera.right = 28
+    sun.shadow.camera.top  =  18; sun.shadow.camera.bottom = -8
+    sun.shadow.bias = -0.0005
     scene.add(sun)
 
-    const rimL = new THREE.DirectionalLight(0xff5500, 2.8); rimL.position.set(-12, 6, -10); scene.add(rimL)
-    const rimR = new THREE.DirectionalLight(0xff2200, 1.2); rimR.position.set( 12, 4, -8);  scene.add(rimR)
-    const fill  = new THREE.PointLight(0xff4400, 2.5, 50);  fill.position.set(0, 8, 6);     scene.add(fill)
+    // Back-light to separate horses from background
+    const backLight = new THREE.DirectionalLight(0xff2200, 3.0)
+    backLight.position.set(0, 10, -20)
+    scene.add(backLight)
+
+    const rimL = new THREE.DirectionalLight(0xff6600, 3.5); rimL.position.set(-14, 8, -10); scene.add(rimL)
+    const rimR = new THREE.DirectionalLight(0xff3300, 2.0); rimR.position.set( 14, 6, -8);  scene.add(rimR)
+    const fill  = new THREE.PointLight(0xff5500, 3.5, 60);  fill.position.set(0, 10, 8);    scene.add(fill)
 
     // Colored point lights matching each horseman — positioned at their rest X
     const hLights = HORSEMEN.map(h => {
@@ -139,32 +133,6 @@ export default function LoginCinematic({ onArrived, phase }) {
       scene.add(l)
       return l
     })
-
-    // ── Fireball particles ────────────────────────────────────────────────────
-    const FB = 160
-    const fbPos  = new Float32Array(FB * 3)
-    const fbVel  = new Float32Array(FB * 3)
-    const fbLife = new Float32Array(FB)
-    const rng = (a,b) => a + Math.random()*(b-a)
-    const resetFB = i => {
-      fbPos[i*3]   = rng(-55, 55)
-      fbPos[i*3+1] = rng(16, 32)
-      fbPos[i*3+2] = rng(-36, 6)
-      fbVel[i*3]   = rng(-2, 2)
-      fbVel[i*3+1] = rng(-7, -3.5)
-      fbVel[i*3+2] = rng(-1.2, 1.2)
-      fbLife[i]    = rng(0, 1)
-    }
-    for (let i = 0; i < FB; i++) resetFB(i)
-
-    const fbGeo  = new THREE.BufferGeometry()
-    fbGeo.setAttribute('position', new THREE.BufferAttribute(fbPos, 3))
-    const fbMat  = new THREE.PointsMaterial({ color: 0xff5500, size: 0.65, transparent: true, opacity: 0.9, sizeAttenuation: true, depthWrite: false })
-    const glowMat = new THREE.PointsMaterial({ color: 0xff2200, size: 2.6, transparent: true, opacity: 0.18, sizeAttenuation: true, depthWrite: false })
-    const glowGeo = new THREE.BufferGeometry()
-    glowGeo.setAttribute('position', new THREE.BufferAttribute(fbPos, 3))
-    scene.add(new THREE.Points(fbGeo, fbMat))
-    scene.add(new THREE.Points(glowGeo, glowMat))
 
     // ── Horse loading ─────────────────────────────────────────────────────────
     const clock    = new THREE.Clock()
@@ -182,13 +150,24 @@ export default function LoginCinematic({ onArrived, phase }) {
         mesh.scale.setScalar(h.scale * 0.013)
         mesh.traverse(o => {
           if (!o.isMesh) return
-          o.castShadow = true
-          o.material = o.material.clone()
-          o.material.color    = new THREE.Color(h.color)
-          o.material.emissive = new THREE.Color(h.emissive)
-          o.material.emissiveIntensity = h.emInt
-          o.material.roughness = 0.6
-          o.material.metalness = 0.15
+          o.castShadow    = true
+          o.receiveShadow = true
+          // Compute smooth normals so the low-poly mesh looks rounded
+          if (o.geometry) {
+            o.geometry = o.geometry.clone()
+            o.geometry.computeVertexNormals()
+          }
+          // Replace with a PBR standard material for realistic shading
+          o.material = new THREE.MeshStandardMaterial({
+            color:              new THREE.Color(h.color),
+            emissive:           new THREE.Color(h.emissive),
+            emissiveIntensity:  h.emInt,
+            roughness:          0.72,
+            metalness:          0.08,
+            envMapIntensity:    1.0,
+            flatShading:        false,
+          })
+          if (o.morphTargetDictionary) o.material.morphTargets = true
           if (o.morphTargetInfluences) o.morphTargetInfluences = [...o.morphTargetInfluences]
         })
         scene.add(mesh)
@@ -212,28 +191,10 @@ export default function LoginCinematic({ onArrived, phase }) {
         lastTime = elapsed
         const curPhase = phaseRef.current
 
-        // Fireball update
+        // Flicker rim lights while horses are sweeping
         if (curPhase < 1) {
-          for (let i = 0; i < FB; i++) {
-            fbLife[i] += dt * 0.45
-            fbPos[i*3]   += fbVel[i*3]   * dt
-            fbPos[i*3+1] += fbVel[i*3+1] * dt
-            fbPos[i*3+2] += fbVel[i*3+2] * dt
-            if (fbLife[i] > 1 || fbPos[i*3+1] < -1) resetFB(i)
-          }
-          fbGeo.attributes.position.needsUpdate  = true
-          glowGeo.attributes.position.needsUpdate = true
-          const flicker = Math.sin(elapsed * 12)
-          fbMat.color.setHSL(0.04 + flicker*0.015, 1, 0.54 + flicker*0.06)
-          fbMat.opacity  = 0.78 + flicker*0.12
           rimL.intensity = 2.8 + Math.sin(elapsed * 9)  * 0.7
           fill.intensity = 2.5 + Math.sin(elapsed * 14) * 0.8
-        } else {
-          // Fade out fireballs
-          fbMat.opacity   = Math.max(0, fbMat.opacity   - dt * 1.5)
-          glowMat.opacity = Math.max(0, glowMat.opacity - dt * 0.8)
-          rimL.intensity  = Math.max(0, rimL.intensity  - dt * 2)
-          fill.intensity  = Math.max(0, fill.intensity  - dt * 2)
         }
 
         // Horse sweep
