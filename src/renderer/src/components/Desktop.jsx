@@ -10,7 +10,7 @@ import horsemenLogo from '../assets/raxx-logo.png'
 import { WALLPAPERS, getSettings } from '../theme'
 
 export default function Desktop() {
-  const { windows, addNotification } = useOSStore()
+  const { windows, addNotification, openWindow, toggleOrbLauncher } = useOSStore()
   const [contextMenu, setContextMenu] = useState(null)
   const [wallpaper, setWallpaper] = useState(() => getSettings().wallpaper || 'nebula')
   const hasWindows = windows.filter(w => !w.minimized).length > 0
@@ -23,6 +23,7 @@ export default function Desktop() {
     window.addEventListener('revos:settings-changed', onSettings)
     return () => { clearTimeout(t); window.removeEventListener('revos:settings-changed', onSettings) }
   }, [])
+
 
   const handleContextMenu = (e) => {
     if (e.target === e.currentTarget || e.target.classList.contains('desktop-bg')) {
@@ -91,19 +92,51 @@ export default function Desktop() {
       {/* Notification center */}
       <NotificationCenter />
 
+      {/* Footer — privacy & support links (only visible when no windows open) */}
+      <div style={{
+        position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', gap: 16, zIndex: 6, pointerEvents: hasWindows ? 'none' : 'all',
+        opacity: hasWindows ? 0 : 0.45, transition: 'opacity 0.4s ease',
+      }}>
+        {[
+          { label: 'Privacy Policy', appId: 'privacy', title: 'Privacy Policy' },
+          { label: 'Support', appId: 'support', title: 'Support' },
+        ].map(({ label, appId, title }) => (
+          <button key={appId} onClick={() => openWindow({ appId, title, width: 780, height: 560 })}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem', textDecoration: 'underline', textUnderlineOffset: 2, padding: 0 }}>
+            {label}
+          </button>
+        ))}
+        <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.7rem' }}>· RAXX BEATS STUDIOS LLC</span>
+      </div>
+
       {contextMenu && (
         <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }}>
-          <div className="context-menu-item" onClick={() => { useOSStore.getState().openWindow({ appId: 'settings', title: 'Settings' }); setContextMenu(null) }}>
+          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'settings', title: 'Settings' }); setContextMenu(null) }}>
             🖼 Change Wallpaper
           </div>
           <div className="context-menu-item" onClick={() => { addNotification({ title: 'New Folder', body: 'Created on Desktop', type: 'success' }); setContextMenu(null) }}>
             📁 New Folder
           </div>
           <div className="context-menu-separator" />
-          <div className="context-menu-item" onClick={() => { useOSStore.getState().toggleOrbLauncher(); setContextMenu(null) }}>
+          <div className="context-menu-item" onClick={() => { toggleOrbLauncher(); setContextMenu(null) }}>
             🚀 Open App Launcher
           </div>
-          <div className="context-menu-item" onClick={() => { useOSStore.getState().openWindow({ appId: 'settings', title: 'Settings' }); setContextMenu(null) }}>
+          <div className="context-menu-separator" />
+          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'calculator', title: 'Calculator', width: 440, height: 520 }); setContextMenu(null) }}>
+            🧮 Calculator
+          </div>
+          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'clock', title: 'Clock', width: 480, height: 560 }); setContextMenu(null) }}>
+            🕐 Clock & Alarms
+          </div>
+          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'calendar', title: 'Calendar', width: 780, height: 560 }); setContextMenu(null) }}>
+            📅 Calendar
+          </div>
+          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'music', title: 'Music', width: 680, height: 480 }); setContextMenu(null) }}>
+            🎵 Music Player
+          </div>
+          <div className="context-menu-separator" />
+          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'settings', title: 'Settings' }); setContextMenu(null) }}>
             ⚙️ System Settings
           </div>
         </div>

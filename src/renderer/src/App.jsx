@@ -5,14 +5,27 @@ import Desktop from './components/Desktop'
 import ExitOSModal from './components/ExitOSModal'
 import SubscriptionModal from './components/SubscriptionModal'
 import UpdateBanner from './components/UpdateBanner'
+import Spotlight from './components/Spotlight'
 
 export default function App() {
   const { user, addNotification, pendingUpdate, setPendingUpdate } = useOSStore()
-  // showLogin — whether LoginScreen is in the DOM
-  // loginOpacity — CSS opacity of LoginScreen (1 fades out to 0)
   const [showLogin, setShowLogin] = useState(true)
   const [loginOpacity, setLoginOpacity] = useState(1)
+  const [spotlightOpen, setSpotlightOpen] = useState(false)
   const timers = useRef([])
+
+  // Global Cmd+Space → Spotlight (available after login)
+  useEffect(() => {
+    if (!user.loggedIn) return
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.code === 'Space') {
+        e.preventDefault()
+        setSpotlightOpen(o => !o)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [user.loggedIn])
 
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
 
@@ -84,6 +97,7 @@ export default function App() {
       {user.loggedIn && <UpdateBanner />}
       <ExitOSModal />
       <SubscriptionModal />
+      {user.loggedIn && <Spotlight open={spotlightOpen} onClose={() => setSpotlightOpen(false)} />}
     </>
   )
 }

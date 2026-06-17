@@ -13,6 +13,14 @@ import WiFiPanel from './WiFiPanel'
 import BluetoothPanel from './BluetoothPanel'
 import BatteryPanel from './BatteryPanel'
 import VolumePanel from './VolumePanel'
+import Calculator from './Calculator'
+import ClockAlarm from './ClockAlarm'
+import MusicPlayer from './MusicPlayer'
+import CalendarApp from './CalendarApp'
+import PrivacySupport from './PrivacySupport'
+
+function PrivacyApp(props) { return <PrivacySupport {...props} initialTab="privacy" /> }
+function SupportApp(props) { return <PrivacySupport {...props} initialTab="support" /> }
 
 const APP_COMPONENTS = {
   ephesians: EphesiansBrowser,
@@ -27,6 +35,12 @@ const APP_COMPONENTS = {
   bluetooth: BluetoothPanel,
   battery: BatteryPanel,
   volume: VolumePanel,
+  calculator: Calculator,
+  clock: ClockAlarm,
+  music: MusicPlayer,
+  calendar: CalendarApp,
+  privacy: PrivacyApp,
+  support: SupportApp,
 }
 
 function RAXXLiveApp({ appId, liveUrl, appName }) {

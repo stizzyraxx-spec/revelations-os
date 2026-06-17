@@ -5,6 +5,9 @@ import {
   LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
   Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
   Building2, ShoppingCart, Waves, BookHeart,
+  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
+  MessageSquare, UserCircle, ScrollText, DollarSign,
+  Clock, Calendar, HelpCircle,
 } from 'lucide-react'
 
 export const ICON_MAP = {
@@ -14,6 +17,9 @@ export const ICON_MAP = {
   LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
   Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
   Building2, ShoppingCart, Waves, BookHeart,
+  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
+  MessageSquare, UserCircle, ScrollText, DollarSign,
+  Clock, Calendar, HelpCircle,
 }
 
 export function getAppIcon(name) {

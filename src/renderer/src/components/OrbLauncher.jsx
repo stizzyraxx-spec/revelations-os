@@ -11,6 +11,7 @@ import {
   Building2, ShoppingCart, Waves, BookHeart,
   Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
   MessageSquare, UserCircle, ScrollText, DollarSign, X,
+  Clock, Calendar, HelpCircle,
 } from 'lucide-react'
 
 const ICON_MAP = {
@@ -22,6 +23,7 @@ const ICON_MAP = {
   Building2, ShoppingCart, Waves, BookHeart,
   Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
   MessageSquare, UserCircle, ScrollText, DollarSign,
+  Clock, Calendar, HelpCircle,
 }
 
 const CATEGORIES = ['All', 'faith', 'system', 'finance', 'commerce', 'media', 'legal', 'health', 'marketing', 'dev', 'productivity', 'music', 'pets', 'wellness', 'beauty', 'sports', 'enterprise', 'community', 'education', 'trades', 'admin', 'business', 'automotive', 'pos', 'gov']
@@ -30,32 +32,34 @@ const TAB_EDGE_THRESHOLD = 4
 const TAB_REVEAL_DELAY   = 2000
 
 export default function OrbLauncher() {
-  const { orbLauncherOpen, toggleOrbLauncher, openWindow, openSubscription } = useOSStore()
+  const { orbLauncherOpen, toggleOrbLauncher, openWindow, openSubscription, windows } = useOSStore()
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
-  const [tabVisible, setTabVisible] = useState(false)
   const tabTimerRef = useRef(null)
 
-  // Auto-hide tab — reveal when cursor held at right edge for 2s
+  const hasOpenWindows = windows.filter(w => !w.minimized).length > 0
+
+  // Tab is visible when: no windows open, drawer is open, or cursor held at right edge
+  const [edgeVisible, setEdgeVisible] = useState(false)
+
   useEffect(() => {
     const onMove = (e) => {
       const atEdge = e.clientX >= window.innerWidth - TAB_EDGE_THRESHOLD
       if (atEdge) {
         if (!tabTimerRef.current) {
-          tabTimerRef.current = setTimeout(() => setTabVisible(true), TAB_REVEAL_DELAY)
+          tabTimerRef.current = setTimeout(() => setEdgeVisible(true), TAB_REVEAL_DELAY)
         }
       } else {
         clearTimeout(tabTimerRef.current)
         tabTimerRef.current = null
-        if (!orbLauncherOpen && e.clientX < window.innerWidth - 22) setTabVisible(false)
+        if (!orbLauncherOpen && e.clientX < window.innerWidth - 22) setEdgeVisible(false)
       }
     }
     window.addEventListener('mousemove', onMove)
     return () => { window.removeEventListener('mousemove', onMove); clearTimeout(tabTimerRef.current) }
   }, [orbLauncherOpen])
 
-  // Keep tab visible while drawer is open
-  useEffect(() => { if (orbLauncherOpen) setTabVisible(true) }, [orbLauncherOpen])
+  const tabVisible = !hasOpenWindows || orbLauncherOpen || edgeVisible
 
   // Close on Escape
   useEffect(() => {
