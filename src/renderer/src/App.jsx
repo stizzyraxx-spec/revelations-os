@@ -64,17 +64,16 @@ export default function App() {
 
   return (
     <>
-      {/* Desktop renders underneath, fades in as login fades out */}
-      {user.loggedIn && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          opacity: desktopVisible ? 1 : 0,
-          transition: FADE,
-          willChange: 'opacity',
-        }}>
-          <Desktop />
-        </div>
-      )}
+      {/* Desktop always mounted so it's ready to fade in — just invisible until login */}
+      <div style={{
+        position: 'fixed', inset: 0,
+        opacity: desktopVisible ? 1 : 0,
+        transition: FADE,
+        willChange: 'opacity',
+        pointerEvents: desktopVisible ? 'all' : 'none',
+      }}>
+        <Desktop />
+      </div>
 
       {/* LoginScreen sits on top, fades out */}
       {showLogin && (
