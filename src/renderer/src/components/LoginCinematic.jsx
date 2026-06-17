@@ -248,14 +248,18 @@ export default function LoginCinematic({ onArrived, phase }) {
             const x = START_X - progress * (START_X - END_X) + h.x
             mesh.position.set(x, 0, h.z)
             mesh.rotation.y = -Math.PI / 2
-            mixer.update(dt)
+            // Slow animation speed to match horse decelerating into stop
+            const speedScale = 1 - Math.pow(Math.max(0, (t / SWEEP_DURATION - 0.7) / 0.3), 2)
+            mixer.update(dt * Math.max(0.05, speedScale))
             hLights[idx].intensity = 0
           } else {
+            // Glide to final position over 0.4s after sweep ends
+            const settle = Math.min((t - SWEEP_DURATION) / 0.4, 1)
+            const ex = easeInOut(settle)
             mesh.position.set(h.x, 0, h.z)
-            mesh.rotation.y = 0
-            mixer.update(0) // freeze
-            // Light up each horse's colored point light when it arrives
-            hLights[idx].intensity = Math.min(hLights[idx].intensity + dt * 3, 2.5)
+            mesh.rotation.y = -(1 - ex) * Math.PI / 2  // smoothly rotate to face forward
+            mixer.update(dt * Math.max(0, 0.05 - (t - SWEEP_DURATION) * 0.08))
+            hLights[idx].intensity = Math.min(hLights[idx].intensity + dt * 2.5, 2.5)
           }
         })
 
@@ -264,12 +268,16 @@ export default function LoginCinematic({ onArrived, phase }) {
           arrivedRef.current = true
           onArrived()  // LoginScreen: shows logo, schedules login()
         }
-        // Canvas fades out slightly after onArrived (matched to logo fade-in in LoginScreen)
+        // Canvas fades out after logo is well into its fade-in (600ms after onArrived).
+        // The 1.4s CSS transition lets them cross-fade smoothly.
         if (arrivedRef.current && !canvasFadeStarted) {
           canvasFadeStarted = true
           setTimeout(() => {
-            if (canvasRef.current) canvasRef.current.style.opacity = '0'
-          }, 300)
+            if (canvasRef.current) {
+              canvasRef.current.style.transition = 'opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1)'
+              canvasRef.current.style.opacity = '0'
+            }
+          }, 600)
         }
 
         renderer.render(scene, camera)
