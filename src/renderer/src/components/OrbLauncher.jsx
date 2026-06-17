@@ -12,6 +12,7 @@ import {
   Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
   MessageSquare, UserCircle, ScrollText, DollarSign, X,
   Clock, Calendar, HelpCircle, Mail, Video, StickyNote, Bell, CalendarDays,
+  ChevronLeft,
 } from 'lucide-react'
 
 const ICON_MAP = {
@@ -31,10 +32,13 @@ const CATEGORIES = ['All', 'faith', 'system', 'finance', 'commerce', 'media', 'l
 const TAB_EDGE_THRESHOLD = 4
 const TAB_REVEAL_DELAY   = 2000
 
+const BUSINESS_FOLDER = { id: '__business_folder__', name: 'Business Apps', icon: 'Briefcase', color: '#6d28d9' }
+
 export default function OrbLauncher() {
   const { orbLauncherOpen, toggleOrbLauncher, openWindow, openSubscription, windows } = useOSStore()
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
+  const [folderOpen, setFolderOpen] = useState(false)
   const tabTimerRef = useRef(null)
 
   const hasOpenWindows = windows.filter(w => !w.minimized).length > 0
@@ -64,22 +68,43 @@ export default function OrbLauncher() {
   // Close on Escape
   useEffect(() => {
     if (!orbLauncherOpen) return
-    const handler = (e) => { if (e.key === 'Escape') toggleOrbLauncher() }
+    const handler = (e) => {
+      if (e.key !== 'Escape') return
+      if (folderOpen) setFolderOpen(false)
+      else toggleOrbLauncher()
+    }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [orbLauncherOpen])
+  }, [orbLauncherOpen, folderOpen])
+
+  // When searching or filtering by an explicit category, the folder is bypassed
+  // and we show a flat list (paid apps included) so nothing is hidden from search.
+  const usingFlatView = query.trim() !== '' || activeCategory !== 'All'
 
   const filtered = useMemo(() => {
-    let apps = APP_REGISTRY
-    if (activeCategory !== 'All') apps = apps.filter(a => a.category === activeCategory)
-    if (query.trim()) {
-      const q = query.toLowerCase()
-      apps = apps.filter(a => a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q))
+    if (usingFlatView) {
+      let apps = APP_REGISTRY
+      if (activeCategory !== 'All') apps = apps.filter(a => a.category === activeCategory)
+      if (query.trim()) {
+        const q = query.toLowerCase()
+        apps = apps.filter(a => a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q))
+      }
+      return apps
     }
-    return apps
-  }, [query, activeCategory])
+    // Default "All" view: paid apps live inside the Business Apps folder.
+    if (folderOpen) return APP_REGISTRY.filter(a => !a.free)
+    const freeApps = APP_REGISTRY.filter(a => a.free)
+    return [BUSINESS_FOLDER, ...freeApps]
+  }, [query, activeCategory, folderOpen, usingFlatView])
+
+  // Leaving the default All view (via search/category) closes the folder.
+  useEffect(() => { if (usingFlatView && folderOpen) setFolderOpen(false) }, [usingFlatView, folderOpen])
 
   const handleAppClick = (app) => {
+    if (app.id === BUSINESS_FOLDER.id) {
+      setFolderOpen(true)
+      return
+    }
     if (app.free) {
       openWindow({ appId: app.id, title: app.name, props: app.liveUrl ? { liveUrl: app.liveUrl, appId: app.id, appName: app.name } : {} })
     } else {
@@ -88,6 +113,7 @@ export default function OrbLauncher() {
     toggleOrbLauncher()
     setQuery('')
     setActiveCategory('All')
+    setFolderOpen(false)
   }
 
   return (
@@ -225,12 +251,32 @@ export default function OrbLauncher() {
           ))}
         </div>
 
+        {/* Folder breadcrumb — only inside Business Apps */}
+        {folderOpen && (
+          <button
+            onClick={() => setFolderOpen(false)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, margin: '0 16px 8px', padding: '7px 12px',
+              borderRadius: 10, cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
+              background: 'rgba(109,40,217,0.16)', border: '1px solid var(--border-accent)', color: 'var(--text-primary)',
+            }}
+          >
+            <ChevronLeft size={15} />
+            <Briefcase size={15} color="#6d28d9" />
+            Business Apps
+            <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontWeight: 500 }}>
+              {filtered.length} apps
+            </span>
+          </button>
+        )}
+
         {/* App grid */}
         <div style={{
           flex: 1, overflowY: 'auto', padding: '4px 12px 24px',
           display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, alignContent: 'start',
         }}>
           {filtered.map(app => {
+            const isFolder = app.id === BUSINESS_FOLDER.id
             const IconComp = ICON_MAP[app.icon] || Globe
             return (
               <button
@@ -252,7 +298,11 @@ export default function OrbLauncher() {
                 <span style={{ fontSize: '0.68rem', fontWeight: 500, textAlign: 'center', lineHeight: 1.3, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
                   {app.name}
                 </span>
-                {!app.free && (
+                {isFolder ? (
+                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
+                    {APP_REGISTRY.filter(a => !a.free).length} apps
+                  </span>
+                ) : !app.free && (
                   <span style={{ fontSize: '0.6rem', color: 'var(--accent-gold)', background: 'rgba(245,158,11,0.12)', padding: '1px 5px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)' }}>
                     {app.price}
                   </span>
