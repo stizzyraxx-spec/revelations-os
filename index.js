@@ -142,7 +142,7 @@ ipcMain.handle("proverbs:run", async (event, cmd) => {
   const safe = String(cmd || "").slice(0, 200).replace(/[;&|`$]/g, "");
   return new Promise((resolve) => {
     const args = safe.split(" ").filter(Boolean);
-    const proc = spawn("node", ["index.js", ...args], {
+    const proc = spawn("node", ["cli.js", ...args], {
       cwd: path.join(os.homedir(), "proverbs"),
       timeout: 1e4
     });
@@ -154,7 +154,7 @@ ipcMain.handle("proverbs:run", async (event, cmd) => {
       out += d.toString();
     });
     proc.on("close", () => resolve(out || "(no output)"));
-    proc.on("error", () => resolve("Proverbs CLI not found at ~/proverbs\nMake sure /Users/Stizzop/proverbs/index.js exists"));
+    proc.on("error", () => resolve("Proverbs CLI not found at ~/proverbs\nMake sure /Users/Stizzop/proverbs/cli.js exists"));
     setTimeout(() => {
       proc.kill();
       resolve(out || "Command timed out after 9s");
@@ -432,9 +432,9 @@ function sendProgress(text) {
 ipcMain.handle("rev:update", async (event, issue) => {
   if (!rateOk("rev:update")) return { ok: false, output: "Rate limit exceeded" };
   const home = os.homedir();
-  const proverbs = path.join(home, "proverbs", "index.js");
+  const proverbs = path.join(home, "proverbs", "cli.js");
   if (!fs.existsSync(proverbs)) {
-    return { ok: false, output: "Proverbs CLI not found at ~/proverbs/index.js.\nRun: git clone <proverbs-repo> ~/proverbs && cd ~/proverbs && npm install" };
+    return { ok: false, output: "Proverbs CLI not found at ~/proverbs/cli.js.\nRun: git clone <proverbs-repo> ~/proverbs && cd ~/proverbs && npm install" };
   }
   const existingRepos = ALL_REPOS.map((r) => path.join(home, r)).filter((p) => fs.existsSync(p));
   const issueLower = issue.toLowerCase();
