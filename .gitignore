@@ -5,3 +5,11 @@ dist/
 *.log
 resources/*.png
 resources/*.icns
+.env
+.env.*
+.env.local
+.env.production
+.next/
+build/
+.vercel
+.turbo
