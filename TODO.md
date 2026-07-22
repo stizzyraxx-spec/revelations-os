@@ -822,3 +822,4 @@
 - [x] **ISS-14** ~~Red error for proverbs in dev mode~~ FIXED — now amber system-style message: "Proverbs CLI unavailable in dev mode — package the app to enable IPC."
 - [x] **ISS-15** VERIFIED — SubscriptionModal passes `props: { liveUrl, appId, appName }`; WindowManager's RAXXLiveApp forwards `url={liveUrl}` to RAXXAppViewer. No missing prop.
 - [x] **ISS-16** (found 2026-06-11) Duplicate `border` key in VolumePanel mute-button style — dead `border: 'none'` removed; build is warning-free.
+- [ ] **2026-07-22 12:41:13** `48b58c6a` — push to gh
