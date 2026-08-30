@@ -1,7 +1,7 @@
 {
   "name": "revelations-os",
   "version": "1.0.0",
-  "description": "Revelations OS — Ultimate Business Desktop",
+  "description": "Revelations OS \u2014 Ultimate Business Desktop",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -35,7 +35,7 @@
   "build": {
     "appId": "com.raxxbeats.revelations-os",
     "productName": "Revelations",
-    "copyright": "Copyright © 2025 Revelations OS",
+    "copyright": "Copyright \u00a9 2025 Revelations OS",
     "icon": "resources/icon",
     "files": [
       "out/**/*",
@@ -67,7 +67,7 @@
           ]
         }
       ],
-      "icon": "resources/icon.png",
+      "icon": "resources/icon.ico",
       "artifactName": "Revelations-Setup-${version}.${ext}"
     },
     "nsis": {
@@ -77,8 +77,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Revelations",
-      "installerIcon": "resources/icon.png",
-      "uninstallerIcon": "resources/icon.png",
+      "installerIcon": "resources/icon.ico",
+      "uninstallerIcon": "resources/icon.ico",
       "deleteAppDataOnUninstall": false
     }
   }
