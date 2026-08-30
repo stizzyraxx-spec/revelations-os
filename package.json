@@ -1,6 +1,6 @@
 {
   "name": "revelations-os",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Revelations OS \u2014 Ultimate Business Desktop",
   "main": "out/main/index.js",
   "scripts": {
@@ -63,12 +63,11 @@
         }
       ],
       "category": "public.app-category.productivity",
-      "identity": "Shane Bedasee (9AFM69H37L)",
-      "hardenedRuntime": true,
+      "icon": "resources/icon.png",
+      "identity": null,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "notarize": false,
-      "entitlements": "resources/entitlements.mac.plist",
-      "entitlementsInherit": "resources/entitlements.mac.plist"
+      "notarize": false
     },
     "win": {
       "target": [

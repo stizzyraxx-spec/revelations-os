@@ -1,0 +1,65 @@
+name: Build Installers
+
+# One update builds BOTH downloadables: the Windows .exe and the macOS .dmg.
+# Pushing a v* tag runs both jobs in parallel and attaches each installer to
+# the same GitHub Release, so the two downloads always stay in lockstep.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build Windows installer
+        run: npm run dist:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: revelations-windows-installer
+          path: dist/*.exe
+          if-no-files-found: error
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build macOS dmg (unsigned)
+        run: npm run dist:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No Apple Developer certificate on the runner — build unsigned.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Upload dmg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: revelations-macos-dmg
+          path: dist/*.dmg
+          if-no-files-found: error
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.dmg
