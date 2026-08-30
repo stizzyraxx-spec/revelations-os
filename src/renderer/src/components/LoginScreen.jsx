@@ -3,7 +3,7 @@ import { useOSStore } from '../store'
 import raxxLogo from '../assets/raxx-logo.png'
 import LoginCinematic from './LoginCinematic'
 import { hasAccounts, createAccount, verifyLogin } from '../auth/localAuth'
-import { User, Lock, Mail, Phone, Eye, EyeOff, ArrowRight, IdCard } from 'lucide-react'
+import { User, Lock, Mail, Phone, Eye, EyeOff, ArrowRight, UserCircle } from 'lucide-react'
 
 export default function LoginScreen() {
   const login = useOSStore((s) => s.login)
@@ -93,7 +93,7 @@ export default function LoginScreen() {
 
           {isCreate && (
             <>
-              <Field icon={IdCard} placeholder="Full name" value={f.name} onChange={set('name')} onKeyDown={onKeyDown} inputRef={firstInput} />
+              <Field icon={UserCircle} placeholder="Full name" value={f.name} onChange={set('name')} onKeyDown={onKeyDown} inputRef={firstInput} />
               <Field icon={Mail} placeholder="Email" type="email" value={f.email} onChange={set('email')} onKeyDown={onKeyDown} />
               <Field icon={Phone} placeholder="Phone (optional)" value={f.phone} onChange={set('phone')} onKeyDown={onKeyDown} />
             </>
