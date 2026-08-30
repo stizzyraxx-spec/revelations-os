@@ -1,6 +1,6 @@
 {
   "name": "revelations-os",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Revelations OS \u2014 Ultimate Business Desktop",
   "main": "out/main/index.js",
   "scripts": {
@@ -40,6 +40,18 @@
     "files": [
       "out/**/*",
       "resources/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "proverbs-runtime",
+        "to": "proverbs",
+        "filter": [
+          "**/*",
+          "!**/node_modules/**",
+          "!**/*.py",
+          "!**/*.md"
+        ]
+      }
     ],
     "mac": {
       "target": [

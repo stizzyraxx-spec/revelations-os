@@ -1,0 +1,44 @@
+{
+  "name": "proverbs-ai",
+  "version": "3.0.1",
+  "description": "Proverbs \u2014 faith-based smart coding language with a self-testing agent loop, local + cloud backends, and a built-in transformer.",
+  "bin": {
+    "proverbs": "dist/cli.js"
+  },
+  "scripts": {
+    "start": "node cli.js",
+    "build": "node build.js",
+    "prepublishOnly": "node build.js",
+    "package": "bash scripts/package-release.sh",
+    "release": "bash scripts/package-release.sh --publish"
+  },
+  "files": [
+    "dist/cli.js",
+    "dist/server/",
+    "install-release.ps1"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ai",
+    "coding",
+    "assistant",
+    "llm",
+    "local",
+    "offline",
+    "transformer"
+  ],
+  "author": "RAXX BEATS STUDIOS LLC",
+  "license": "UNLICENSED",
+  "main": "dist/cli.js",
+  "type": "commonjs",
+  "devDependencies": {
+    "javascript-obfuscator": "^5.4.3"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "@xenova/transformers": "^2",
+    "isomorphic-git": "^1"
+  }
+}

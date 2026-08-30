@@ -1,0 +1,5 @@
+install.sh
+install.ps1
+*.md
+.DS_Store
+node_modules

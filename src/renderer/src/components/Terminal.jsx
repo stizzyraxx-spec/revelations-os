@@ -26,6 +26,7 @@ const HELP_TEXT = `\x1b[33mSystem Commands:\x1b[0m
 
 \x1b[33mDeveloper Tools:\x1b[0m
   proverbs [args]   Launch Proverbs AI CLI
+  claude [args]     Launch Claude Code CLI (e.g. claude -p "fix my bug")
 
 \x1b[35mRev OS Tools:\x1b[0m
   rev help          Show rev subcommands
@@ -250,6 +251,24 @@ export default function Terminal() {
           }
         } else {
           addLine('\x1b[33mProverbs CLI unavailable in dev mode — package the app to enable IPC.\x1b[0m', 'html')
+        }
+        setBusy(false)
+        setBusyLabel('')
+        break
+      case 'claude':
+        setBusy(true)
+        setBusyLabel('Running Claude...')
+        addLine('\x1b[36m[claude]\x1b[0m Launching Claude Code CLI...', 'html')
+        if (window.nexus?.runClaude) {
+          try {
+            const result = await window.nexus.runClaude(rest || '--help')
+            addLine(result || '(no output)', 'output')
+          } catch (err) {
+            logError('Terminal:claude', err.message)
+            addLine(`\x1b[31mError: ${err.message}\x1b[0m`, 'html')
+          }
+        } else {
+          addLine('\x1b[33mClaude CLI unavailable in dev mode — package the app to enable IPC.\x1b[0m', 'html')
         }
         setBusy(false)
         setBusyLabel('')

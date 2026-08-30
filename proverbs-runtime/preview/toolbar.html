@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline';" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #111;
+      color: #d4d4d4;
+      height: 44px;
+      overflow: hidden;
+      user-select: none;
+      -webkit-app-region: drag;
+    }
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      height: 44px;
+      padding: 0 8px 0 76px; /* 76px leaves room for macOS traffic lights */
+      gap: 4px;
+      background: #111;
+      border-bottom: 1px solid #222;
+    }
+
+    button {
+      -webkit-app-region: no-drag;
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      padding: 5px 7px;
+      border-radius: 5px;
+      font-size: 14px;
+      line-height: 1;
+      transition: background 0.1s, color 0.1s;
+      flex-shrink: 0;
+    }
+    button:hover { background: #1e1e1e; color: #ccc; }
+    button:active { background: #2a2a2a; }
+    button:disabled { opacity: 0.3; cursor: default; }
+    button:disabled:hover { background: none; }
+
+    #url-bar {
+      -webkit-app-region: no-drag;
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 12px;
+      padding: 4px 10px;
+      outline: none;
+      min-width: 0;
+      transition: border-color 0.15s;
+    }
+    #url-bar:focus { border-color: #444; color: #eee; }
+
+    #loading-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #28b463;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    #loading-dot.active {
+      opacity: 1;
+      animation: pulse 0.9s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    #open-btn {
+      -webkit-app-region: no-drag;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      color: #888;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    #open-btn:hover { background: #222; color: #ccc; border-color: #3a3a3a; }
+
+    #badge {
+      font-size: 9px;
+      color: #4a4a4a;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      padding-left: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button id="back-btn"    title="Back"    disabled>&#8592;</button>
+    <button id="fwd-btn"     title="Forward" disabled>&#8594;</button>
+    <button id="reload-btn"  title="Reload">&#8635;</button>
+    <div id="loading-dot"></div>
+    <input id="url-bar" type="text" spellcheck="false" />
+    <button id="open-btn" title="Open in browser">&#8599; Browser</button>
+    <span id="badge">Proverbs Preview</span>
+  </div>
+
+  <script>
+    const back    = document.getElementById('back-btn');
+    const fwd     = document.getElementById('fwd-btn');
+    const reload  = document.getElementById('reload-btn');
+    const urlBar  = document.getElementById('url-bar');
+    const openBtn = document.getElementById('open-btn');
+    const dot     = document.getElementById('loading-dot');
+
+    let currentUrl = '';
+
+    back.onclick   = () => window.proverbs.back();
+    fwd.onclick    = () => window.proverbs.forward();
+    reload.onclick = () => window.proverbs.reload();
+    openBtn.onclick = () => window.proverbs.openInBrowser(currentUrl);
+
+    urlBar.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      let val = urlBar.value.trim();
+      if (!val) return;
+      if (!/^https?:\/\//.test(val)) val = 'http://' + val;
+      window.proverbs.navigate(val);
+    });
+
+    window.proverbs.onUrlChanged((url) => {
+      currentUrl = url;
+      urlBar.value = url;
+    });
+
+    window.proverbs.onLoadingChanged((loading) => {
+      dot.classList.toggle('active', loading);
+      reload.textContent = loading ? '✕' : '⟳';
+      reload.title       = loading ? 'Stop' : 'Reload';
+      reload.onclick     = loading
+        ? () => window.proverbs.reload()
+        : () => window.proverbs.reload();
+    });
+
+    window.proverbs.onNavState(({ canGoBack, canGoForward }) => {
+      back.disabled = !canGoBack;
+      fwd.disabled  = !canGoForward;
+    });
+
+    window.proverbs.getUrl();
+  </script>
+</body>
+</html>

@@ -1,8 +1,9 @@
 import { useRef, useState, useCallback } from 'react'
 import { useOSStore } from '../store'
+import { TASKBAR_HEIGHT } from './BottomTaskbar'
 
 export default function AppWindow({ win, ContentComponent }) {
-  const { closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow } = useOSStore()
+  const { closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow, setBounds } = useOSStore()
   const [maximized, setMaximized] = useState(false)
   const [preMaxState, setPreMaxState] = useState(null)
   const [contextMenu, setContextMenu] = useState(null)
@@ -32,12 +33,28 @@ export default function AppWindow({ win, ContentComponent }) {
     document.addEventListener('mouseup', onUp)
   }, [win, maximized, focusWindow, moveWindow])
 
-  const handleResizeMouseDown = useCallback((e) => {
+  // Resize from any edge or corner. `dir` is a compass string (n/s/e/w/ne/…).
+  // Dragging the north or west edge moves x/y as well as sizing, so we compute
+  // the full bounds and commit them atomically via setBounds.
+  const startResize = useCallback((e, dir) => {
     e.preventDefault(); e.stopPropagation()
+    if (maximized) return
+    focusWindow(win.id)
     const startX = e.clientX, startY = e.clientY
-    const startW = win.width, startH = win.height
+    const ox = win.x, oy = win.y, ow = win.width, oh = win.height
+    const MIN_W = 320, MIN_H = 200
     const onMove = (me) => {
-      resizeWindow(win.id, Math.max(320, startW + me.clientX - startX), Math.max(200, startH + me.clientY - startY))
+      const dx = me.clientX - startX
+      const dy = me.clientY - startY
+      let x = ox, y = oy, width = ow, height = oh
+      if (dir.includes('e')) width = ow + dx
+      if (dir.includes('s')) height = oh + dy
+      if (dir.includes('w')) { width = ow - dx; x = ox + dx }
+      if (dir.includes('n')) { height = oh - dy; y = oy + dy }
+      // Honour minimums while keeping the anchored (opposite) edge fixed.
+      if (width < MIN_W) { if (dir.includes('w')) x = ox + (ow - MIN_W); width = MIN_W }
+      if (height < MIN_H) { if (dir.includes('n')) y = oy + (oh - MIN_H); height = MIN_H }
+      setBounds(win.id, { x, y, width, height })
     }
     const onUp = () => {
       document.removeEventListener('mousemove', onMove)
@@ -45,7 +62,7 @@ export default function AppWindow({ win, ContentComponent }) {
     }
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)
-  }, [win, resizeWindow])
+  }, [win, maximized, focusWindow, setBounds])
 
   const toggleMax = () => {
     if (maximized) {
@@ -55,7 +72,7 @@ export default function AppWindow({ win, ContentComponent }) {
     } else {
       setPreMaxState({ x: win.x, y: win.y, width: win.width, height: win.height })
       moveWindow(win.id, DOCK_W, 40)
-      resizeWindow(win.id, window.innerWidth - DOCK_W - TAB_W, window.innerHeight - 40)
+      resizeWindow(win.id, window.innerWidth - DOCK_W - TAB_W, window.innerHeight - 40 - TASKBAR_HEIGHT)
       setMaximized(true)
     }
     focusWindow(win.id)
@@ -67,7 +84,7 @@ export default function AppWindow({ win, ContentComponent }) {
   }
 
   const style = maximized
-    ? { position:'fixed', top:40, left:DOCK_W, width:`calc(100vw - ${DOCK_W + TAB_W}px)`, height:'calc(100vh - 40px)', zIndex: win.zIndex }
+    ? { position:'fixed', top:40, left:DOCK_W, width:`calc(100vw - ${DOCK_W + TAB_W}px)`, height:`calc(100vh - ${40 + TASKBAR_HEIGHT}px)`, zIndex: win.zIndex }
     : { position:'absolute', top: win.y, left: win.x, width: win.width, height: win.height, zIndex: win.zIndex }
 
   return (
@@ -117,12 +134,31 @@ export default function AppWindow({ win, ContentComponent }) {
         <ContentComponent windowId={win.id} appId={win.appId} {...(win.props || {})} />
       </div>
 
-      {/* Resize handle */}
+      {/* Resize handles — 4 edges + 4 corners */}
+      {!maximized && (() => {
+        const EDGE = 6, CORNER = 14
+        const handles = [
+          { dir: 'n',  style: { top: 0, left: CORNER, right: CORNER, height: EDGE, cursor: 'ns-resize' } },
+          { dir: 's',  style: { bottom: 0, left: CORNER, right: CORNER, height: EDGE, cursor: 'ns-resize' } },
+          { dir: 'w',  style: { left: 0, top: CORNER, bottom: CORNER, width: EDGE, cursor: 'ew-resize' } },
+          { dir: 'e',  style: { right: 0, top: CORNER, bottom: CORNER, width: EDGE, cursor: 'ew-resize' } },
+          { dir: 'nw', style: { top: 0, left: 0, width: CORNER, height: CORNER, cursor: 'nwse-resize' } },
+          { dir: 'ne', style: { top: 0, right: 0, width: CORNER, height: CORNER, cursor: 'nesw-resize' } },
+          { dir: 'sw', style: { bottom: 0, left: 0, width: CORNER, height: CORNER, cursor: 'nesw-resize' } },
+          { dir: 'se', style: { bottom: 0, right: 0, width: CORNER, height: CORNER, cursor: 'nwse-resize' } },
+        ]
+        return handles.map((h) => (
+          <div
+            key={h.dir}
+            onMouseDown={(e) => startResize(e, h.dir)}
+            style={{ position: 'absolute', zIndex: 20, ...h.style }}
+          />
+        ))
+      })()}
+
+      {/* Visual grip on the bottom-right corner */}
       {!maximized && (
-        <div
-          onMouseDown={handleResizeMouseDown}
-          style={{ position:'absolute', right:0, bottom:0, width:16, height:16, cursor:'se-resize', zIndex:10, background:'linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.1) 50%)' }}
-        />
+        <div style={{ position:'absolute', right:0, bottom:0, width:16, height:16, pointerEvents:'none', zIndex:19, background:'linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.1) 50%)' }} />
       )}
 
       {/* Window context menu */}

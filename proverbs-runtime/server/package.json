@@ -1,0 +1,13 @@
+{
+  "name": "proverbs-server",
+  "version": "2.0.0",
+  "description": "Proverbs local inference server — llama.cpp wrapper with Ollama-compatible API",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "node-llama-cpp": "^3"
+  }
+}

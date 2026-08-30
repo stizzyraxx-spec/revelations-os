@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Proverbs Faith-Based Smart Coding Language</title>
+  <meta name="description" content="Proverbs Privacy Policy. No data ever leaves your machine when using local models. Full disclosure on what is stored locally." />
+  <meta property="og:title" content="Privacy Policy — Proverbs Faith-Based Smart Coding Language" />
+  <meta property="og:description" content="Proverbs is local-first. Read what we store, what we never collect, and how cloud fallback works." />
+  <meta property="og:url" content="https://proverbscode.com/privacy" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>" />
+  <style>
+    :root {
+      --bg:        #030a07;
+      --bg2:       #0a1a10;
+      --bg3:       #0d2218;
+      --border:    #0f3d22;
+      --cyan:      #00e5a0;
+      --cyan-dim:  #007a50;
+      --green:     #39ff6e;
+      --green-dim: #1a7030;
+      --gold:      #f0c040;
+      --red:       #ff4d6d;
+      --text:      #c8e8d0;
+      --text-dim:  #4a7a5a;
+      --white:     #eaf5ee;
+      --font:      'Courier New', 'Courier', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0.4;
+    }
+
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(3,10,7,0.92);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+    nav .inner {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 52px;
+    }
+    .nav-logo { color: var(--cyan); font-size: 17px; font-weight: bold; letter-spacing: 0.05em; }
+    .nav-logo span { color: var(--text-dim); }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a { color: var(--text-dim); font-size: 13px; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--cyan); text-decoration: none; }
+    .nav-links a.active { color: var(--cyan); }
+
+    /* ── PAGE HERO ── */
+    .page-hero {
+      padding: 120px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 800px; height: 400px;
+      background: radial-gradient(ellipse, rgba(0,229,160,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .page-hero .container { position: relative; }
+    .hero-label {
+      color: var(--cyan-dim);
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero-title {
+      font-size: clamp(28px, 4vw, 48px);
+      color: var(--white);
+      line-height: 1.15;
+      margin-bottom: 16px;
+      text-shadow: 0 0 40px rgba(0,229,160,0.2);
+    }
+    .hero-title .accent { color: var(--cyan); }
+    .hero-sub {
+      color: var(--text-dim);
+      font-size: 14px;
+      max-width: 580px;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .effective-date {
+      color: var(--text-dim);
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }
+    .effective-date strong { color: var(--cyan); }
+
+    /* ── VERSE STRIP ── */
+    .verse-strip {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      padding: 18px 24px;
+      text-align: center;
+      color: var(--gold);
+      font-size: 13px;
+      font-style: italic;
+    }
+    .verse-strip span { color: var(--text-dim); font-style: normal; margin-left: 8px; }
+
+    /* ── SECTIONS ── */
+    section { padding: 64px 0; }
+    section.alt { background: var(--bg2); }
+
+    .section-label {
+      color: var(--cyan-dim);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(18px, 2.5vw, 26px);
+      color: var(--white);
+      margin-bottom: 14px;
+    }
+
+    /* ── POLICY BODY ── */
+    .policy-body {
+      max-width: 780px;
+    }
+    .policy-body p {
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.85;
+      margin-bottom: 16px;
+    }
+    .policy-body p strong { color: var(--text); }
+    .policy-body h3 {
+      color: var(--cyan);
+      font-size: 14px;
+      font-weight: bold;
+      margin: 28px 0 10px;
+      letter-spacing: 0.05em;
+    }
+    .policy-body ul {
+      list-style: none;
+      margin-bottom: 16px;
+    }
+    .policy-body ul li {
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.75;
+      padding: 5px 0 5px 20px;
+      position: relative;
+      border-bottom: 1px solid rgba(15,61,34,0.3);
+    }
+    .policy-body ul li:last-child { border-bottom: none; }
+    .policy-body ul li::before {
+      content: '›';
+      color: var(--cyan-dim);
+      position: absolute;
+      left: 0;
+    }
+    .policy-body ul li strong { color: var(--text); }
+
+    /* ── PRIVACY SUMMARY BOX ── */
+    .privacy-summary {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px 24px;
+      max-width: 780px;
+      margin-bottom: 40px;
+    }
+    .privacy-summary-title {
+      color: var(--white);
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .summary-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(15,61,34,0.4);
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-icon { font-size: 16px; min-width: 24px; margin-top: 1px; }
+    .summary-text { font-size: 13px; line-height: 1.6; }
+    .summary-text strong { color: var(--white); }
+    .summary-text.good   { color: var(--green); }
+    .summary-text.neutral { color: var(--text-dim); }
+    .summary-text.warn   { color: var(--gold); }
+
+    /* ── DATA STORAGE TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      max-width: 780px;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 10px 16px;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      font-weight: normal;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .data-table th.accent { color: var(--cyan); }
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(15,61,34,0.4);
+      color: var(--text-dim);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .data-table td:first-child { color: var(--text); }
+    .data-table tr:hover td { background: rgba(0,229,160,0.02); }
+    .check { color: var(--green); }
+    .warn-text { color: var(--gold); }
+    .never { color: var(--red); }
+
+    /* ── TERMINAL WINDOW ── */
+    .terminal-window {
+      width: 100%;
+      max-width: 720px;
+      background: #030d08;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow:
+        0 0 0 1px rgba(0,229,160,0.05),
+        0 20px 60px rgba(0,0,0,0.8),
+        0 0 80px rgba(0,229,160,0.06);
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+    .terminal-titlebar {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+    .terminal-title {
+      margin-left: auto; margin-right: auto;
+      color: var(--text-dim); font-size: 12px; letter-spacing: 0.05em;
+    }
+    .terminal-body {
+      padding: 20px 22px 24px;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+    .t-line  { margin-bottom: 2px; }
+    .t-cyan  { color: var(--cyan); }
+    .t-green { color: var(--green); }
+    .t-gold  { color: var(--gold); }
+    .t-dim   { color: var(--text-dim); }
+    .t-white { color: var(--white); }
+    .t-bold  { font-weight: bold; }
+    .t-red   { color: var(--red); }
+    .t-box {
+      border: 1px solid var(--cyan-dim);
+      padding: 6px 12px;
+      margin-bottom: 4px;
+      color: var(--cyan);
+      font-weight: bold;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px 24px;
+      max-width: 400px;
+      margin-bottom: 40px;
+    }
+    .toc-title { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 12px; }
+    .toc a { display: block; color: var(--text-dim); font-size: 12px; padding: 5px 0; border-bottom: 1px solid rgba(15,61,34,0.3); transition: color 0.2s; }
+    .toc a:last-child { border-bottom: none; }
+    .toc a:hover { color: var(--cyan); text-decoration: none; }
+    .toc-num { color: var(--cyan-dim); margin-right: 8px; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      padding: 40px 24px;
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-logo { color: var(--cyan); font-weight: bold; font-size: 15px; }
+    .footer-verse { color: var(--text-dim); font-size: 12px; font-style: italic; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { color: var(--text-dim); font-size: 12px; }
+    .footer-links a:hover { color: var(--cyan); text-decoration: none; }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .data-table th, .data-table td { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="inner">
+    <a href="index.html" class="nav-logo">PROVERBS<span>.code</span></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="help.html">Help</a>
+      <a href="support.html">Support</a>
+      <a href="privacy.html" class="active">Privacy</a>
+      <a href="https://github.com/raxxbeats/proverbs" target="_blank">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── PAGE HERO ── -->
+<div class="page-hero">
+  <div class="container">
+    <p class="hero-label">// Legal</p>
+    <h1 class="hero-title">
+      Privacy<br/>
+      <span class="accent">Policy.</span>
+    </h1>
+    <p class="hero-sub">
+      Proverbs is a local tool. The short version: when you use a local model,
+      zero bytes of your code, prompts, or files ever leave your machine.
+      This document explains what we do and do not store, in plain English.
+    </p>
+    <p class="effective-date">Effective: <strong>June 1, 2026</strong> &nbsp;·&nbsp; Company: <strong>RAXX BEATS STUDIOS LLC</strong></p>
+  </div>
+</div>
+
+<!-- ── VERSE STRIP ── -->
+<div class="verse-strip">
+  "A gossip betrays a confidence, but a trustworthy person keeps a secret."
+  <span>— Proverbs 11:13</span>
+</div>
+
+<!-- ── SUMMARY ── -->
+<section>
+  <div class="container">
+    <p class="section-label">// TL;DR first</p>
+    <h2 class="section-title">Privacy at a Glance</h2>
+
+    <div class="privacy-summary">
+      <div class="privacy-summary-title">📋 What you need to know before reading the full policy</div>
+      <div class="summary-row">
+        <div class="summary-icon">✅</div>
+        <div class="summary-text good"><strong>Local models = zero data transmission.</strong> When using Ollama (the default), your prompts, code, and files never leave your machine. Inference is local-only.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">✅</div>
+        <div class="summary-text good"><strong>No telemetry, ever.</strong> Proverbs collects no usage analytics, no crash reports, no model metrics. There is no phone-home behavior of any kind.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">✅</div>
+        <div class="summary-text good"><strong>No account required.</strong> No registration, no email, no user account. There is no Proverbs server that knows you exist.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">⚠️</div>
+        <div class="summary-text warn"><strong>Cloud fallback = your API key, your data.</strong> If you enable /fallback and configure a cloud provider (OpenAI, Anthropic), your prompts go to that provider under their privacy policy. This is opt-in and off by default.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">📁</div>
+        <div class="summary-text neutral"><strong>Local storage only.</strong> Session logs, config, the knowledge base, and backups are stored in <code style="color:var(--cyan);background:var(--bg);padding:1px 5px;border-radius:3px;">~/.proverbs/</code> on your machine. You own it. Delete it anytime.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">🌐</div>
+        <div class="summary-text neutral"><strong>This website uses no tracking.</strong> proverbscode.com has no analytics, no cookies, no fingerprinting, and no third-party scripts.</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <div class="toc-title">// Table of Contents</div>
+      <a href="#who-we-are"><span class="toc-num">1.</span>Who We Are</a>
+      <a href="#what-we-collect"><span class="toc-num">2.</span>What We Collect (and Don't)</a>
+      <a href="#local-storage"><span class="toc-num">3.</span>What Is Stored Locally</a>
+      <a href="#cloud-fallback"><span class="toc-num">4.</span>Cloud Fallback Disclosure</a>
+      <a href="#website"><span class="toc-num">5.</span>This Website</a>
+      <a href="#children"><span class="toc-num">6.</span>Children's Privacy</a>
+      <a href="#gdpr-ccpa"><span class="toc-num">7.</span>GDPR &amp; CCPA</a>
+      <a href="#changes"><span class="toc-num">8.</span>Changes to This Policy</a>
+      <a href="#contact-privacy"><span class="toc-num">9.</span>Contact</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── VISUAL DATA FLOW ── -->
+<section class="alt">
+  <div class="container">
+    <p class="section-label">// Data flow</p>
+    <h2 class="section-title">Where Your Data Goes</h2>
+
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div>
+        <span class="terminal-title">data-flow.txt — proverbs</span>
+      </div>
+      <div class="terminal-body">
+        <div class="t-box">DEFAULT CONFIGURATION (local-only)</div>
+        <br>
+        <div class="t-line"><span class="t-dim">Your Terminal</span></div>
+        <div class="t-line"><span class="t-cyan">    ↓ prompt</span></div>
+        <div class="t-line"><span class="t-dim">Proverbs CLI (your machine)</span></div>
+        <div class="t-line"><span class="t-cyan">    ↓ localhost:11434</span></div>
+        <div class="t-line"><span class="t-dim">Ollama (your machine)</span></div>
+        <div class="t-line"><span class="t-cyan">    ↓ GGUF weights on disk</span></div>
+        <div class="t-line"><span class="t-dim">LLM Inference (your CPU/GPU)</span></div>
+        <div class="t-line"><span class="t-cyan">    ↓ tokens</span></div>
+        <div class="t-line"><span class="t-dim">Your Terminal</span></div>
+        <br>
+        <div class="t-line t-green t-bold">✓ No network calls. Nothing external. Your code stays on your machine.</div>
+        <br>
+        <div class="t-line t-dim">──────────────────────────────────────────────────────────</div>
+        <br>
+        <div class="t-box">OPTIONAL: /fallback ON (cloud provider)</div>
+        <br>
+        <div class="t-line"><span class="t-dim">Your Terminal</span></div>
+        <div class="t-line"><span class="t-cyan">    ↓ prompt</span></div>
+        <div class="t-line"><span class="t-dim">Proverbs CLI (your machine)</span></div>
+        <div class="t-line"><span class="t-gold">    ↓ HTTPS — your API key — provider's endpoint</span></div>
+        <div class="t-line"><span class="t-gold">OpenAI / Anthropic API (third-party cloud)</span></div>
+        <div class="t-line"><span class="t-gold">    ↓ governed by THEIR privacy policy</span></div>
+        <div class="t-line"><span class="t-dim">Your Terminal</span></div>
+        <br>
+        <div class="t-line t-gold">⚠  Cloud fallback is OPT-IN. Disabled by default. You configure the key.</div>
+        <div class="t-line t-dim">   RAXX BEATS STUDIOS LLC never receives these requests.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── POLICY TEXT ── -->
+<section id="who-we-are" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §1</p>
+      <h2 class="section-title">1. Who We Are</h2>
+
+      <p>
+        Proverbs is a software product created and maintained by
+        <strong>RAXX BEATS STUDIOS LLC</strong>, a limited liability company organized under
+        the laws of the State of Florida, USA. Our contact address is
+        <a href="mailto:stizzyraxx@gmail.com">stizzyraxx@gmail.com</a>.
+      </p>
+      <p>
+        "Proverbs," "we," "us," and "our" refer to RAXX BEATS STUDIOS LLC and the Proverbs
+        faith-based smart coding language software. "You" refers to any individual who downloads, installs,
+        or uses the Proverbs software or visits proverbscode.com.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="what-we-collect" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §2</p>
+      <h2 class="section-title">2. What We Collect — and What We Don't</h2>
+
+      <p>
+        <strong>We collect nothing.</strong> Proverbs has no server-side component for the core product.
+        There is no registration, no account creation, no login, and no telemetry endpoint.
+        RAXX BEATS STUDIOS LLC has no infrastructure that receives data from running instances of Proverbs.
+      </p>
+
+      <h3>// What we never collect</h3>
+      <ul>
+        <li><strong>Your source code or project files</strong> — never transmitted.</li>
+        <li><strong>Your prompts and conversation history</strong> — stored locally only, never sent to us.</li>
+        <li><strong>Your name, email address, or any identifying information</strong> — we have no account system.</li>
+        <li><strong>Usage analytics</strong> — which commands you run, how often, what models you use.</li>
+        <li><strong>Crash reports or error telemetry</strong> — if Proverbs crashes, nothing is reported to us automatically.</li>
+        <li><strong>IP address or device fingerprint</strong> — the software never contacts our servers.</li>
+        <li><strong>Model output or generated code</strong> — stays on your machine.</li>
+      </ul>
+
+      <h3>// When you contact us voluntarily</h3>
+      <p>
+        If you email us at <a href="mailto:stizzyraxx@gmail.com">stizzyraxx@gmail.com</a> or open a
+        GitHub Issue, you share information voluntarily (your email address, GitHub username, and
+        the content of your message). We use this only to respond to your inquiry. We do not add
+        you to any mailing list or share this information with third parties.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="local-storage" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §3</p>
+      <h2 class="section-title">3. What Is Stored Locally</h2>
+
+      <p>
+        Proverbs writes files to <code style="background:var(--bg3);color:var(--cyan);padding:1px 6px;border-radius:3px;">~/.proverbs/</code>
+        on your local machine. You own these files completely. You can inspect, edit, or delete
+        them at any time. No part of this directory is transmitted to Proverbs servers (which do not exist).
+      </p>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="accent">Location</th>
+          <th>Contents</th>
+          <th>Purpose</th>
+          <th>Ever Transmitted?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>~/.proverbs/config.json</td>
+          <td>Active model, backend, theme, feature flags, cloud API keys (if set)</td>
+          <td>Runtime configuration</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+        <tr>
+          <td>~/.proverbs/sessions/</td>
+          <td>Saved conversation history (/save command). JSON files containing message turns.</td>
+          <td>Session persistence and /resume</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+        <tr>
+          <td>~/.proverbs/memory.json</td>
+          <td>Persistent facts stored via /memory command. Injected into every session context.</td>
+          <td>Cross-session knowledge</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+        <tr>
+          <td>~/.proverbs/knowledge/</td>
+          <td>Project knowledge base entries from /knowledge and /scan results.</td>
+          <td>Project-aware context injection</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+        <tr>
+          <td>~/.proverbs/index/</td>
+          <td>Vector embeddings generated by /index and /embed. FAISS-format binary files.</td>
+          <td>Semantic search (/semrag)</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+        <tr>
+          <td>~/.proverbs/backups/</td>
+          <td>Automatic file backups before every write. Used by /undo to restore originals.</td>
+          <td>Undo / disaster recovery</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+        <tr>
+          <td>~/.proverbs/plugins/</td>
+          <td>User-installed plugin .js files. Provided by the user, not Proverbs.</td>
+          <td>Plugin execution</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+        <tr>
+          <td>&lt;project&gt;/.script</td>
+          <td>Project-specific rules, conventions, and architecture notes written by the user.</td>
+          <td>Persistent per-project context</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+        <tr>
+          <td>Ollama model cache</td>
+          <td>GGUF model weight files. Managed by Ollama, stored in the Ollama default directory.</td>
+          <td>Local inference</td>
+          <td class="check">Never (local only)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="policy-body" style="margin-top:24px;">
+      <p>
+        <strong>To delete all Proverbs data:</strong> remove the <code style="background:var(--bg3);color:var(--cyan);padding:1px 5px;border-radius:3px;">~/.proverbs/</code>
+        directory entirely. This removes all sessions, config, memory, index, backups, and knowledge.
+        Proverbs will re-create defaults on next launch. To also remove model weights, follow
+        Ollama's uninstall instructions.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="cloud-fallback" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §4</p>
+      <h2 class="section-title">4. Cloud Fallback Disclosure</h2>
+
+      <p>
+        Proverbs includes an <strong>optional</strong> cloud inference fallback feature, accessible via the
+        <code style="background:var(--bg);color:var(--cyan);padding:1px 5px;border-radius:3px;">/fallback</code> and
+        <code style="background:var(--bg);color:var(--cyan);padding:1px 5px;border-radius:3px;">/route</code>
+        commands. This feature is <strong>disabled by default</strong>.
+      </p>
+
+      <h3>// How it works</h3>
+      <p>
+        When you enable cloud fallback and configure a third-party API key (e.g., OpenAI or Anthropic),
+        Proverbs sends your prompts directly to that provider's API over HTTPS using the API key you
+        supply. RAXX BEATS STUDIOS LLC is not an intermediary — the request goes from your machine
+        directly to the provider's endpoint.
+      </p>
+
+      <h3>// What this means for your data</h3>
+      <ul>
+        <li><strong>Your prompts and any injected file content go to the third-party provider.</strong></li>
+        <li>That data is governed entirely by the provider's own privacy policy — not this one.</li>
+        <li>RAXX BEATS STUDIOS LLC never receives, logs, or processes cloud fallback requests.</li>
+        <li>Your API key is stored in <code style="background:var(--bg3);color:var(--cyan);padding:1px 4px;border-radius:3px;">~/.proverbs/config.json</code> locally. We never see it.</li>
+      </ul>
+
+      <h3>// Relevant third-party policies</h3>
+      <ul>
+        <li><strong>OpenAI:</strong> <a href="https://openai.com/policies/privacy-policy" target="_blank">openai.com/policies/privacy-policy</a></li>
+        <li><strong>Anthropic (Claude):</strong> <a href="https://www.anthropic.com/privacy" target="_blank">anthropic.com/privacy</a></li>
+        <li><strong>LiteLLM (self-hosted proxy):</strong> Privacy depends on where you host it. If self-hosted, no third party receives the data.</li>
+      </ul>
+
+      <p>
+        <strong>Recommendation:</strong> If your code is sensitive (proprietary, confidential, regulated),
+        keep cloud fallback disabled and use local models only. The default local-only configuration
+        is the privacy-correct choice for sensitive codebases.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="website" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §5</p>
+      <h2 class="section-title">5. This Website (proverbscode.com)</h2>
+
+      <p>
+        The Proverbs website is a static HTML site. It has no analytics, no tracking pixels,
+        no cookies, no localStorage, and no JavaScript that contacts external servers. There is
+        no third-party CDN loading scripts or fonts. Everything on the page is self-contained.
+      </p>
+
+      <h3>// What the web server logs</h3>
+      <p>
+        Standard web server access logs may record your IP address, browser user-agent, and
+        requested URL for operational purposes (detecting abuse, diagnosing server errors).
+        These logs are not shared with any third party, are not used for marketing, and are
+        rotated and deleted regularly. We do not use them to identify individual users.
+      </p>
+
+      <h3>// Download files</h3>
+      <p>
+        When you download install.sh or install.ps1 from this website, the web server logs
+        the request as described above. The installer scripts themselves do not report back
+        to us after installation. There is no "installation complete" ping.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="children" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §6</p>
+      <h2 class="section-title">6. Children's Privacy</h2>
+
+      <p>
+        Proverbs is a developer tool intended for adults and is not directed at children under
+        the age of 13 (or 16 in the European Union). We do not knowingly collect any personal
+        information from children. Since we collect no personal information from anyone, no
+        special handling is required — but if you are aware of a minor using Proverbs, please
+        note that the tool is designed for professional software development contexts.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── VERSE STRIP ── -->
+<div class="verse-strip">
+  "A good name is more desirable than great riches; to be esteemed is better than silver or gold."
+  <span>— Proverbs 22:1</span>
+</div>
+
+<section id="gdpr-ccpa" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §7</p>
+      <h2 class="section-title">7. GDPR &amp; CCPA Compliance</h2>
+
+      <h3>// GDPR (European Union / EEA)</h3>
+      <p>
+        Because Proverbs collects no personal data from users in the normal course of operation,
+        most GDPR obligations do not apply — there is no data to process, no legal basis for
+        processing to declare, and no data controller / processor relationship to establish
+        with respect to your coding activity.
+      </p>
+      <p>
+        <strong>Lawful basis:</strong> If you contact us by email, we process your email address
+        under legitimate interest (responding to your inquiry). We retain it only as long as
+        needed to resolve your inquiry and do not add it to any list or database.
+      </p>
+
+      <h3>// Your GDPR rights</h3>
+      <ul>
+        <li><strong>Right of access:</strong> We hold no profile data about you. If you have emailed us, you may request a copy of that correspondence.</li>
+        <li><strong>Right to erasure:</strong> Email us to request deletion of any communication records we hold.</li>
+        <li><strong>Right to portability:</strong> All your Proverbs data (sessions, config, knowledge) is already in standard JSON format on your machine — you have it.</li>
+        <li><strong>Right to object:</strong> We conduct no automated decision-making or profiling on any user.</li>
+        <li><strong>Right to lodge a complaint:</strong> You may lodge a complaint with your local EU supervisory authority.</li>
+      </ul>
+      <p>
+        For all GDPR requests, contact: <a href="mailto:stizzyraxx@gmail.com">stizzyraxx@gmail.com</a>
+      </p>
+
+      <h3>// CCPA (California Residents)</h3>
+      <p>
+        Proverbs does not sell personal information. Proverbs does not share personal information
+        with third parties for cross-context behavioral advertising. We do not collect personal
+        information as defined by the CCPA in the course of normal software operation.
+      </p>
+
+      <h3>// Your CCPA rights</h3>
+      <ul>
+        <li><strong>Right to know:</strong> We collect no personal information from your use of the software.</li>
+        <li><strong>Right to delete:</strong> There is no server-side data to delete. Delete <code style="background:var(--bg3);color:var(--cyan);padding:1px 4px;border-radius:3px;">~/.proverbs/</code> locally to remove all local data.</li>
+        <li><strong>Right to opt out of sale:</strong> We do not sell your data. No opt-out is required.</li>
+        <li><strong>Right to non-discrimination:</strong> We do not discriminate based on exercise of CCPA rights.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="changes" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §8</p>
+      <h2 class="section-title">8. Changes to This Policy</h2>
+
+      <p>
+        We may update this Privacy Policy from time to time. When we do, we will update the
+        "Effective" date at the top of this page. Material changes — those that expand what
+        data we collect or how we use it — will be announced via a GitHub release note in the
+        Proverbs repository at least 14 days before taking effect.
+      </p>
+      <p>
+        Given that Proverbs is a local tool with no telemetry, the practical impact of any
+        policy change on your installed software is zero unless you choose to enable optional
+        features (like cloud fallback) that are explicitly covered in the change.
+      </p>
+      <p>
+        Continued use of Proverbs after the effective date of a policy change constitutes
+        acceptance of the updated policy. You may always review the current policy at
+        <a href="https://proverbscode.com/privacy">proverbscode.com/privacy</a>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="contact-privacy" style="scroll-margin-top:52px;">
+  <div class="container">
+    <div class="policy-body">
+      <p class="section-label">// §9</p>
+      <h2 class="section-title">9. Contact</h2>
+
+      <p>
+        If you have any questions about this Privacy Policy, concerns about how your data may
+        be handled, or want to exercise any rights described above, contact us at:
+      </p>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:24px 20px;margin:20px 0;max-width:480px;">
+        <div style="margin-bottom:10px;font-size:13px;"><span style="color:var(--text-dim);">Company: </span><span style="color:var(--white);">RAXX BEATS STUDIOS LLC</span></div>
+        <div style="margin-bottom:10px;font-size:13px;"><span style="color:var(--text-dim);">Address: </span><span style="color:var(--white);">Wellington, FL, USA</span></div>
+        <div style="margin-bottom:10px;font-size:13px;"><span style="color:var(--text-dim);">Email: </span><a href="mailto:stizzyraxx@gmail.com">stizzyraxx@gmail.com</a></div>
+        <div style="font-size:13px;"><span style="color:var(--text-dim);">GitHub: </span><a href="https://github.com/raxxbeats/proverbs" target="_blank">github.com/raxxbeats/proverbs</a></div>
+      </div>
+
+      <p>
+        Response time for privacy-related inquiries: within 5 business days.
+        For security vulnerabilities, please email directly rather than opening a public GitHub Issue.
+      </p>
+      <p style="margin-top:28px;color:var(--text-dim);font-size:12px;border-top:1px solid var(--border);padding-top:20px;">
+        This Privacy Policy was last updated on <strong style="color:var(--text);">June 1, 2026</strong>.
+        It supersedes all prior versions. The authoritative version is always at
+        <a href="https://proverbscode.com/privacy">proverbscode.com/privacy</a>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">PROVERBS.code</div>
+    <div class="footer-verse">"Do not forsake wisdom, and she will protect you." — Proverbs 4:6</div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="help.html">Help</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/raxxbeats/proverbs" target="_blank">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "proverbs-preview",
+  "version": "1.0.0",
+  "description": "Proverbs app preview window",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^33.0.0"
+  }
+}

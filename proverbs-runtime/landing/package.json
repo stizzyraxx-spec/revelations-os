@@ -1,0 +1,8 @@
+{
+  "name": "proverbs-landing",
+  "version": "4.0.0",
+  "private": true,
+  "scripts": {
+    "deploy:prod": "bash scripts/deploy-verify.sh"
+  }
+}

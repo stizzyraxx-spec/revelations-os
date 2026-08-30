@@ -5,7 +5,7 @@ import OrbLauncher from './OrbLauncher'
 import WindowManager from './WindowManager'
 import NotificationCenter from './NotificationCenter'
 import Widgets from './Widgets'
-import Dock from './Dock'
+import BottomTaskbar, { TASKBAR_HEIGHT } from './BottomTaskbar'
 import horsemenLogo from '../assets/raxx-logo.png'
 import { WALLPAPERS, getSettings } from '../theme'
 
@@ -86,15 +86,15 @@ export default function Desktop() {
         <WindowManager />
       </div>
 
-      {/* Left dock — open windows */}
-      <Dock />
+      {/* Bottom taskbar — Start menu + running/pinned apps (Windows-style) */}
+      <BottomTaskbar />
 
       {/* Notification center */}
       <NotificationCenter />
 
       {/* Footer — privacy & support links (only visible when no windows open) */}
       <div style={{
-        position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+        position: 'absolute', bottom: TASKBAR_HEIGHT + 8, left: '50%', transform: 'translateX(-50%)',
         display: 'flex', gap: 16, zIndex: 6, pointerEvents: hasWindows ? 'none' : 'all',
         opacity: hasWindows ? 0 : 0.45, transition: 'opacity 0.4s ease',
       }}>

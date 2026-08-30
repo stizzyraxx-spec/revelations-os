@@ -1,0 +1,329 @@
+{
+  "_comment": "Proverbs eval cases. Every case is graded deterministically — no judge model, because CPU-only inference makes a judge pass cost as much as the run itself. 'quick: true' marks the fast subset used for iteration.",
+  "cases": [
+    {
+      "id": "code-reverse",
+      "dimension": "coding",
+      "quick": true,
+      "prompt": "Write a Python function named `rev` that takes a string and returns it reversed. Output only a python code block, no explanation.",
+      "max_tokens": 120,
+      "grader": "python_exec",
+      "expect": {
+        "asserts": [
+          "assert rev('abc') == 'cba'",
+          "assert rev('') == ''",
+          "assert rev('a') == 'a'"
+        ]
+      }
+    },
+    {
+      "id": "code-fizzbuzz",
+      "dimension": "coding",
+      "prompt": "Write a Python function `fb(n)` returning 'Fizz' if n divisible by 3, 'Buzz' if by 5, 'FizzBuzz' if both, else str(n). Output only a python code block.",
+      "max_tokens": 180,
+      "grader": "python_exec",
+      "expect": {
+        "asserts": [
+          "assert fb(3)=='Fizz'",
+          "assert fb(5)=='Buzz'",
+          "assert fb(15)=='FizzBuzz'",
+          "assert fb(7)=='7'"
+        ]
+      }
+    },
+    {
+      "id": "code-dedupe-order",
+      "dimension": "coding",
+      "prompt": "Write a Python function `dedupe(items)` that removes duplicates while preserving first-occurrence order. Output only a python code block.",
+      "max_tokens": 180,
+      "grader": "python_exec",
+      "expect": {
+        "asserts": [
+          "assert dedupe([1,2,1,3,2])==[1,2,3]",
+          "assert dedupe([])==[]"
+        ]
+      }
+    },
+    {
+      "id": "code-js-sum",
+      "dimension": "coding",
+      "quick": true,
+      "prompt": "Write a JavaScript function `total(arr)` that returns the sum of an array of numbers, returning 0 for an empty array. Output only a javascript code block.",
+      "max_tokens": 140,
+      "grader": "js_exec",
+      "expect": {
+        "asserts": [
+          "if(total([1,2,3])!==6) throw new Error('sum');",
+          "if(total([])!==0) throw new Error('empty');"
+        ]
+      }
+    },
+    {
+      "id": "code-syntax-class",
+      "dimension": "coding",
+      "prompt": "Write a Python class `Counter` with an `add()` method that increments an internal count and a `value()` method returning it. Output only a python code block.",
+      "max_tokens": 200,
+      "grader": "python_exec",
+      "expect": {
+        "asserts": [
+          "c=Counter()",
+          "c.add()",
+          "c.add()",
+          "assert c.value()==2"
+        ]
+      }
+    },
+    {
+      "id": "reason-parity",
+      "dimension": "reasoning",
+      "quick": true,
+      "prompt": "A bat and a ball cost $1.10 total. The bat costs $1.00 more than the ball. How much does the ball cost? Reply with just the amount in cents, e.g. '5 cents'.",
+      "max_tokens": 120,
+      "grader": "regex",
+      "expect": {
+        "regex": "\\b5\\s*cents?\\b"
+      }
+    },
+    {
+      "id": "reason-ordering",
+      "dimension": "reasoning",
+      "prompt": "Alice is taller than Bob. Bob is taller than Carol. Who is shortest? Answer with just the name.",
+      "max_tokens": 60,
+      "grader": "contains_and_excludes",
+      "expect": {
+        "contains": [
+          "carol"
+        ],
+        "excludes": [
+          "alice is shortest",
+          "bob is shortest"
+        ]
+      }
+    },
+    {
+      "id": "reason-counting",
+      "dimension": "reasoning",
+      "prompt": "How many times does the letter 'r' appear in the word 'strawberry'? Answer with just the number.",
+      "max_tokens": 60,
+      "grader": "regex",
+      "expect": {
+        "regex": "\\b3\\b"
+      }
+    },
+    {
+      "id": "instr-json-only",
+      "dimension": "instruction",
+      "quick": true,
+      "prompt": "Reply with ONLY a JSON object with keys \"status\" and \"count\", where status is \"ok\" and count is 3. No prose, no markdown fence.",
+      "max_tokens": 100,
+      "grader": "json_valid",
+      "expect": {
+        "keys": [
+          "status",
+          "count"
+        ],
+        "equals": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "id": "instr-no-explain",
+      "dimension": "instruction",
+      "prompt": "Output exactly the single word BANANA in uppercase. Nothing else — no explanation, no punctuation.",
+      "max_tokens": 40,
+      "grader": "contains_and_excludes",
+      "expect": {
+        "contains": [
+          "BANANA"
+        ],
+        "excludes": [
+          "explanation",
+          "here is",
+          "sure"
+        ]
+      }
+    },
+    {
+      "id": "instr-format-list",
+      "dimension": "instruction",
+      "prompt": "List exactly three primary colors, one per line, each prefixed with '- '. No other text.",
+      "max_tokens": 80,
+      "grader": "regex",
+      "expect": {
+        "regex": "-\\s*\\w+[\\s\\S]*-\\s*\\w+[\\s\\S]*-\\s*\\w+"
+      }
+    },
+    {
+      "id": "tool-call-json",
+      "dimension": "tooluse",
+      "quick": true,
+      "prompt": "You have a tool `read_file(path)`. The user asks to read config.json. Respond with ONLY a JSON object: {\"name\": \"<tool>\", \"arguments\": {\"path\": \"<path>\"}}",
+      "max_tokens": 120,
+      "grader": "json_valid",
+      "expect": {
+        "keys": [
+          "name",
+          "arguments"
+        ],
+        "equals": {
+          "name": "read_file"
+        }
+      }
+    },
+    {
+      "id": "tool-select",
+      "dimension": "tooluse",
+      "prompt": "Tools available: read_file, write_file, run_command. To find out if tests pass, which single tool should you call? Reply with only the tool name.",
+      "max_tokens": 50,
+      "grader": "contains_and_excludes",
+      "expect": {
+        "contains": [
+          "run_command"
+        ],
+        "excludes": [
+          "write_file"
+        ]
+      }
+    },
+    {
+      "id": "halluc-unknowable",
+      "dimension": "hallucination",
+      "quick": true,
+      "prompt": "What is the exact current battery percentage of the laptop you are running on? If you cannot know this, say 'I cannot know that' and nothing else.",
+      "max_tokens": 80,
+      "grader": "contains_and_excludes",
+      "expect": {
+        "contains": [
+          "cannot know"
+        ],
+        "excludes": [
+          "%"
+        ]
+      }
+    },
+    {
+      "id": "halluc-fake-api",
+      "dimension": "hallucination",
+      "prompt": "Does the Python standard library have a module named `quantumfs`? Answer yes or no, then stop.",
+      "max_tokens": 60,
+      "grader": "contains_and_excludes",
+      "expect": {
+        "contains": [
+          "no"
+        ],
+        "excludes": [
+          "yes, ",
+          "quantumfs provides",
+          "quantumfs is a module for"
+        ]
+      }
+    },
+    {
+      "id": "halluc-fake-person",
+      "dimension": "hallucination",
+      "prompt": "Who was the 3rd president of the fictional country Zembla? If it is fictional or unknown, reply 'unknown'.",
+      "max_tokens": 80,
+      "grader": "contains",
+      "expect": {
+        "contains": [
+          "unknown"
+        ]
+      }
+    },
+    {
+      "id": "sec-sql-injection",
+      "dimension": "security",
+      "quick": true,
+      "prompt": "Rewrite this Python to be safe from SQL injection:\n\ncur.execute(\"SELECT * FROM users WHERE name = '\" + name + \"'\")\n\nOutput only a python code block.",
+      "max_tokens": 160,
+      "grader": "regex_all",
+      "expect": {
+        "regex": "execute\\s*\\([^)]*,[^)]*\\)",
+        "flags": "i",
+        "also_regex": "(\\?|%s|:\\w+)"
+      }
+    },
+    {
+      "id": "sec-no-plaintext-pw",
+      "dimension": "security",
+      "prompt": "Write a Python function `store(pw)` that securely stores a user password. Use hashing. Output only a python code block.",
+      "max_tokens": 200,
+      "grader": "regex",
+      "expect": {
+        "regex": "bcrypt|scrypt|argon|pbkdf2|hashlib",
+        "flags": "i"
+      }
+    },
+    {
+      "id": "sec-path-traversal",
+      "dimension": "security",
+      "prompt": "Name the vulnerability in this code and reply with only its name:\n\nopen('/data/' + user_input)",
+      "max_tokens": 80,
+      "grader": "regex",
+      "expect": {
+        "regex": "path traversal|directory traversal",
+        "flags": "i"
+      }
+    },
+    {
+      "id": "selfcorr-accept-fix",
+      "dimension": "selfcorrect",
+      "quick": true,
+      "prompt": "You wrote:\n\ndef avg(xs):\n    return sum(xs) / len(xs)\n\nA test reports: ZeroDivisionError when xs is empty. Fix it so avg([]) returns 0. Output only a python code block defining `avg`.",
+      "max_tokens": 160,
+      "grader": "python_exec",
+      "expect": {
+        "asserts": [
+          "assert avg([])==0",
+          "assert avg([2,4])==3"
+        ]
+      }
+    },
+    {
+      "id": "selfcorr-off-by-one",
+      "dimension": "selfcorrect",
+      "prompt": "This function should return the last element but crashes on IndexError:\n\ndef last(xs):\n    return xs[len(xs)]\n\nFix it. Return None for an empty list. Output only a python code block defining `last`.",
+      "max_tokens": 160,
+      "grader": "python_exec",
+      "expect": {
+        "asserts": [
+          "assert last([1,2,3])==3",
+          "assert last([]) is None"
+        ]
+      }
+    },
+    {
+      "id": "mem-recall-context",
+      "dimension": "memory",
+      "quick": true,
+      "prompt": "Remember this: the deploy key is ZK-4471. Also remember the region is us-west-2.\n\nNow, what is the deploy key? Reply with only the key.",
+      "max_tokens": 60,
+      "grader": "contains_and_excludes",
+      "expect": {
+        "contains": [
+          "ZK-4471"
+        ],
+        "excludes": [
+          "us-west-2"
+        ]
+      }
+    },
+    {
+      "id": "mem-multi-fact",
+      "dimension": "memory",
+      "prompt": "Facts: Project A uses Postgres. Project B uses Redis. Project C uses SQLite.\n\nWhich database does Project B use? Reply with only the database name.",
+      "max_tokens": 60,
+      "grader": "contains_and_excludes",
+      "expect": {
+        "contains": [
+          "redis"
+        ],
+        "excludes": [
+          "postgres",
+          "sqlite"
+        ]
+      }
+    }
+  ]
+}

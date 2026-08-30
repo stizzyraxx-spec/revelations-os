@@ -1,0 +1,41 @@
+{
+  "name": "proverbs-ai",
+  "displayName": "Proverbs AI",
+  "description": "VS Code extension for the Proverbs local LLM coding assistant",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "proverbs.ask",
+        "title": "Ask Proverbs"
+      },
+      {
+        "command": "proverbs.fix",
+        "title": "Fix with Proverbs"
+      },
+      {
+        "command": "proverbs.explain",
+        "title": "Explain with Proverbs"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "proverbs.ask",
+        "key": "ctrl+shift+p",
+        "mac": "cmd+shift+p"
+      },
+      {
+        "command": "proverbs.fix",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f"
+      }
+    ]
+  }
+}

@@ -127,6 +127,24 @@ export const useOSStore = create((set, get) => ({
     }))
   },
 
+  // Set position AND size in one update — used by edge/corner resizing where
+  // dragging the top or left edge changes x/y and width/height together.
+  setBounds: (id, { x, y, width, height }) => {
+    const MIN_W = 320, MIN_H = 200
+    set((s) => ({
+      windows: s.windows.map((w) => {
+        if (w.id !== id) return w
+        return {
+          ...w,
+          x: Math.max(0, Math.round(x)),
+          y: Math.max(0, Math.round(y)),
+          width: Math.max(MIN_W, Math.round(width)),
+          height: Math.max(MIN_H, Math.round(height)),
+        }
+      }),
+    }))
+  },
+
   // ─── NOTIFICATIONS ──────────────────────────────────────────────────────────
   notifications: [],
   notificationPanelOpen: false,

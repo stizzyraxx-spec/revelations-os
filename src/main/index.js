@@ -199,21 +199,74 @@ function spawnNode(scriptArgs, opts = {}) {
   })
 }
 
+// Resolve the Proverbs CLI entry point. The current version ships bundled
+// inside the app (extraResources → resources/proverbs); we prefer that so the
+// Terminal always runs the packaged version, and fall back to a dev checkout
+// or a ~/proverbs clone for backwards compatibility.
+function resolveProverbs() {
+  const candidates = [
+    // Packaged app: unpacked extraResources
+    path.join(process.resourcesPath || '', 'proverbs', 'cli.js'),
+    // Dev run from the repo
+    path.join(process.cwd(), 'proverbs-runtime', 'cli.js'),
+    // Legacy clones in the user's home
+    path.join(os.homedir(), 'proverbs', 'cli.js'),
+    path.join(os.homedir(), 'proverbs', 'index.js'),
+  ]
+  for (const entry of candidates) {
+    try { if (entry && fs.existsSync(entry)) return { entry, dir: path.dirname(entry) } } catch {}
+  }
+  return null
+}
+
 ipcMain.handle('proverbs:run', async (event, cmd) => {
   if (!rateOk('proverbs')) return 'Rate limit exceeded'
   const safe = String(cmd || '').slice(0, 200).replace(/[;&|`$]/g, '')
+  const resolved = resolveProverbs()
+  if (!resolved) {
+    return 'Proverbs CLI not found. Reinstall Revelations OS or clone proverbs-ai into ~/proverbs.'
+  }
   return new Promise(resolve => {
     const args = safe.split(' ').filter(Boolean)
-    const proc = spawnNode(['index.js', ...args], {
-      cwd: path.join(os.homedir(), 'proverbs'),
+    const proc = spawnNode([resolved.entry, ...args], {
+      cwd: resolved.dir,
       timeout: 10000,
     })
     let out = ''
     proc.stdout.on('data', d => { out += d.toString() })
     proc.stderr.on('data', d => { out += d.toString() })
     proc.on('close', () => resolve(out || '(no output)'))
-    proc.on('error', () => resolve(`Proverbs CLI not found\nMake sure ${path.join(os.homedir(), 'proverbs', 'index.js')} exists`))
+    proc.on('error', () => resolve(`Proverbs CLI failed to launch from ${resolved.entry}`))
     setTimeout(() => { proc.kill(); resolve(out || 'Command timed out after 9s') }, 9000)
+  })
+})
+
+// Run the Claude Code CLI installed on the host machine. Output is streamed
+// back to the OS Terminal. If `claude` is not on PATH we return install
+// guidance rather than an opaque spawn error.
+ipcMain.handle('claude:run', async (event, cmd) => {
+  if (!rateOk('claude')) return 'Rate limit exceeded'
+  // Keep quotes/spaces (prompts need them); strip shell control metacharacters.
+  const safe = String(cmd || '').slice(0, 2000).replace(/[;&|`$><\n\r]/g, '').trim()
+  const cmdline = `claude ${safe || '--help'}`
+  return new Promise(resolve => {
+    const proc = spawn(cmdline, [], {
+      shell: true,
+      windowsHide: true,
+      env: process.env,
+    })
+    let out = ''
+    proc.stdout.on('data', d => { out += d.toString() })
+    proc.stderr.on('data', d => { out += d.toString() })
+    proc.on('close', () => resolve(out || '(no output)'))
+    proc.on('error', () => resolve(
+      'Claude Code CLI not found on this machine.\n' +
+      'Install it, then run `claude` again:\n' +
+      '  npm install -g @anthropic-ai/claude-code\n' +
+      '  (or see https://claude.com/claude-code)'
+    ))
+    // Claude runs can be long; allow up to 3 minutes before giving up.
+    setTimeout(() => { try { proc.kill() } catch {} ; resolve(out || 'Claude command timed out after 180s') }, 180000)
   })
 })
 
@@ -466,11 +519,12 @@ ipcMain.handle('rev:update', async (event, issue) => {
   if (!rateOk('rev:update')) return { ok: false, output: 'Rate limit exceeded' }
 
   const home = os.homedir()
-  const proverbs = path.join(home, 'proverbs', 'index.js')
+  const resolvedProverbs = resolveProverbs()
 
-  if (!fs.existsSync(proverbs)) {
-    return { ok: false, output: 'Proverbs CLI not found at ~/proverbs/index.js.\nRun: git clone <proverbs-repo> ~/proverbs && cd ~/proverbs && npm install' }
+  if (!resolvedProverbs) {
+    return { ok: false, output: 'Proverbs CLI not found. Reinstall Revelations OS (it ships bundled) or clone proverbs-ai into ~/proverbs.' }
   }
+  const proverbs = resolvedProverbs.entry
 
   // Build repo context list (only existing repos)
   const existingRepos = ALL_REPOS
@@ -524,7 +578,7 @@ ipcMain.handle('rev:update', async (event, issue) => {
 
     // Try proverbs first with structured args, fallback to simple stdin
     const proc = spawnNode([proverbs, ...args], {
-      cwd: path.join(home, 'proverbs'),
+      cwd: resolvedProverbs.dir,
       env: { REV_ISSUE: issue, REV_REPOS: targetRepos.join(','), REV_MODE: 'fix' },
     })
 
