@@ -3,6 +3,7 @@
 // Desktop listens to re-render the wallpaper, and applyAccent hot-swaps CSS vars.
 
 export const WALLPAPERS = {
+  brimstone: 'radial-gradient(ellipse at 50% 118%, #4a0d02 0%, #250701 28%, #120300 52%, #060100 74%, #000000 100%)',
   nebula: 'linear-gradient(135deg, #000428, #00235a, #003a8c, #001f4d, #000c2e, #001a5c, #000428)',
   cosmos: 'linear-gradient(135deg, #0d0221, #2d0b4e, #1a0533, #3b0764, #170230, #2d0b4e, #0d0221)',
   aurora: 'linear-gradient(135deg, #001510, #013a2d, #00574a, #014d3c, #00251c, #013a2d, #001510)',

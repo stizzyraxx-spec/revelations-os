@@ -21,7 +21,7 @@ function saveDesktopIcons(ids) {
   try { localStorage.setItem(DESKTOP_ICONS_KEY, JSON.stringify(ids)) } catch {}
 }
 
-const WALLPAPER_LABELS = { nebula: 'Nebula', cosmos: 'Cosmos', aurora: 'Aurora', void: 'Void' }
+const WALLPAPER_LABELS = { brimstone: 'Brimstone', nebula: 'Nebula', cosmos: 'Cosmos', aurora: 'Aurora', void: 'Void' }
 
 export default function Desktop() {
   const { windows, addNotification, openWindow, openSubscription, toggleOrbLauncher, customApps } = useOSStore()
@@ -29,7 +29,7 @@ export default function Desktop() {
   const [iconMenu, setIconMenu] = useState(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerQuery, setPickerQuery] = useState('')
-  const [wallpaper, setWallpaper] = useState(() => getSettings().wallpaper || 'nebula')
+  const [wallpaper, setWallpaper] = useState(() => getSettings().wallpaper || 'brimstone')
   const [desktopIcons, setDesktopIcons] = useState(loadDesktopIcons)
   const [displayModalOpen, setDisplayModalOpen] = useState(false)
   const [displayInfo, setDisplayInfo] = useState(null)
