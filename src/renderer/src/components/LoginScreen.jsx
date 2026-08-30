@@ -60,24 +60,26 @@ export default function LoginScreen() {
 
       {/* Logo */}
       <div style={{
-        position: 'absolute', top: '14%', left: 0, right: 0, zIndex: 10,
-        display: 'flex', justifyContent: 'center', pointerEvents: 'none',
-        opacity: logoVisible ? 1 : 0,
-        transform: logoVisible ? 'scale(1)' : 'scale(0.88)',
-        transition: 'opacity 1.0s cubic-bezier(0.16,1,0.3,1), transform 1.0s cubic-bezier(0.16,1,0.3,1)',
-      }}>
-        <img src={raxxLogo} alt="Revelations OS" style={{ width: 240, maxWidth: '55vw', filter: 'drop-shadow(0 0 48px rgba(255,255,255,0.25)) drop-shadow(0 0 96px rgba(200,100,255,0.18))' }} />
-      </div>
-
-      {/* Auth card */}
-      <div style={{
-        position: 'absolute', top: '40%', left: '50%', zIndex: 11,
-        transform: `translate(-50%, 0) ${authVisible ? 'translateY(0)' : 'translateY(16px)'}`,
-        opacity: authVisible ? 1 : 0,
-        transition: 'opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1)',
+        position: 'absolute', inset: 0, zIndex: 10,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        gap: 22, padding: '28px 16px', overflowY: 'auto',
         pointerEvents: authVisible ? 'all' : 'none',
-        width: 380, maxWidth: '90vw',
       }}>
+        <img src={raxxLogo} alt="Revelations OS" style={{
+          width: 190, maxWidth: '46vw', flexShrink: 0,
+          opacity: logoVisible ? 1 : 0,
+          transform: logoVisible ? 'scale(1)' : 'scale(0.88)',
+          transition: 'opacity 1.0s cubic-bezier(0.16,1,0.3,1), transform 1.0s cubic-bezier(0.16,1,0.3,1)',
+          filter: 'drop-shadow(0 0 48px rgba(255,255,255,0.25)) drop-shadow(0 0 96px rgba(200,100,255,0.18))',
+        }} />
+
+        {/* Auth card */}
+        <div style={{
+          zIndex: 11, width: 380, maxWidth: '90vw', flexShrink: 0,
+          opacity: authVisible ? 1 : 0,
+          transform: authVisible ? 'translateY(0)' : 'translateY(16px)',
+          transition: 'opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1)',
+        }}>
         <div style={{
           background: 'rgba(10,10,20,0.74)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
           border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20,
@@ -116,7 +118,8 @@ export default function LoginScreen() {
           <button onClick={submit} disabled={busy} style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2,
             padding: '11px 0', borderRadius: 10, border: 'none', cursor: busy ? 'default' : 'pointer',
-            background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', fontSize: 14, fontWeight: 600,
+            background: isCreate ? '#ffffff' : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+            color: isCreate ? '#000000' : '#fff', fontSize: 14, fontWeight: 600,
             opacity: busy ? 0.7 : 1,
           }}>
             {busy ? 'Please wait…' : isCreate ? 'Create Account' : 'Sign In'}
@@ -132,6 +135,7 @@ export default function LoginScreen() {
                 <button onClick={() => { setMode('create'); setError('') }} style={linkBtn}>Create an account</button></>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
