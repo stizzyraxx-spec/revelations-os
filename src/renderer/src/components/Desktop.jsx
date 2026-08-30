@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useOSStore } from '../store'
+import { APP_REGISTRY } from '../constants'
+import { getAppIcon } from './appIcons'
 import TopBar from './TopBar'
 import OrbLauncher from './OrbLauncher'
 import WindowManager from './WindowManager'
@@ -8,12 +10,29 @@ import Widgets from './Widgets'
 import BottomTaskbar, { TASKBAR_HEIGHT } from './BottomTaskbar'
 import horsemenLogo from '../assets/raxx-logo.png'
 import { WALLPAPERS, getSettings } from '../theme'
+import { X, Search } from 'lucide-react'
+
+const DESKTOP_ICONS_KEY = 'revos_desktop_icons'
+function loadDesktopIcons() {
+  try { return JSON.parse(localStorage.getItem(DESKTOP_ICONS_KEY) || '[]') } catch { return [] }
+}
+function saveDesktopIcons(ids) {
+  try { localStorage.setItem(DESKTOP_ICONS_KEY, JSON.stringify(ids)) } catch {}
+}
+
+const WALLPAPER_LABELS = { nebula: 'Nebula', cosmos: 'Cosmos', aurora: 'Aurora', void: 'Void' }
 
 export default function Desktop() {
-  const { windows, addNotification, openWindow, toggleOrbLauncher } = useOSStore()
+  const { windows, addNotification, openWindow, openSubscription, toggleOrbLauncher, customApps } = useOSStore()
   const [contextMenu, setContextMenu] = useState(null)
+  const [iconMenu, setIconMenu] = useState(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerQuery, setPickerQuery] = useState('')
   const [wallpaper, setWallpaper] = useState(() => getSettings().wallpaper || 'nebula')
+  const [desktopIcons, setDesktopIcons] = useState(loadDesktopIcons)
   const hasWindows = windows.filter(w => !w.minimized).length > 0
+
+  const allApps = [...APP_REGISTRY, ...customApps]
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -24,15 +43,49 @@ export default function Desktop() {
     return () => { clearTimeout(t); window.removeEventListener('revos:settings-changed', onSettings) }
   }, [])
 
+  const setBackground = (key) => {
+    const s = getSettings()
+    s.wallpaper = key
+    try { localStorage.setItem('revos_settings', JSON.stringify(s)) } catch {}
+    setWallpaper(key)
+    window.dispatchEvent(new CustomEvent('revos:settings-changed', { detail: { wallpaper: key } }))
+  }
+
+  const launchById = (id) => {
+    const app = allApps.find(a => a.id === id)
+    if (!app) return
+    if (app.free === false) { openSubscription(app); return }
+    openWindow({ appId: app.id, title: app.name, props: app.liveUrl ? { liveUrl: app.liveUrl, appId: app.id, appName: app.name } : {} })
+  }
+
+  const addIcon = (id) => {
+    setDesktopIcons(prev => {
+      const next = prev.includes(id) ? prev : [...prev, id]
+      saveDesktopIcons(next)
+      return next
+    })
+  }
+  const removeIcon = (id) => {
+    setDesktopIcons(prev => {
+      const next = prev.filter(x => x !== id)
+      saveDesktopIcons(next)
+      return next
+    })
+  }
 
   const handleContextMenu = (e) => {
     if (e.target === e.currentTarget || e.target.classList.contains('desktop-bg')) {
       e.preventDefault()
+      setIconMenu(null)
       setContextMenu({ x: e.clientX, y: e.clientY })
     }
   }
 
-  const handleClick = () => setContextMenu(null)
+  const handleClick = () => { setContextMenu(null); setIconMenu(null) }
+
+  const pickerApps = pickerQuery.trim()
+    ? allApps.filter(a => a.name.toLowerCase().includes(pickerQuery.toLowerCase()))
+    : allApps
 
   return (
     <div
@@ -40,8 +93,8 @@ export default function Desktop() {
       onContextMenu={handleContextMenu}
       onClick={handleClick}
     >
-      {/* ── Solid black background ── */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: '#000', pointerEvents: 'none' }} />
+      {/* ── Wallpaper background ── */}
+      <div className="desktop-bg" style={{ position: 'absolute', inset: 0, zIndex: 0, background: WALLPAPERS[wallpaper] || WALLPAPERS.nebula, transition: 'background 0.5s ease' }} />
 
       {/* Desktop center — horsemen logo, hidden when windows open */}
       <div style={{
@@ -63,6 +116,41 @@ export default function Desktop() {
             filter: 'drop-shadow(0 0 40px rgba(109,40,217,0.35)) drop-shadow(0 0 80px rgba(60,20,120,0.25))',
           }}
         />
+      </div>
+
+      {/* Desktop icons (saved app shortcuts) */}
+      <div style={{
+        position: 'absolute', top: 300, left: 12, zIndex: 5,
+        display: 'flex', flexDirection: 'column', flexWrap: 'wrap', maxHeight: 'calc(100vh - 380px)', gap: 4,
+        pointerEvents: hasWindows ? 'none' : 'all', opacity: hasWindows ? 0 : 1, transition: 'opacity 0.3s ease',
+      }}>
+        {desktopIcons.map(id => {
+          const app = allApps.find(a => a.id === id)
+          if (!app) return null
+          const Icon = getAppIcon(app.icon)
+          return (
+            <div
+              key={id}
+              onDoubleClick={() => launchById(id)}
+              onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu(null); setIconMenu({ id, x: e.clientX, y: e.clientY }) }}
+              title={`${app.name} — double-click to open`}
+              style={{
+                width: 84, padding: '10px 4px', borderRadius: 10, cursor: 'default',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <div style={{ width: 46, height: 46, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${app.color}44, ${app.color}99)`, border: `1px solid ${app.color}55` }}>
+                <Icon size={24} style={{ color: app.color }} />
+              </div>
+              <span style={{ fontSize: '0.68rem', color: '#fff', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                {app.name}
+              </span>
+            </div>
+          )
+        })}
       </div>
 
       {/* TopBar */}
@@ -92,14 +180,13 @@ export default function Desktop() {
       {/* Notification center */}
       <NotificationCenter />
 
-      {/* Footer — privacy & support links (only visible when no windows open) */}
+      {/* Footer — support link (only visible when no windows open) */}
       <div style={{
         position: 'absolute', bottom: TASKBAR_HEIGHT + 8, left: '50%', transform: 'translateX(-50%)',
         display: 'flex', gap: 16, zIndex: 6, pointerEvents: hasWindows ? 'none' : 'all',
         opacity: hasWindows ? 0 : 0.45, transition: 'opacity 0.4s ease',
       }}>
         {[
-          { label: 'Privacy Policy', appId: 'privacy', title: 'Privacy Policy' },
           { label: 'Support', appId: 'support', title: 'Support' },
         ].map(({ label, appId, title }) => (
           <button key={appId} onClick={() => openWindow({ appId, title, width: 780, height: 560 })}
@@ -110,34 +197,85 @@ export default function Desktop() {
         <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.7rem' }}>· RAXX BEATS STUDIOS LLC</span>
       </div>
 
+      {/* Desktop right-click menu */}
       {contextMenu && (
-        <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }}>
-          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'settings', title: 'Settings' }); setContextMenu(null) }}>
-            🖼 Change Wallpaper
+        <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x, minWidth: 210 }}>
+          <div className="context-menu-item" onClick={() => { setPickerOpen(true); setContextMenu(null) }}>
+            ➕ Add App to Desktop
           </div>
-          <div className="context-menu-item" onClick={() => { addNotification({ title: 'New Folder', body: 'Created on Desktop', type: 'success' }); setContextMenu(null) }}>
-            📁 New Folder
+          <div className="context-menu-separator" />
+          <div style={{ padding: '6px 12px 4px', fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Change Background</div>
+          <div style={{ display: 'flex', gap: 6, padding: '2px 12px 8px' }}>
+            {Object.keys(WALLPAPERS).map(key => (
+              <button
+                key={key}
+                title={WALLPAPER_LABELS[key]}
+                onClick={() => { setBackground(key); setContextMenu(null) }}
+                style={{
+                  width: 34, height: 24, borderRadius: 6, cursor: 'pointer',
+                  background: WALLPAPERS[key],
+                  border: `2px solid ${wallpaper === key ? 'var(--accent)' : 'rgba(255,255,255,0.2)'}`,
+                }}
+              />
+            ))}
           </div>
           <div className="context-menu-separator" />
           <div className="context-menu-item" onClick={() => { toggleOrbLauncher(); setContextMenu(null) }}>
             🚀 Open App Launcher
           </div>
-          <div className="context-menu-separator" />
           <div className="context-menu-item" onClick={() => { openWindow({ appId: 'calculator', title: 'Calculator', width: 440, height: 520 }); setContextMenu(null) }}>
             🧮 Calculator
           </div>
           <div className="context-menu-item" onClick={() => { openWindow({ appId: 'clock', title: 'Clock', width: 480, height: 560 }); setContextMenu(null) }}>
             🕐 Clock & Alarms
           </div>
-          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'calendar', title: 'Calendar', width: 780, height: 560 }); setContextMenu(null) }}>
-            📅 Calendar
-          </div>
-          <div className="context-menu-item" onClick={() => { openWindow({ appId: 'music', title: 'Music', width: 680, height: 480 }); setContextMenu(null) }}>
-            🎵 Music Player
-          </div>
           <div className="context-menu-separator" />
           <div className="context-menu-item" onClick={() => { openWindow({ appId: 'settings', title: 'Settings' }); setContextMenu(null) }}>
             ⚙️ System Settings
+          </div>
+        </div>
+      )}
+
+      {/* Desktop-icon right-click menu */}
+      {iconMenu && (
+        <div className="context-menu" style={{ top: iconMenu.y, left: iconMenu.x }} onClick={e => e.stopPropagation()}>
+          <div className="context-menu-item" onClick={() => { launchById(iconMenu.id); setIconMenu(null) }}>⇱ Open</div>
+          <div className="context-menu-separator" />
+          <div className="context-menu-item danger" onClick={() => { removeIcon(iconMenu.id); setIconMenu(null) }}>✕ Remove from Desktop</div>
+        </div>
+      )}
+
+      {/* App picker for "Add App to Desktop" */}
+      {pickerOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setPickerOpen(false); setPickerQuery('') } }}
+        >
+          <div style={{ width: 520, maxWidth: '90vw', maxHeight: '76vh', background: 'rgba(8,8,16,0.98)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px' }}>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Add App to Desktop</div>
+              <button onClick={() => { setPickerOpen(false); setPickerQuery('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 4 }}><X size={18} /></button>
+            </div>
+            <div style={{ position: 'relative', margin: '0 16px 12px' }}>
+              <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input autoFocus value={pickerQuery} onChange={e => setPickerQuery(e.target.value)} placeholder="Search apps..."
+                style={{ width: '100%', height: 38, paddingLeft: 36, paddingRight: 12, borderRadius: 19, fontSize: '0.85rem', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px 16px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, alignContent: 'start' }}>
+              {pickerApps.map(app => {
+                const Icon = getAppIcon(app.icon)
+                const already = desktopIcons.includes(app.id)
+                return (
+                  <button key={app.id} onClick={() => { addIcon(app.id); addNotification({ title: 'Added to Desktop', body: app.name, type: 'success' }) }} title={already ? 'Already on desktop' : `Add ${app.name}`}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 4px 8px', background: already ? 'rgba(109,40,217,0.18)' : 'rgba(255,255,255,0.04)', border: `1px solid ${already ? 'var(--border-accent)' : 'var(--border)'}`, borderRadius: 14, cursor: 'pointer', color: 'var(--text-primary)' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${app.color}44, ${app.color}99)`, border: `1px solid ${app.color}44` }}>
+                      <Icon size={20} style={{ color: app.color }} />
+                    </div>
+                    <span style={{ fontSize: '0.62rem', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>{app.name}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
       )}

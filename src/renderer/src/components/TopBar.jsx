@@ -269,10 +269,15 @@ export default function TopBar() {
           {fmtTime(now)}
         </div>
 
-        {/* User avatar */}
+        {/* User avatar + name */}
         <div style={{ position:'relative' }}>
-          <button onClick={()=>setUserMenuOpen(v=>!v)} style={{ width:26,height:26,borderRadius:'50%',background:'linear-gradient(135deg,var(--accent),var(--accent-2))',border:'2px solid var(--border-accent)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.7rem',fontWeight:700,color:'#fff' }}>
-            {initials(user.name)}
+          <button onClick={()=>setUserMenuOpen(v=>!v)} title="Account" style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', cursor:'pointer', padding:0 }}>
+            <div style={{ width:26,height:26,borderRadius:'50%',background:'linear-gradient(135deg,var(--accent),var(--accent-2))',border:'2px solid var(--border-accent)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.7rem',fontWeight:700,color:'#fff', flexShrink:0 }}>
+              {initials(user.name)}
+            </div>
+            <span style={{ fontSize:'0.78rem', fontWeight:500, color:'var(--text-primary)', whiteSpace:'nowrap', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis' }}>
+              {user.name}
+            </span>
           </button>
           {userMenuOpen && (
             <div className="glass-strong animate-fade-in-down" style={{ position:'absolute', right:0, top:32, width:210, borderRadius:14, overflow:'hidden', boxShadow:'var(--shadow-lg)', zIndex:9000 }}>
