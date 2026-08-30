@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, nativeTheme, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, session, nativeTheme, shell, globalShortcut } = require('electron')
 const path = require('path')
 const os = require('os')
 const fs = require('fs')
@@ -654,6 +654,27 @@ app.on('web-contents-created', (_, contents) => {
   })
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  createWindow()
+  // The window is frameless and fullscreen, so Windows shows no minimize or
+  // close control and provides no default way out. macOS users can still reach
+  // Mission Control / Cmd-Tab, but on Windows this would trap them — bind F11
+  // to toggle fullscreen and Ctrl+Shift+M to minimize.
+  if (IS_WIN) {
+    globalShortcut.register('F11', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setFullScreen(!mainWindow.isFullScreen())
+      }
+    })
+    globalShortcut.register('CommandOrControl+Shift+M', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setFullScreen(false)
+        mainWindow.minimize()
+      }
+    })
+  }
+})
+
+app.on('will-quit', () => globalShortcut.unregisterAll())
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
