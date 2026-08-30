@@ -60,8 +60,11 @@ export const useOSStore = create((set, get) => ({
     }
     const vw = window.innerWidth || 1280
     const vh = window.innerHeight || 800
-    const x = Math.max(0, Math.floor((vw - width) / 2) + (nextId % 5) * 12)
-    const y = Math.max(0, 80 + (nextId % 4) * 20)
+    // Center every window in the usable area (below the 40px top bar, above the
+    // 48px taskbar), so apps always open centered on screen.
+    const TOP = 40, BOTTOM = 48
+    const x = Math.max(0, Math.floor((vw - width) / 2))
+    const y = Math.max(TOP, Math.floor((vh - TOP - BOTTOM - height) / 2) + TOP)
     const newWin = {
       id: nextId,
       appId,

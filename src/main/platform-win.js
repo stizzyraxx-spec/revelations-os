@@ -22,14 +22,25 @@ async function batteryStatus(runCmd) {
   const script = `
 $b = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($null -eq $b) { '{}' } else {
-  $full = Get-CimInstance -Namespace root\\wmi -ClassName BatteryFullChargedCapacity -ErrorAction SilentlyContinue | Select-Object -First 1
-  $des  = Get-CimInstance -Namespace root\\wmi -ClassName BatteryStaticData -ErrorAction SilentlyContinue | Select-Object -First 1
+  # powercfg's battery report is the reliable source for design/full capacity
+  # and cycle count on Windows (WMI's BatteryStaticData is usually empty).
+  $design=$null; $full=$null; $cycles=$null
+  try {
+    $tmp = Join-Path $env:TEMP 'rev-batt.xml'
+    powercfg /batteryreport /XML /OUTPUT $tmp *> $null
+    if (Test-Path $tmp) {
+      [xml]$rep = Get-Content $tmp
+      $bt = $rep.BatteryReport.Batteries.Battery | Select-Object -First 1
+      if ($bt) { $design=[int64]$bt.DesignCapacity; $full=[int64]$bt.FullChargeCapacity; $cycles=[int]$bt.CycleCount }
+    }
+  } catch {}
   [pscustomobject]@{
     charge = $b.EstimatedChargeRemaining
     status = $b.BatteryStatus
     runtime = $b.EstimatedRunTime
-    maxCap = $(if ($full) { $full.FullChargedCapacity } else { $null })
-    designCap = $(if ($des) { $des.DesignedCapacity } else { $null })
+    maxCap = $full
+    designCap = $design
+    cycles = $cycles
   } | ConvertTo-Json -Compress
 }`
   const { out } = await ps(runCmd, script, 10000)
@@ -54,9 +65,9 @@ if ($null -eq $b) { '{}' } else {
       status: d.status === 1 ? 'discharging' : (charging ? 'charging' : 'charged'),
       timeRemaining,
       onAC,
-      cycleCount: null, // Windows does not expose this via WMI
+      cycleCount: (d.cycles != null && d.cycles > 0) ? d.cycles : null, // from powercfg report
       healthPct: (d.designCap && d.maxCap) ? Math.round((d.maxCap / d.designCap) * 100) : null,
-      tempC: null, // no reliable stock WMI source
+      tempC: null, // Windows does not expose battery temperature
     }
   } catch {
     return { percentage: null, status: 'unknown', timeRemaining: null, onAC: true, cycleCount: null, healthPct: null, tempC: null }
