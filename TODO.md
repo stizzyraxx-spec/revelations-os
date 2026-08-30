@@ -823,3 +823,5 @@
 - [x] **ISS-15** VERIFIED — SubscriptionModal passes `props: { liveUrl, appId, appName }`; WindowManager's RAXXLiveApp forwards `url={liveUrl}` to RAXXAppViewer. No missing prop.
 - [x] **ISS-16** (found 2026-06-11) Duplicate `border` key in VolumePanel mute-button style — dead `border: 'none'` removed; build is warning-free.
 - [ ] **2026-07-22 12:41:13** `48b58c6a` — push to gh
+- [ ] **2026-08-29 23:42:31** `89a840e8` — I need to build a .exe file for revelations os and push it to the gh repo for revelations
+- [ ] **2026-08-29 23:42:51** `89a840e8` — Please ensure that it works and that I can install it on a windows seamlessly with the same functionality as on my mac

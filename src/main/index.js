@@ -4,6 +4,13 @@ const os = require('os')
 const fs = require('fs')
 const { spawn } = require('child_process')
 
+const IS_WIN = process.platform === 'win32'
+// Windows implementations of the same IPC contracts (battery/volume/wifi/bt/fs).
+// Required unconditionally so the bundler inlines it — behind `IS_WIN &&` it is
+// left as an external require and the file is missing from the packaged app.
+// The module itself touches nothing platform-specific at load time.
+const win = require('./platform-win')
+
 // Security: disable remote debugging
 app.commandLine.appendSwitch('remote-debugging-port', '0')
 nativeTheme.themeSource = 'dark'
@@ -126,12 +133,25 @@ ipcMain.handle('app:getSystemInfo', async () => {
   }
 })
 
+// The renderer addresses paths with a leading `~`; resolve it against the real
+// home dir (path.resolve does not do this) and normalise separators so the
+// renderer's '/'-joined breadcrumbs work on Windows too.
+function expandHome(p) {
+  if (!p) return p
+  let s = String(p)
+  if (s === '~') return os.homedir()
+  if (s.startsWith('~/') || s.startsWith('~\\')) s = path.join(os.homedir(), s.slice(2))
+  return IS_WIN ? s.replace(/\//g, path.sep) : s
+}
+
 ipcMain.handle('fs:scanDirectory', async (event, dirPath) => {
   if (!rateOk('scandir')) return []
   const home = os.homedir()
-  const resolved = path.resolve(dirPath || home)
-  const allowed = [home, '/Applications', '/tmp', '/Users', '/']
-  if (!allowed.some(p => resolved.startsWith(p))) return []
+  const resolved = path.resolve(expandHome(dirPath) || home)
+  const allowed = IS_WIN ? win.fsAllowedRoots() : [home, '/Applications', '/tmp', '/Users', '/']
+  // Windows paths are case-insensitive, so compare case-folded there.
+  const probe = IS_WIN ? resolved.toLowerCase() : resolved
+  if (!allowed.some(p => probe.startsWith(IS_WIN ? p.toLowerCase() : p))) return []
   try {
     const entries = await fs.promises.readdir(resolved, { withFileTypes: true })
     const filtered = entries.filter(e => !e.name.startsWith('.') || dirPath === home)
@@ -156,8 +176,11 @@ ipcMain.handle('fs:scanDirectory', async (event, dirPath) => {
 ipcMain.handle('fs:readFile', async (event, filePath) => {
   if (!rateOk('readfile')) return null
   const home = os.homedir()
-  const resolved = path.resolve(filePath)
-  if (!resolved.startsWith(home)) return null
+  const resolved = path.resolve(expandHome(filePath))
+  const inHome = IS_WIN
+    ? resolved.toLowerCase().startsWith(home.toLowerCase())
+    : resolved.startsWith(home)
+  if (!inHome) return null
   try {
     const stat = await fs.promises.stat(resolved)
     if (stat.size > 10 * 1024 * 1024) return null
@@ -165,12 +188,23 @@ ipcMain.handle('fs:readFile', async (event, filePath) => {
   } catch { return null }
 })
 
+// Spawn a Node script using Electron's bundled Node instead of a `node` on
+// PATH — a packaged Windows install has no standalone Node, and this keeps the
+// mac and Windows behaviour identical.
+function spawnNode(scriptArgs, opts = {}) {
+  return spawn(process.execPath, scriptArgs, {
+    ...opts,
+    env: { ...process.env, ...opts.env, ELECTRON_RUN_AS_NODE: '1' },
+    windowsHide: true,
+  })
+}
+
 ipcMain.handle('proverbs:run', async (event, cmd) => {
   if (!rateOk('proverbs')) return 'Rate limit exceeded'
   const safe = String(cmd || '').slice(0, 200).replace(/[;&|`$]/g, '')
   return new Promise(resolve => {
     const args = safe.split(' ').filter(Boolean)
-    const proc = spawn('node', ['index.js', ...args], {
+    const proc = spawnNode(['index.js', ...args], {
       cwd: path.join(os.homedir(), 'proverbs'),
       timeout: 10000,
     })
@@ -178,7 +212,7 @@ ipcMain.handle('proverbs:run', async (event, cmd) => {
     proc.stdout.on('data', d => { out += d.toString() })
     proc.stderr.on('data', d => { out += d.toString() })
     proc.on('close', () => resolve(out || '(no output)'))
-    proc.on('error', () => resolve('Proverbs CLI not found at ~/proverbs\nMake sure /Users/Stizzop/proverbs/index.js exists'))
+    proc.on('error', () => resolve(`Proverbs CLI not found\nMake sure ${path.join(os.homedir(), 'proverbs', 'index.js')} exists`))
     setTimeout(() => { proc.kill(); resolve(out || 'Command timed out after 9s') }, 9000)
   })
 })
@@ -226,6 +260,7 @@ async function findBlueutil() {
 }
 
 ipcMain.handle('bt:status', async () => {
+  if (IS_WIN) return win.btStatus(runCmd)
   const { out } = await runCmd('system_profiler', ['SPBluetoothDataType', '-json'], 10000)
   const parsed = parseBTJson(out)
   const blueutilPath = await findBlueutil()
@@ -233,6 +268,7 @@ ipcMain.handle('bt:status', async () => {
 })
 
 ipcMain.handle('bt:toggle', async (event, on) => {
+  if (IS_WIN) return win.BT_UNSUPPORTED
   const p = await findBlueutil()
   if (!p) return { ok: false, error: 'blueutil not installed' }
   const { code } = await runCmd(p, ['-p', on ? '1' : '0'])
@@ -240,6 +276,7 @@ ipcMain.handle('bt:toggle', async (event, on) => {
 })
 
 ipcMain.handle('bt:connect', async (event, address) => {
+  if (IS_WIN) return win.BT_UNSUPPORTED
   const p = await findBlueutil()
   if (!p) return { ok: false, error: 'blueutil not installed' }
   const { code, err } = await runCmd(p, ['--connect', address], 20000)
@@ -247,6 +284,7 @@ ipcMain.handle('bt:connect', async (event, address) => {
 })
 
 ipcMain.handle('bt:disconnect', async (event, address) => {
+  if (IS_WIN) return win.BT_UNSUPPORTED
   const p = await findBlueutil()
   if (!p) return { ok: false, error: 'blueutil not installed' }
   const { code, err } = await runCmd(p, ['--disconnect', address], 10000)
@@ -276,6 +314,7 @@ function parseIOReg(out) {
 }
 
 ipcMain.handle('battery:status', () => cached('battery', 5000, async () => {
+  if (IS_WIN) return win.batteryStatus(runCmd)
   const [pmOut, ioOut] = await Promise.all([
     runCmd('pmset', ['-g', 'batt']),
     runCmd('ioreg', ['-rn', 'AppleSmartBattery']),
@@ -295,6 +334,7 @@ ipcMain.handle('battery:status', () => cached('battery', 5000, async () => {
 
 // ─── Volume IPC ──────────────────────────────────────────────────────────────
 ipcMain.handle('volume:get', () => cached('volume', 3000, async () => {
+  if (IS_WIN) return win.volumeGet(runCmd)
   const [volOut, muteOut] = await Promise.all([
     runCmd('osascript', ['-e', 'output volume of (get volume settings)']),
     runCmd('osascript', ['-e', 'output muted of (get volume settings)']),
@@ -306,6 +346,7 @@ ipcMain.handle('volume:get', () => cached('volume', 3000, async () => {
 }))
 
 ipcMain.handle('volume:set', async (event, level) => {
+  if (IS_WIN) { const r = await win.volumeSet(runCmd, level); _cache.delete('volume'); return r }
   const clamped = Math.max(0, Math.min(100, Math.round(level)))
   await runCmd('osascript', ['-e', `set volume output volume ${clamped}`])
   _cache.delete('volume')
@@ -313,6 +354,7 @@ ipcMain.handle('volume:set', async (event, level) => {
 })
 
 ipcMain.handle('volume:mute', async (event, mute) => {
+  if (IS_WIN) { const r = await win.volumeMute(runCmd, mute); _cache.delete('volume'); return r }
   const cmd = mute ? 'set volume with output muted' : 'set volume without output muted'
   await runCmd('osascript', ['-e', cmd])
   _cache.delete('volume')
@@ -325,7 +367,10 @@ const WIFI_IF = 'en0'
 
 function runCmd(bin, args, timeoutMs = 12000) {
   return new Promise(resolve => {
-    const proc = spawn(bin, args)
+    // On Windows the targets (netsh, powershell) resolve through PATHEXT, which
+    // bare spawn does not apply — hence shell:true there. windowsHide keeps the
+    // console window from flashing on every poll.
+    const proc = spawn(bin, args, IS_WIN ? { shell: true, windowsHide: true } : {})
     let out = '', err = ''
     proc.stdout.on('data', d => { out += d.toString() })
     proc.stderr.on('data', d => { err += d.toString() })
@@ -352,18 +397,21 @@ function parseAirportScan(raw) {
 }
 
 ipcMain.handle('wifi:status', async () => {
+  if (IS_WIN) return win.wifiStatus(runCmd)
   const { out } = await runCmd('networksetup', ['-getairportnetwork', WIFI_IF])
   const m = out.match(/Current Wi-Fi Network:\s*(.+)/)
   return { connected: !!m, ssid: m ? m[1].trim() : null }
 })
 
 ipcMain.handle('wifi:scan', async () => {
+  if (IS_WIN) return win.wifiScan(runCmd)
   const { out, err } = await runCmd(AIRPORT, ['-s'], 15000)
   if (!out.trim()) return { ok: false, networks: [], error: err }
   return { ok: true, networks: parseAirportScan(out) }
 })
 
 ipcMain.handle('wifi:connect', async (event, ssid, password) => {
+  if (IS_WIN) return win.wifiConnect(runCmd, ssid, password)
   const args = ['-setairportnetwork', WIFI_IF, ssid]
   if (password) args.push(password)
   const { code, err } = await runCmd('networksetup', args, 30000)
@@ -371,6 +419,7 @@ ipcMain.handle('wifi:connect', async (event, ssid, password) => {
 })
 
 ipcMain.handle('wifi:disconnect', async () => {
+  if (IS_WIN) return win.wifiDisconnect(runCmd)
   const { code, err } = await runCmd(AIRPORT, ['-z'])
   return { ok: code === 0, error: err }
 })
@@ -474,9 +523,9 @@ ipcMain.handle('rev:update', async (event, issue) => {
     const args = ['--issue', prompt, '--repos', targetRepos.join(','), '--mode', 'fix']
 
     // Try proverbs first with structured args, fallback to simple stdin
-    const proc = spawn('node', [proverbs, ...args], {
+    const proc = spawnNode([proverbs, ...args], {
       cwd: path.join(home, 'proverbs'),
-      env: { ...process.env, REV_ISSUE: issue, REV_REPOS: targetRepos.join(','), REV_MODE: 'fix' },
+      env: { REV_ISSUE: issue, REV_REPOS: targetRepos.join(','), REV_MODE: 'fix' },
     })
 
     proc.stdout.on('data', d => {
@@ -525,13 +574,20 @@ ipcMain.handle('rev:rebuild', async () => {
 
   return new Promise(resolve => {
     let output = ''
-    const build = spawn('node', [evite, 'build'], { cwd: osDir })
+    const build = spawnNode([evite, 'build'], { cwd: osDir })
     build.stdout.on('data', d => { const t = d.toString(); output += t; sendProgress(t) })
     build.stderr.on('data', d => { const t = d.toString(); output += t; sendProgress(t) })
     build.on('close', code => {
       if (code !== 0) {
         sendProgress(`\x1b[31m[rev] Build failed (${code})\x1b[0m\n`)
         resolve({ ok: false, output })
+        return
+      }
+      // On Windows there is no .app bundle to swap, and a running .exe cannot
+      // overwrite itself — the rebuilt sources load on the next launch instead.
+      if (IS_WIN) {
+        sendProgress(`\x1b[32m[rev] Build succeeded — restart Revelations to apply.\x1b[0m\n`)
+        resolve({ ok: true, output: output + '\nBuild complete — restart to apply.' })
         return
       }
       sendProgress(`\x1b[32m[rev] Build succeeded — copying to /Applications...\x1b[0m\n`)

@@ -3,6 +3,10 @@ import { Home, ChevronRight, Folder, File, ArrowLeft, ArrowRight, RefreshCw, Gri
 import { categorizeFile, sortFiles } from '../ai/LocalAI'
 import { useOSStore } from '../store'
 
+// Windows names the video folder "Videos" and has no /Applications; everything
+// else maps 1:1 between the two platforms.
+const IS_WIN = typeof navigator !== 'undefined' && /win/i.test(navigator.userAgentData?.platform || navigator.platform || '')
+
 const QUICK_ACCESS = [
   { label: 'Home', path: '~', icon: Home },
   { label: 'Desktop', path: '~/Desktop', icon: HardDrive },
@@ -10,8 +14,12 @@ const QUICK_ACCESS = [
   { label: 'Downloads', path: '~/Downloads', icon: Download },
   { label: 'Music', path: '~/Music', icon: Music },
   { label: 'Pictures', path: '~/Pictures', icon: Image },
-  { label: 'Movies', path: '~/Movies', icon: Video },
-  { label: 'Applications', path: '/Applications', icon: Grid },
+  IS_WIN
+    ? { label: 'Videos', path: '~/Videos', icon: Video }
+    : { label: 'Movies', path: '~/Movies', icon: Video },
+  IS_WIN
+    ? { label: 'This PC', path: 'C:\\', icon: Grid }
+    : { label: 'Applications', path: '/Applications', icon: Grid },
 ]
 
 function formatSize(bytes) {
