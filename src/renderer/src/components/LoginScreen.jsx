@@ -118,8 +118,8 @@ export default function LoginScreen() {
           <button onClick={submit} disabled={busy} style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2,
             padding: '11px 0', borderRadius: 10, border: 'none', cursor: busy ? 'default' : 'pointer',
-            background: isCreate ? '#ffffff' : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-            color: isCreate ? '#000000' : '#fff', fontSize: 14, fontWeight: 600,
+            background: '#ffffff',
+            color: '#000000', fontSize: 14, fontWeight: 600,
             opacity: busy ? 0.7 : 1,
           }}>
             {busy ? 'Please wait…' : isCreate ? 'Create Account' : 'Sign In'}
@@ -161,4 +161,4 @@ function Field({ icon: Icon, placeholder, value, onChange, onKeyDown, type = 'te
 }
 
 const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', display: 'flex', padding: 0 }
-const linkBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#a78bfa', fontSize: '0.76rem', fontWeight: 600, padding: 0, textDecoration: 'underline' }
+const linkBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#ffffff', fontSize: '0.76rem', fontWeight: 600, padding: 0, textDecoration: 'underline' }

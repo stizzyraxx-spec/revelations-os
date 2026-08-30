@@ -5,6 +5,7 @@ import FileManager from './FileManager'
 import Settings from './Settings'
 import Terminal from './Terminal'
 import TerminalX from './TerminalX'
+import Scrolls from './Scrolls'
 import Notepad from './Notepad'
 import PCFixScan from './PCFixScan'
 import AppStore from './AppStore'
@@ -35,6 +36,7 @@ const APP_COMPONENTS = {
   settings: Settings,
   terminal: Terminal,
   terminalx: TerminalX,
+  scrolls: Scrolls,
   notepad: Notepad,
   pcscanfix: PCFixScan,
   appstore: AppStore,

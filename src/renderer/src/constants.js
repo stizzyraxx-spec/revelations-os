@@ -26,6 +26,7 @@ export const APP_REGISTRY = [
   { id: 'calconnect', name: 'Calendar Sync', icon: 'CalendarDays', color: '#6366f1', category: 'system', free: true, desc: 'Connect Google Calendar, iCloud, Outlook and ICS feeds' },
   { id: 'ephesians', name: 'Ephesians', icon: 'Globe', color: '#2563eb', category: 'system', free: true, desc: 'Revelations OS Web Browser — Chromium-powered' },
   { id: 'files', name: 'Files', icon: 'Folder', color: '#d97706', category: 'system', free: true, desc: 'File Manager' },
+  { id: 'scrolls', name: 'Scrolls', icon: 'ScrollText', color: '#d97706', category: 'system', free: true, desc: 'File explorer — browse locations and search your machine' },
   { id: 'settings', name: 'Settings', icon: 'Settings2', color: '#6d28d9', category: 'system', free: true, desc: 'System Preferences' },
   { id: 'terminal', name: 'Terminal', icon: 'TerminalSquare', color: '#059669', category: 'system', free: true, desc: 'Developer Terminal + Proverbs' },
   { id: 'terminalx', name: 'Terminal X', icon: 'TerminalSquare', color: '#10b981', category: 'system', free: true, desc: 'Real system shell — runs actual PowerShell commands' },
