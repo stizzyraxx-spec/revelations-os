@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import horsemenLogo from '../assets/raxx-logo.png'
+import whiteHorse from '../assets/white-horse.png'
 import {
   Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store,
   FileStack, Calculator, ShoppingBag, Music2, Scale, AlertTriangle, Heart,
@@ -30,7 +31,7 @@ export const TASKBAR_HEIGHT = 48
 
 const PINNED_KEY = 'revos_taskbar_pinned'
 // The default apps that sit on the taskbar like the Windows navbar.
-const DEFAULT_PINNED = ['ephesians', 'files', 'terminal', 'calculator', 'music', 'settings']
+const DEFAULT_PINNED = ['ephesians', 'bible', 'files', 'notepad', 'terminal', 'calculator', 'music', 'settings']
 
 function loadPinned() {
   try {
@@ -189,13 +190,13 @@ export default function BottomTaskbar() {
         background: 'rgba(6,6,12,0.94)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid rgba(255,255,255,0.08)',
       }}>
-        {/* Start button — Revelations icon, far left */}
+        {/* Start button — white horse emblem, far left */}
         <button
           ref={btnRef}
           onClick={() => setStartOpen((v) => !v)}
           title="Start — All Applications"
           style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 38,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 44,
             borderRadius: 10, cursor: 'pointer', flexShrink: 0,
             background: startOpen ? 'rgba(109,40,217,0.35)' : 'rgba(255,255,255,0.04)',
             border: `1px solid ${startOpen ? 'var(--border-accent)' : 'rgba(255,255,255,0.08)'}`,
@@ -204,8 +205,27 @@ export default function BottomTaskbar() {
           onMouseEnter={(e) => { if (!startOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.09)' }}
           onMouseLeave={(e) => { if (!startOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
         >
-          <img src={horsemenLogo} alt="Start" style={{ width: 26, height: 26, objectFit: 'contain' }} />
+          <img src={whiteHorse} alt="Start" style={{ height: 40, objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.35))' }} />
         </button>
+
+        {/* Search bar */}
+        <div
+          onClick={() => setStartOpen(true)}
+          title="Search apps"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 14px', flexShrink: 0,
+            width: 220, maxWidth: '28vw', borderRadius: 18, cursor: 'text',
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+            transition: 'background 0.15s, border-color 0.15s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+        >
+          <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            Search apps
+          </span>
+        </div>
 
         <div style={{ width: 1, height: 26, background: 'rgba(255,255,255,0.1)', margin: '0 4px', flexShrink: 0 }} />
 
@@ -224,7 +244,7 @@ export default function BottomTaskbar() {
                 onClick={() => handleTaskClick(item)}
                 title={label}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 7, height: 38, padding: '0 12px', maxWidth: 180,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 38,
                   borderRadius: 9, cursor: 'pointer', flexShrink: 0, position: 'relative',
                   background: isActive ? `linear-gradient(135deg, ${color}44, ${color}77)` : 'rgba(255,255,255,0.04)',
                   border: `1px solid ${isActive ? color + '88' : 'rgba(255,255,255,0.07)'}`,
@@ -233,10 +253,7 @@ export default function BottomTaskbar() {
                 onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.09)' }}
                 onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
               >
-                <IconComp size={18} color={isActive ? '#fff' : color} style={{ flexShrink: 0 }} />
-                <span style={{ fontSize: 12, color: isActive ? '#fff' : 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {label}
-                </span>
+                <IconComp size={20} color={isActive ? '#fff' : color} style={{ flexShrink: 0 }} />
                 {/* Running indicator */}
                 {isOpen && (
                   <span style={{
