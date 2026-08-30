@@ -1,7 +1,7 @@
 {
   "name": "revelations-os",
-  "version": "1.0.12",
-  "description": "Revelations OS \u2014 Ultimate Business Desktop",
+  "version": "1.0.13",
+  "description": "Revelations OS — Ultimate Business Desktop",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -35,7 +35,7 @@
   "build": {
     "appId": "com.raxxbeats.revelations-os",
     "productName": "Revelations",
-    "copyright": "Copyright \u00a9 2025 Revelations OS",
+    "copyright": "Copyright © 2025 Revelations OS",
     "icon": "resources/icon",
     "files": [
       "out/**/*",

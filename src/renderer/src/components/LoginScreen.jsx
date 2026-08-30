@@ -87,59 +87,50 @@ export default function LoginScreen() {
     }}>
       <img src={raxxLogo} alt="Revelations OS" style={{ width: 190, maxWidth: '46vw', flexShrink: 0, filter: 'drop-shadow(0 0 40px rgba(255,120,40,0.28)) drop-shadow(0 0 90px rgba(200,40,10,0.2))' }} />
 
-      <div style={{ width: 380, maxWidth: '90vw', flexShrink: 0 }}>
-        <div style={{
-          background: 'rgba(10,6,6,0.72)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-          border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, boxShadow: '0 28px 72px rgba(0,0,0,0.6)',
-          padding: '26px 26px 22px', display: 'flex', flexDirection: 'column', gap: 12,
+      <div style={{ width: 380, maxWidth: '90vw', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>
+          {isCreate ? 'Create your account' : 'Sign in to continue'}
+        </div>
+
+        {isCreate && (
+          <>
+            <Field icon={UserCircle} placeholder="Full name" value={f.name} onChange={set('name')} onKeyDown={onKeyDown} inputRef={firstInput} />
+            <Field icon={Mail} placeholder="Email" type="email" value={f.email} onChange={set('email')} onKeyDown={onKeyDown} />
+            <Field icon={Phone} placeholder="Phone (optional)" value={f.phone} onChange={set('phone')} onKeyDown={onKeyDown} />
+          </>
+        )}
+
+        <Field icon={User} placeholder="Username" value={f.username} onChange={set('username')} onKeyDown={onKeyDown} inputRef={isCreate ? undefined : firstInput} error={!!error} />
+
+        <Field
+          icon={Lock} placeholder={isCreate ? 'Create password' : 'Password'} value={f.password} onChange={set('password')} onKeyDown={onKeyDown}
+          type={show ? 'text' : 'password'} error={!!error}
+          trailing={<button onClick={() => setShow((v) => !v)} tabIndex={-1} style={iconBtn}>{show ? <EyeOff size={15} /> : <Eye size={15} />}</button>}
+        />
+
+        {isCreate && (
+          <Field icon={Lock} placeholder="Confirm password" type={show ? 'text' : 'password'} value={f.confirm} onChange={set('confirm')} onKeyDown={onKeyDown} />
+        )}
+
+        {error && <div style={{ color: '#f87171', fontSize: '0.76rem', textAlign: 'center' }}>{error}</div>}
+
+        <button onClick={submit} disabled={busy} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2,
+          padding: '11px 0', borderRadius: 10, border: 'none', cursor: busy ? 'default' : 'pointer',
+          background: '#ffffff', color: '#000000', fontSize: 14, fontWeight: 600, opacity: busy ? 0.7 : 1,
         }}>
-          <div style={{ textAlign: 'center', marginBottom: 2 }}>
-            <div style={{ fontFamily: '"Times New Roman", Times, serif', fontSize: '1.6rem', fontWeight: 700, color: '#fff', letterSpacing: '0.04em' }}>Revelations</div>
-            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 3 }}>
-              {isCreate ? 'Create your account' : 'Sign in to continue'}
-            </div>
-          </div>
+          {busy ? 'Please wait…' : isCreate ? 'Create Account' : 'Sign In'}
+          {!busy && <ArrowRight size={16} />}
+        </button>
 
-          {isCreate && (
-            <>
-              <Field icon={UserCircle} placeholder="Full name" value={f.name} onChange={set('name')} onKeyDown={onKeyDown} inputRef={firstInput} />
-              <Field icon={Mail} placeholder="Email" type="email" value={f.email} onChange={set('email')} onKeyDown={onKeyDown} />
-              <Field icon={Phone} placeholder="Phone (optional)" value={f.phone} onChange={set('phone')} onKeyDown={onKeyDown} />
-            </>
+        <div style={{ textAlign: 'center', fontSize: '0.76rem', color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+          {isCreate ? (
+            <>Already have an account?{' '}
+              <button onClick={() => { setMode('signin'); setError('') }} style={linkBtn}>Log in</button></>
+          ) : (
+            <>New here?{' '}
+              <button onClick={() => { setMode('create'); setError('') }} style={linkBtn}>Create an account</button></>
           )}
-
-          <Field icon={User} placeholder="Username" value={f.username} onChange={set('username')} onKeyDown={onKeyDown} inputRef={isCreate ? undefined : firstInput} error={!!error} />
-
-          <Field
-            icon={Lock} placeholder={isCreate ? 'Create password' : 'Password'} value={f.password} onChange={set('password')} onKeyDown={onKeyDown}
-            type={show ? 'text' : 'password'} error={!!error}
-            trailing={<button onClick={() => setShow((v) => !v)} tabIndex={-1} style={iconBtn}>{show ? <EyeOff size={15} /> : <Eye size={15} />}</button>}
-          />
-
-          {isCreate && (
-            <Field icon={Lock} placeholder="Confirm password" type={show ? 'text' : 'password'} value={f.confirm} onChange={set('confirm')} onKeyDown={onKeyDown} />
-          )}
-
-          {error && <div style={{ color: '#f87171', fontSize: '0.76rem', textAlign: 'center' }}>{error}</div>}
-
-          <button onClick={submit} disabled={busy} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2,
-            padding: '11px 0', borderRadius: 10, border: 'none', cursor: busy ? 'default' : 'pointer',
-            background: '#ffffff', color: '#000000', fontSize: 14, fontWeight: 600, opacity: busy ? 0.7 : 1,
-          }}>
-            {busy ? 'Please wait…' : isCreate ? 'Create Account' : 'Sign In'}
-            {!busy && <ArrowRight size={16} />}
-          </button>
-
-          <div style={{ textAlign: 'center', fontSize: '0.76rem', color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
-            {isCreate ? (
-              hasAccounts() && <>Already have an account?{' '}
-                <button onClick={() => { setMode('signin'); setError('') }} style={linkBtn}>Sign in</button></>
-            ) : (
-              <>New here?{' '}
-                <button onClick={() => { setMode('create'); setError('') }} style={linkBtn}>Create an account</button></>
-            )}
-          </div>
         </div>
       </div>
     </div>
@@ -148,7 +139,16 @@ export default function LoginScreen() {
 
 function Field({ icon: Icon, placeholder, value, onChange, onKeyDown, type = 'text', trailing, inputRef, error }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.06)', border: `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.14)'}`, borderRadius: 10, padding: '10px 12px' }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8, borderRadius: 10, padding: '10px 12px',
+      // Carved into the background: dark well + inner top shadow, lit only along
+      // the bottom lip so the field reads as recessed rather than raised.
+      background: 'rgba(0,0,0,0.34)',
+      border: `1px solid ${error ? 'rgba(239,68,68,0.45)' : 'rgba(0,0,0,0.45)'}`,
+      boxShadow: error
+        ? 'inset 0 2px 6px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(239,68,68,0.25), 0 1px 0 rgba(255,150,90,0.10)'
+        : 'inset 0 2px 6px rgba(0,0,0,0.6), inset 0 1px 1px rgba(0,0,0,0.5), 0 1px 0 rgba(255,150,90,0.10)',
+    }}>
       <Icon size={15} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
       <input ref={inputRef} type={type} value={value} onChange={onChange} onKeyDown={onKeyDown} placeholder={placeholder}
         style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: 14, minWidth: 0 }} />
