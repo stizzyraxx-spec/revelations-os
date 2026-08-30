@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import { getAppIcon } from './appIcons'
+import AppTile from './AppTile'
 import TopBar from './TopBar'
 import OrbLauncher from './OrbLauncher'
 import WindowManager from './WindowManager'
@@ -281,16 +282,16 @@ export default function Desktop() {
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px 16px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, alignContent: 'start' }}>
               {pickerApps.map(app => {
-                const Icon = getAppIcon(app.icon)
                 const already = desktopIcons.includes(app.id)
                 return (
-                  <button key={app.id} onClick={() => { addIcon(app.id); addNotification({ title: 'Added to Desktop', body: app.name, type: 'success' }) }} title={already ? 'Already on desktop' : `Add ${app.name}`}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 4px 8px', background: already ? 'rgba(109,40,217,0.18)' : 'rgba(255,255,255,0.04)', border: `1px solid ${already ? 'var(--border-accent)' : 'var(--border)'}`, borderRadius: 14, cursor: 'pointer', color: 'var(--text-primary)' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${app.color}44, ${app.color}99)`, border: `1px solid ${app.color}44` }}>
-                      <Icon size={20} style={{ color: app.color }} />
-                    </div>
-                    <span style={{ fontSize: '0.62rem', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>{app.name}</span>
-                  </button>
+                  <AppTile
+                    key={app.id}
+                    app={app}
+                    size="sm"
+                    title={already ? 'Already on desktop' : `Add ${app.name}`}
+                    onClick={() => { addIcon(app.id); addNotification({ title: 'Added to Desktop', body: app.name, type: 'success' }) }}
+                    badge={already ? <span style={{ fontSize: '0.55rem', color: '#6ee7b7' }}>✓ on desktop</span> : null}
+                  />
                 )
               })}
             </div>

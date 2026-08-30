@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Search, Star, Download, ExternalLink, Shield, Zap, Users, TrendingUp } from 'lucide-react'
 import { APP_REGISTRY } from '../constants'
 import { getAppIcon } from './appIcons'
+import AppTile from './AppTile'
 import { useOSStore } from '../store'
 import Fuse from 'fuse.js'
 
@@ -159,15 +160,24 @@ export default function AppStore() {
           ))}
         </div>
 
-        {/* App list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* App grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
           {results.map((app) => (
-            <AppRow key={app.id} app={app} rating={RATINGS[app.id]} onDetail={() => setDetail(app)} onOpen={() => handleOpen(app)} />
+            <AppTile
+              key={app.id}
+              app={app}
+              size="md"
+              onClick={() => handleOpen(app)}
+              onContextMenu={(e) => { e.preventDefault(); setDetail(app) }}
+              badge={!app.free ? (
+                <span style={{ fontSize: '0.58rem', color: 'var(--accent-gold)', background: 'rgba(245,158,11,0.12)', padding: '1px 6px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)' }}>{app.price}</span>
+              ) : null}
+            />
           ))}
-          {results.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No apps found</div>
-          )}
         </div>
+        {results.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No apps found</div>
+        )}
       </div>
 
       {/* Stats footer */}

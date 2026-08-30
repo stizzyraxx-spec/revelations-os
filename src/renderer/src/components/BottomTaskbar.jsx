@@ -3,6 +3,7 @@ import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import horsemenLogo from '../assets/raxx-logo.png'
 import whiteHorse from '../assets/white-horse.png'
+import AppTile from './AppTile'
 import {
   Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store,
   FileStack, Calculator, ShoppingBag, Music2, Scale, AlertTriangle, Heart,
@@ -150,35 +151,19 @@ export default function BottomTaskbar() {
 
           {/* App grid */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px 16px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, alignContent: 'start' }}>
-            {filteredApps.map((app) => {
-              const IconComp = ICON_MAP[app.icon] || Globe
-              return (
-                <button
-                  key={app.id}
-                  onClick={() => handleStartLaunch(app)}
-                  title={app.desc}
-                  style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 4px 8px',
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 14,
-                    cursor: 'pointer', transition: 'var(--transition)', color: 'var(--text-primary)',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(109,40,217,0.18)'; e.currentTarget.style.borderColor = 'var(--border-accent)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'var(--border)' }}
-                >
-                  <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${app.color}44, ${app.color}99)`, border: `1px solid ${app.color}44` }}>
-                    <IconComp size={20} color={app.color} />
-                  </div>
-                  <span style={{ fontSize: '0.62rem', fontWeight: 500, textAlign: 'center', lineHeight: 1.25, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
-                    {app.name}
+            {filteredApps.map((app) => (
+              <AppTile
+                key={app.id}
+                app={app}
+                size="sm"
+                onClick={() => handleStartLaunch(app)}
+                badge={!app.free ? (
+                  <span style={{ fontSize: '0.55rem', color: 'var(--accent-gold)', background: 'rgba(245,158,11,0.12)', padding: '1px 5px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)' }}>
+                    {app.price}
                   </span>
-                  {!app.free && (
-                    <span style={{ fontSize: '0.55rem', color: 'var(--accent-gold)', background: 'rgba(245,158,11,0.12)', padding: '1px 5px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)' }}>
-                      {app.price}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+                ) : null}
+              />
+            ))}
             {filteredApps.length === 0 && (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: 24 }}>No apps found</div>
             )}

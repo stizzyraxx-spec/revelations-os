@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
+import AppTile from './AppTile'
 import horsemenLogo from '../assets/raxx-logo.png'
 import {
   Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store,
@@ -277,37 +278,17 @@ export default function OrbLauncher() {
         }}>
           {filtered.map(app => {
             const isFolder = app.id === BUSINESS_FOLDER.id
-            const IconComp = ICON_MAP[app.icon] || Globe
+            const badge = isFolder ? (
+              <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
+                {APP_REGISTRY.filter(a => !a.free).length} apps
+              </span>
+            ) : !app.free ? (
+              <span style={{ fontSize: '0.6rem', color: 'var(--accent-gold)', background: 'rgba(245,158,11,0.12)', padding: '1px 5px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)' }}>
+                {app.price}
+              </span>
+            ) : null
             return (
-              <button
-                key={app.id}
-                onClick={() => handleAppClick(app)}
-                title={app.desc}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                  padding: '14px 6px 10px',
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)',
-                  borderRadius: 16, cursor: 'pointer', transition: 'var(--transition)', color: 'var(--text-primary)',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(109,40,217,0.18)'; e.currentTarget.style.borderColor = 'var(--border-accent)'; e.currentTarget.style.transform = 'scale(1.05)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'scale(1)' }}
-              >
-                <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${app.color}44, ${app.color}99)`, border: `1px solid ${app.color}44` }}>
-                  <IconComp size={22} color={app.color} />
-                </div>
-                <span style={{ fontSize: '0.68rem', fontWeight: 500, textAlign: 'center', lineHeight: 1.3, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
-                  {app.name}
-                </span>
-                {isFolder ? (
-                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
-                    {APP_REGISTRY.filter(a => !a.free).length} apps
-                  </span>
-                ) : !app.free && (
-                  <span style={{ fontSize: '0.6rem', color: 'var(--accent-gold)', background: 'rgba(245,158,11,0.12)', padding: '1px 5px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)' }}>
-                    {app.price}
-                  </span>
-                )}
-              </button>
+              <AppTile key={app.id} app={app} size="md" onClick={() => handleAppClick(app)} badge={badge} />
             )
           })}
         </div>
