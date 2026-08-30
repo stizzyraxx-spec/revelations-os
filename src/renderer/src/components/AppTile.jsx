@@ -26,10 +26,10 @@ export default function AppTile({ app, onClick, onContextMenu, size = 'md', badg
       onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.background = 'linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))' }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.background = 'linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))' }}
     >
-      {/* Glowing vibrant icon */}
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: dims.icon + 14, height: dims.icon + 14 }}>
-        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: `radial-gradient(circle, ${color}66, transparent 68%)`, filter: 'blur(4px)' }} />
-        <Icon size={dims.icon} color={color} strokeWidth={2.1} style={{ position: 'relative', filter: `drop-shadow(0 2px 5px ${color}aa) drop-shadow(0 0 10px ${color}66)` }} />
+      {/* Filled, vibrant, glowing icon in the app's colour */}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: dims.icon + 16, height: dims.icon + 16 }}>
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: `radial-gradient(circle, ${color}99, ${color}33 45%, transparent 70%)`, filter: 'blur(3px)' }} />
+        <Icon size={dims.icon} color={color} fill={color} strokeWidth={1.5} style={{ position: 'relative', filter: `drop-shadow(0 2px 6px ${color}cc) drop-shadow(0 0 14px ${color}88)` }} />
       </div>
       <span style={{ fontSize: dims.font, fontWeight: 600, color: '#fff', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
         {app.name}

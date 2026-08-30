@@ -138,21 +138,50 @@ export default function LoginCinematic({ onArrived, phase }) {
       return l
     })
 
-    // ── Rising embers (fire & brimstone) ──────────────────────────────────────
-    const EMBERS = 340
-    const emberPos = new Float32Array(EMBERS * 3)
-    const emberVel = new Float32Array(EMBERS)
-    for (let i = 0; i < EMBERS; i++) {
-      emberPos[i*3]   = (Math.random() - 0.5) * 90
-      emberPos[i*3+1] = Math.random() * 34
-      emberPos[i*3+2] = -8 - Math.random() * 46
-      emberVel[i]     = 1.6 + Math.random() * 4.2
+    // ── Falling fireballs / asteroids (fire raining down, with trails) ─────────
+    const makeFireTexture = () => {
+      const c = document.createElement('canvas'); c.width = c.height = 64
+      const x = c.getContext('2d')
+      const g = x.createRadialGradient(32, 32, 0, 32, 32, 32)
+      g.addColorStop(0.0, 'rgba(255,255,238,1)')
+      g.addColorStop(0.22, 'rgba(255,206,96,1)')
+      g.addColorStop(0.5, 'rgba(255,112,24,0.85)')
+      g.addColorStop(1.0, 'rgba(150,26,0,0)')
+      x.fillStyle = g; x.fillRect(0, 0, 64, 64)
+      return new THREE.CanvasTexture(c)
     }
-    const emberGeo = new THREE.BufferGeometry()
-    emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPos, 3))
-    const emberMat = new THREE.PointsMaterial({ color: 0xff6a1a, size: 0.16, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true })
-    const embers = new THREE.Points(emberGeo, emberMat)
-    scene.add(embers)
+    const makeTrailTexture = () => {
+      const c = document.createElement('canvas'); c.width = 16; c.height = 128
+      const x = c.getContext('2d')
+      const g = x.createLinearGradient(0, 0, 0, 128)
+      g.addColorStop(0.0, 'rgba(255,170,60,0)')      // tail — transparent
+      g.addColorStop(0.7, 'rgba(255,120,30,0.45)')
+      g.addColorStop(1.0, 'rgba(255,235,170,0.95)')  // head — bright
+      x.fillStyle = g; x.fillRect(0, 0, 16, 128)
+      return new THREE.CanvasTexture(c)
+    }
+    const fireTex = makeFireTexture()
+    const trailTex = makeTrailTexture()
+
+    const METEORS = 16
+    const meteors = []
+    const spawnMeteor = () => ({
+      x: -22 + Math.random() * 60,
+      y: 22 + Math.random() * 22,
+      z: -4 - Math.random() * 42,          // some closer, some far
+      size: 0.24 + Math.random() * 1.15,   // different sized asteroids
+      speed: 7 + Math.random() * 9,        // fall speed
+    })
+    for (let i = 0; i < METEORS; i++) {
+      const m = spawnMeteor()
+      m.y = Math.random() * 46 - 2          // stagger so they're spread across the sky
+      m.speed += m.size * 5                  // bigger/closer fall faster
+      const head = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, color: 0xffffff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }))
+      const trail = new THREE.Sprite(new THREE.SpriteMaterial({ map: trailTex, color: 0xff7a24, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }))
+      trail.material.rotation = -0.26       // lean to match the sideways drift
+      scene.add(trail); scene.add(head)
+      meteors.push({ ...m, head, trail })
+    }
 
     // ── Horse loading ─────────────────────────────────────────────────────────
     const clock    = new THREE.Clock()
@@ -261,15 +290,20 @@ export default function LoginCinematic({ onArrived, phase }) {
           }, 600)
         }
 
-        // Drift embers upward with a gentle sway and flicker
-        for (let i = 0; i < EMBERS; i++) {
-          let y = emberPos[i*3+1] + emberVel[i] * dt
-          if (y > 38) { y = 0; emberPos[i*3] = (Math.random() - 0.5) * 90; emberPos[i*3+2] = -8 - Math.random() * 46 }
-          emberPos[i*3+1] = y
-          emberPos[i*3] += Math.sin(elapsed * 1.4 + i) * dt * 0.35
+        // Rain the fireballs downward, each with a trailing streak; recycle
+        // above the sky once they fall past the horizon.
+        for (const m of meteors) {
+          m.y -= m.speed * dt
+          m.x -= m.speed * 0.26 * dt
+          if (m.y < -3) { Object.assign(m, spawnMeteor()); m.speed += m.size * 5 }
+          const flick = 0.85 + Math.sin(elapsed * 22 + m.x * 3) * 0.15
+          m.head.position.set(m.x, m.y, m.z)
+          m.head.scale.setScalar(m.size * 2.3 * flick)
+          const trailLen = m.size * 7
+          m.trail.position.set(m.x + m.size * 0.85, m.y + trailLen * 0.5, m.z)
+          m.trail.scale.set(m.size * 0.95, trailLen, 1)
+          m.trail.material.opacity = 0.75 * flick
         }
-        emberGeo.attributes.position.needsUpdate = true
-        emberMat.opacity = 0.6 + Math.sin(elapsed * 7) * 0.25
 
         renderer.render(scene, camera)
       }

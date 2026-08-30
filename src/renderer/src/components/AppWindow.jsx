@@ -117,11 +117,27 @@ export default function AppWindow({ win, ContentComponent }) {
           userSelect:'none', flexShrink:0,
         }}
       >
-        {/* Traffic lights */}
-        <div data-no-drag style={{ display:'flex', gap:6, marginRight:12 }}>
-          <button className="traffic-light" onClick={(e)=>{e.stopPropagation();closeWindow(win.id)}} style={{ background:'#ef4444' }} title="Close"/>
-          <button className="traffic-light" onClick={(e)=>{e.stopPropagation();minimizeWindow(win.id)}} style={{ background:'#f59e0b' }} title="Minimize"/>
-          <button className="traffic-light" onClick={(e)=>{e.stopPropagation();toggleMax()}} style={{ background:'#22c55e' }} title="Maximize"/>
+        {/* Window controls — bright red close / yellow minimize / green expand */}
+        <div data-no-drag style={{ display:'flex', gap:7, marginRight:12 }}>
+          {[
+            { bg:'#ff3b30', sym:'✕', title:'Close',    on:()=>closeWindow(win.id) },
+            { bg:'#ffce00', sym:'−', title:'Minimize', on:()=>minimizeWindow(win.id) },
+            { bg:'#28c93f', sym:'⛶', title:'Expand',   on:()=>toggleMax() },
+          ].map((b) => (
+            <button
+              key={b.title}
+              title={b.title}
+              onClick={(e)=>{ e.stopPropagation(); b.on() }}
+              style={{
+                width:15, height:15, borderRadius:'50%', border:'none', cursor:'pointer',
+                background:b.bg, color:'rgba(0,0,0,0.65)', fontSize:9, fontWeight:900, lineHeight:1,
+                display:'flex', alignItems:'center', justifyContent:'center', padding:0,
+                boxShadow:`0 0 6px ${b.bg}88`,
+              }}
+            >
+              {b.sym}
+            </button>
+          ))}
         </div>
         {/* Title */}
         <div style={{ flex:1, textAlign:'center', fontSize:'0.78rem', fontWeight:500, color: win.focused ? 'var(--text-primary)' : 'var(--text-muted)', pointerEvents:'none', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
