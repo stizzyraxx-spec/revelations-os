@@ -1,5 +1,21 @@
 import { create } from 'zustand'
 
+// ─── CUSTOM (INTERNET-INSTALLED) APPS ─────────────────────────────────────────
+const CUSTOM_APPS_KEY = 'revos_custom_apps'
+
+function loadCustomApps() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_APPS_KEY) || '[]') } catch { return [] }
+}
+function saveCustomApps(apps) {
+  try { localStorage.setItem(CUSTOM_APPS_KEY, JSON.stringify(apps)) } catch {}
+}
+function normalizeUrl(raw) {
+  const t = String(raw || '').trim()
+  if (!t) return ''
+  if (/^https?:\/\//i.test(t)) return t
+  return `https://${t}`
+}
+
 export const useOSStore = create((set, get) => ({
   // ─── USER ───────────────────────────────────────────────────────────────────
   user: { name: '', loggedIn: false, avatar: null },
@@ -185,6 +201,40 @@ export const useOSStore = create((set, get) => ({
 
   toggleNotificationPanel: () => {
     set((s) => ({ notificationPanelOpen: !s.notificationPanelOpen }))
+  },
+
+  // ─── CUSTOM APPS (installed from the internet) ───────────────────────────────
+  customApps: loadCustomApps(),
+
+  installWebApp: ({ name, url, color }) => {
+    const liveUrl = normalizeUrl(url)
+    if (!liveUrl) return null
+    const app = {
+      id: 'web_' + Date.now(),
+      name: (name || '').trim() || liveUrl.replace(/^https?:\/\//, '').split('/')[0],
+      icon: 'Globe',
+      color: color || '#2563eb',
+      category: 'installed',
+      free: true,
+      desc: liveUrl,
+      liveUrl,
+      custom: true,
+    }
+    set((s) => {
+      const next = [...s.customApps, app]
+      saveCustomApps(next)
+      return { customApps: next }
+    })
+    get().addNotification({ title: 'App installed', body: `${app.name} was added to your apps`, type: 'success' })
+    return app
+  },
+
+  uninstallWebApp: (id) => {
+    set((s) => {
+      const next = s.customApps.filter((a) => a.id !== id)
+      saveCustomApps(next)
+      return { customApps: next, windows: s.windows.filter((w) => w.appId !== id) }
+    })
   },
 
   // ─── ORB LAUNCHER ───────────────────────────────────────────────────────────

@@ -17,7 +17,20 @@ export default function AppStore() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [detail, setDetail] = useState(null)
-  const { openWindow, openSubscription } = useOSStore()
+  const [installOpen, setInstallOpen] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newUrl, setNewUrl] = useState('')
+  const { openWindow, openSubscription, customApps, installWebApp, uninstallWebApp } = useOSStore()
+
+  const submitInstall = () => {
+    if (!newUrl.trim()) return
+    installWebApp({ name: newName, url: newUrl })
+    setNewName(''); setNewUrl(''); setInstallOpen(false)
+  }
+
+  const visibleCustom = search
+    ? customApps.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()) || (a.liveUrl || '').toLowerCase().includes(search.toLowerCase()))
+    : customApps
 
   const results = search
     ? fuse.search(search).map((r) => r.item)
@@ -28,8 +41,13 @@ export default function AppStore() {
   const featured = APP_REGISTRY.filter((a) => FEATURED.includes(a.id))
 
   const handleOpen = (app) => {
-    if (app.free) openWindow({ appId: app.id, title: app.name })
-    else openSubscription(app)
+    if (app.free) {
+      openWindow({
+        appId: app.id,
+        title: app.name,
+        props: app.liveUrl ? { liveUrl: app.liveUrl, appId: app.id, appName: app.name } : {},
+      })
+    } else openSubscription(app)
   }
 
   if (detail) {
@@ -55,6 +73,61 @@ export default function AppStore() {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
+        {/* Install from the Web */}
+        <section style={{ marginBottom: 20 }}>
+          {!installOpen ? (
+            <button
+              onClick={() => setInstallOpen(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 16px', borderRadius: 10,
+                background: 'linear-gradient(135deg, rgba(109,40,217,0.28), rgba(30,64,175,0.22))',
+                border: '1px dashed rgba(139,92,246,0.55)', color: '#c4b5fd', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              }}
+            >
+              <Download size={15} /> Install an app from the internet (any website URL)
+            </button>
+          ) : (
+            <div style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(139,92,246,0.4)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Install a web app</div>
+              <input
+                value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="App name (optional)"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 8, padding: '9px 12px', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }}
+              />
+              <input
+                value={newUrl} onChange={(e) => setNewUrl(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submitInstall() }}
+                placeholder="Website URL — e.g. figma.com or https://app.slack.com" autoFocus
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 8, padding: '9px 12px', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={submitInstall} style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: 'none', background: 'var(--accent, #7c3aed)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Install</button>
+                <button onClick={() => { setInstallOpen(false); setNewName(''); setNewUrl('') }} style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Installed from the web */}
+        {visibleCustom.length > 0 && (
+          <section style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Installed from the Web</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {visibleCustom.map((app) => (
+                <div key={app.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'rgba(37,99,235,0.15)' }}>
+                    <ExternalLink size={22} style={{ color: app.color || '#2563eb' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>{app.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.liveUrl}</div>
+                  </div>
+                  <button onClick={() => handleOpen(app)} style={{ padding: '5px 14px', borderRadius: 6, background: 'rgba(109,40,217,0.3)', border: '1px solid rgba(109,40,217,0.5)', color: '#a78bfa', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Open</button>
+                  <button onClick={() => uninstallWebApp(app.id)} title="Uninstall" style={{ padding: '5px 12px', borderRadius: 6, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Remove</button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Featured */}
         {!search && category === 'All' && (
           <section style={{ marginBottom: 24 }}>

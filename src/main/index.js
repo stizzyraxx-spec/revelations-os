@@ -248,7 +248,25 @@ ipcMain.handle('claude:run', async (event, cmd) => {
   if (!rateOk('claude')) return 'Rate limit exceeded'
   // Keep quotes/spaces (prompts need them); strip shell control metacharacters.
   const safe = String(cmd || '').slice(0, 2000).replace(/[;&|`$><\n\r]/g, '').trim()
-  const cmdline = `claude ${safe || '--help'}`
+
+  // The OS Terminal is a one-shot shell (no live TTY), so the interactive
+  // Claude session can't run here. Bare `claude` prints a hint; a leading flag
+  // is passed straight through; anything else is treated as a prompt via -p.
+  if (!safe || safe === '--help') {
+    return [
+      '\x1b[36mClaude Code\x1b[0m is installed and signed in on this machine.',
+      '',
+      'This terminal runs one-shot commands, so type your question directly:',
+      '  \x1b[32mclaude what does this OS do?\x1b[0m',
+      '  \x1b[32mclaude -p "summarise the Book of Revelation"\x1b[0m',
+      '',
+      'For a full interactive Claude session, open a system PowerShell and run \x1b[32mclaude\x1b[0m.',
+    ].join('\n')
+  }
+  const cmdline = safe.startsWith('-')
+    ? `claude ${safe}`
+    : `claude -p "${safe.replace(/"/g, '\\"')}"`
+
   return new Promise(resolve => {
     const proc = spawn(cmdline, [], {
       shell: true,

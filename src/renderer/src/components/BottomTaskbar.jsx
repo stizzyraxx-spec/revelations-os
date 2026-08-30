@@ -54,12 +54,15 @@ function launchApp(app, { openWindow, openSubscription }) {
 }
 
 export default function BottomTaskbar() {
-  const { windows, openWindow, openSubscription, focusWindow, minimizeWindow, restoreWindow } = useOSStore()
+  const { windows, openWindow, openSubscription, focusWindow, minimizeWindow, restoreWindow, customApps } = useOSStore()
   const [startOpen, setStartOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [pinned] = useState(loadPinned)
   const startRef = useRef(null)
   const btnRef = useRef(null)
+
+  // Built-in apps plus anything installed from the internet.
+  const allApps = useMemo(() => [...APP_REGISTRY, ...customApps], [customApps])
 
   // Close the Start menu on outside click or Escape.
   useEffect(() => {
@@ -84,12 +87,12 @@ export default function BottomTaskbar() {
 
   const filteredApps = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return APP_REGISTRY
-    return APP_REGISTRY.filter((a) => a.name.toLowerCase().includes(q) || (a.desc || '').toLowerCase().includes(q))
-  }, [query])
+    if (!q) return allApps
+    return allApps.filter((a) => a.name.toLowerCase().includes(q) || (a.desc || '').toLowerCase().includes(q))
+  }, [query, allApps])
 
   const handleTaskClick = (item) => {
-    const reg = APP_REGISTRY.find((a) => a.id === item.appId)
+    const reg = allApps.find((a) => a.id === item.appId)
     if (!item.window) {
       if (reg) launchApp(reg, { openWindow, openSubscription })
       return
@@ -232,7 +235,7 @@ export default function BottomTaskbar() {
         {/* Task buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflowX: 'auto', flex: 1, scrollbarWidth: 'none' }}>
           {taskItems.map((item) => {
-            const reg = APP_REGISTRY.find((a) => a.id === item.appId)
+            const reg = allApps.find((a) => a.id === item.appId)
             const IconComp = ICON_MAP[reg?.icon] || Globe
             const color = reg?.color || '#6d28d9'
             const label = reg?.name || item.appId

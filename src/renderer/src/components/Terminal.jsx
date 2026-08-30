@@ -257,11 +257,11 @@ export default function Terminal() {
         break
       case 'claude':
         setBusy(true)
-        setBusyLabel('Running Claude...')
-        addLine('\x1b[36m[claude]\x1b[0m Launching Claude Code CLI...', 'html')
+        setBusyLabel('Claude is thinking...')
+        addLine('\x1b[36m[claude]\x1b[0m ' + (rest ? 'Asking Claude...' : 'Claude Code'), 'html')
         if (window.nexus?.runClaude) {
           try {
-            const result = await window.nexus.runClaude(rest || '--help')
+            const result = await window.nexus.runClaude(rest)
             addLine(result || '(no output)', 'output')
           } catch (err) {
             logError('Terminal:claude', err.message)

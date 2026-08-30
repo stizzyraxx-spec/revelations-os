@@ -113,7 +113,7 @@ export default function AppWindow({ win, ContentComponent }) {
           height:36, display:'flex', alignItems:'center', padding:'0 12px',
           background: win.focused ? 'linear-gradient(180deg, rgba(255,255,255,0.06), var(--bg-tertiary))' : 'var(--bg-tertiary)',
           borderBottom:'1px solid var(--border)',
-          cursor: maximized ? 'default' : 'grab',
+          cursor: 'default',
           userSelect:'none', flexShrink:0,
         }}
       >
