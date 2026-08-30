@@ -7,7 +7,7 @@ import Fuse from 'fuse.js'
 
 const CATEGORIES = ['All', 'Business', 'Finance', 'Legal', 'Healthcare', 'Entertainment', 'Productivity', 'Security']
 
-const FEATURED = ['taxflow', 'legalvault', 'govcoreerp', 'commandhq']
+const FEATURED = ['celestia', 'proverbs', 'ephesians', 'tcom']
 
 const RATINGS = { taxflow: 4.9, legalvault: 4.8, govcoreerp: 4.7, bowdwn: 4.6, pcscanfix: 5.0, celestia: 4.8, commandhq: 4.9 }
 
