@@ -44,6 +44,7 @@ export default function LoginCinematic({ onArrived, phase }) {
     // Use full device pixel ratio so horses are crisp on Retina displays
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(W, H)
+    renderer.setClearColor(0x000000, 1) // pure black background
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type    = THREE.PCFSoftShadowMap
     renderer.toneMapping       = THREE.ACESFilmicToneMapping
@@ -55,7 +56,8 @@ export default function LoginCinematic({ onArrived, phase }) {
     mount.appendChild(renderer.domElement)
 
     const scene  = new THREE.Scene()
-    scene.fog    = new THREE.FogExp2(0x150000, 0.022)
+    scene.background = new THREE.Color(0x000000)
+    scene.fog    = new THREE.FogExp2(0x050000, 0.015)
 
     const camera = new THREE.PerspectiveCamera(52, W/H, 0.1, 300)
     camera.position.set(0, 5, 16)
@@ -78,16 +80,17 @@ export default function LoginCinematic({ onArrived, phase }) {
     const skyGeo = new THREE.PlaneGeometry(220, 70, 1, 7)
     const skyPos2 = skyGeo.attributes.position
     const skyCols = new Float32Array(skyPos2.count * 3)
-    // top→bottom: deep blood-red sky → near-black ground horizon
+    // Black sky with a glowing band of fire & brimstone across the middle,
+    // fading to black at the top and at the horizon.
     const pal = [
-      [0.58, 0.04, 0.00],  // top — deep blood-red
-      [0.50, 0.07, 0.00],
-      [0.38, 0.09, 0.01],
-      [0.24, 0.06, 0.01],
-      [0.12, 0.03, 0.01],
-      [0.05, 0.01, 0.01],
-      [0.02, 0.00, 0.00],
-      [0.01, 0.00, 0.00],  // bottom
+      [0.02, 0.00, 0.00],  // top — near black
+      [0.05, 0.01, 0.00],
+      [0.15, 0.03, 0.00],
+      [0.44, 0.13, 0.01],  // fire glow rising
+      [0.72, 0.26, 0.03],  // brightest brimstone band
+      [0.32, 0.08, 0.01],
+      [0.09, 0.02, 0.00],
+      [0.01, 0.00, 0.00],  // bottom — black at horizon
     ]
     for (let i = 0; i < skyPos2.count; i++) {
       const c = pal[Math.min(i >> 1, pal.length-1)]
@@ -98,8 +101,8 @@ export default function LoginCinematic({ onArrived, phase }) {
     skyMesh.position.set(0, 14, -48)
     scene.add(skyMesh)
 
-    // ── Lava/ember ground ─────────────────────────────────────────────────────
-    const groundMat = new THREE.MeshLambertMaterial({ color: 0x120000 })
+    // ── Scorched ground — red tint, lit up by the fire in the sky ──────────────
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x24070a, emissive: 0x300a02, emissiveIntensity: 0.4, roughness: 0.96, metalness: 0.0 })
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(220, 80), groundMat)
     ground.rotation.x = -Math.PI / 2
     ground.receiveShadow = true
@@ -134,6 +137,22 @@ export default function LoginCinematic({ onArrived, phase }) {
       scene.add(l)
       return l
     })
+
+    // ── Rising embers (fire & brimstone) ──────────────────────────────────────
+    const EMBERS = 340
+    const emberPos = new Float32Array(EMBERS * 3)
+    const emberVel = new Float32Array(EMBERS)
+    for (let i = 0; i < EMBERS; i++) {
+      emberPos[i*3]   = (Math.random() - 0.5) * 90
+      emberPos[i*3+1] = Math.random() * 34
+      emberPos[i*3+2] = -8 - Math.random() * 46
+      emberVel[i]     = 1.6 + Math.random() * 4.2
+    }
+    const emberGeo = new THREE.BufferGeometry()
+    emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPos, 3))
+    const emberMat = new THREE.PointsMaterial({ color: 0xff6a1a, size: 0.16, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true })
+    const embers = new THREE.Points(emberGeo, emberMat)
+    scene.add(embers)
 
     // ── Horse loading ─────────────────────────────────────────────────────────
     const clock    = new THREE.Clock()
@@ -241,6 +260,16 @@ export default function LoginCinematic({ onArrived, phase }) {
             }
           }, 600)
         }
+
+        // Drift embers upward with a gentle sway and flicker
+        for (let i = 0; i < EMBERS; i++) {
+          let y = emberPos[i*3+1] + emberVel[i] * dt
+          if (y > 38) { y = 0; emberPos[i*3] = (Math.random() - 0.5) * 90; emberPos[i*3+2] = -8 - Math.random() * 46 }
+          emberPos[i*3+1] = y
+          emberPos[i*3] += Math.sin(elapsed * 1.4 + i) * dt * 0.35
+        }
+        emberGeo.attributes.position.needsUpdate = true
+        emberMat.opacity = 0.6 + Math.sin(elapsed * 7) * 0.25
 
         renderer.render(scene, camera)
       }

@@ -67,6 +67,8 @@ export default function TopBar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sysInfo, setSysInfo] = useState(null)
   const [now, setNow] = useState(new Date())
+  const [timezone, setTimezone] = useState(() => { try { return localStorage.getItem('revos_timezone') || '' } catch { return '' } })
+  const [clockOpen, setClockOpen] = useState(false)
   const searchRef = useRef(null)
   const { verse, visible } = useBibleVerse()
 
@@ -106,12 +108,30 @@ export default function TopBar() {
   const unreadCount = notifications.filter(n => !n.read).length
   const openWindows = windows.filter(w => !w.minimized)
 
+  const tzOpt = timezone ? { timeZone: timezone } : {}
   const fmtTime = (d) => {
     if (!d) return ''
-    const day = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-    const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    const day = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', ...tzOpt })
+    const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', ...tzOpt })
     return `${day}  ${time}`
   }
+
+  const TIMEZONES = [
+    { label: 'System Default', value: '' },
+    { label: 'Pacific · Los Angeles', value: 'America/Los_Angeles' },
+    { label: 'Mountain · Denver', value: 'America/Denver' },
+    { label: 'Central · Chicago', value: 'America/Chicago' },
+    { label: 'Eastern · New York', value: 'America/New_York' },
+    { label: 'UTC', value: 'UTC' },
+    { label: 'London', value: 'Europe/London' },
+    { label: 'Paris · Berlin', value: 'Europe/Paris' },
+    { label: 'Lagos', value: 'Africa/Lagos' },
+    { label: 'Dubai', value: 'Asia/Dubai' },
+    { label: 'India · Kolkata', value: 'Asia/Kolkata' },
+    { label: 'Tokyo', value: 'Asia/Tokyo' },
+    { label: 'Sydney', value: 'Australia/Sydney' },
+  ]
+  const chooseTz = (v) => { setTimezone(v); try { localStorage.setItem('revos_timezone', v) } catch {}; setClockOpen(false) }
 
   const initials = (name) => name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?'
 
@@ -264,9 +284,25 @@ export default function TopBar() {
           )}
         </button>
 
-        {/* Clock */}
-        <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.75rem', color:'var(--text-primary)', whiteSpace:'nowrap', padding:'0 6px' }}>
-          {fmtTime(now)}
+        {/* Clock — click to change timezone */}
+        <div style={{ position:'relative' }}>
+          <button onClick={()=>setClockOpen(v=>!v)} title="Change timezone"
+            style={{ fontFamily:'var(--font-mono)', fontSize:'0.75rem', color:'var(--text-primary)', whiteSpace:'nowrap', padding:'4px 8px', background: clockOpen?'rgba(255,255,255,0.08)':'none', border:'none', borderRadius:8, cursor:'pointer' }}>
+            {fmtTime(now)}
+          </button>
+          {clockOpen && (
+            <>
+              <div style={{ position:'fixed', inset:0, zIndex:8999 }} onClick={()=>setClockOpen(false)} />
+              <div className="glass-strong animate-fade-in-down" style={{ position:'absolute', right:0, top:34, width:210, maxHeight:320, overflowY:'auto', borderRadius:12, boxShadow:'var(--shadow-lg)', zIndex:9000, padding:6 }}>
+                <div style={{ padding:'6px 10px 8px', fontSize:'0.66rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Timezone</div>
+                {TIMEZONES.map(tz => (
+                  <button key={tz.value} onClick={()=>chooseTz(tz.value)} className="context-menu-item" style={{ width:'100%', borderRadius:6, justifyContent:'space-between', color: timezone===tz.value ? 'var(--accent)' : undefined }}>
+                    {tz.label}{timezone===tz.value ? '  ✓' : ''}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* User avatar + name */}
@@ -286,20 +322,20 @@ export default function TopBar() {
                 <div style={{ color:'var(--text-muted)', fontSize:'0.72rem' }}>Revelations OS</div>
               </div>
               {[
-                { icon: User, label: 'My Account', action: ()=>openWindow({appId:'settings',title:'Settings'}) },
-                { icon: Settings2, label: 'System Preferences', action: ()=>openWindow({appId:'settings',title:'Settings'}) },
-                { icon: Shield, label: 'Privacy & Security', action: ()=>openWindow({appId:'pcscanfix',title:'PCFixScan'}) },
-              ].map(({ icon: Icon, label, action }) => (
+                { label: 'My Account', action: ()=>openWindow({appId:'settings',title:'Settings'}) },
+                { label: 'System Preferences', action: ()=>openWindow({appId:'settings',title:'Settings'}) },
+                { label: 'Privacy & Security', action: ()=>openWindow({appId:'pcscanfix',title:'PCFixScan'}) },
+              ].map(({ label, action }) => (
                 <button key={label} onClick={()=>{action();setUserMenuOpen(false)}} className="context-menu-item" style={{ width:'100%', borderRadius:0 }}>
-                  <Icon size={14}/> {label}
+                  {label}
                 </button>
               ))}
               <div className="context-menu-separator"/>
               <button onClick={()=>{logout();setUserMenuOpen(false)}} className="context-menu-item" style={{ width:'100%', borderRadius:0, color:'var(--text-secondary)' }}>
-                <LogOut size={14}/> Sign Out
+                Sign Out
               </button>
               <button onClick={()=>{openExitModal();setUserMenuOpen(false)}} className="context-menu-item danger" style={{ width:'100%', borderRadius:0 }}>
-                <Power size={14}/> Exit Revelations OS
+                Exit Revelations OS
               </button>
             </div>
           )}

@@ -483,7 +483,12 @@ ipcMain.handle('bt:status', async () => {
 })
 
 ipcMain.handle('bt:toggle', async (event, on) => {
-  if (IS_WIN) return win.BT_UNSUPPORTED
+  if (IS_WIN) {
+    // Windows exposes no simple CLI to flip the Bluetooth radio; open the
+    // Windows Bluetooth settings so the user can enable/disable it there.
+    try { await shell.openExternal('ms-settings:bluetooth') } catch {}
+    return { ok: true, openedSettings: true, note: 'Opened Windows Bluetooth settings.' }
+  }
   const p = await findBlueutil()
   if (!p) return { ok: false, error: 'blueutil not installed' }
   const { code } = await runCmd(p, ['-p', on ? '1' : '0'])

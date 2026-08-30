@@ -61,7 +61,7 @@ export default function NotificationCenter() {
                 style={{
                   display:'flex', gap:10, padding:'10px 12px', borderRadius:10, marginBottom:4, cursor:'pointer',
                   background: n.read ? 'transparent' : 'rgba(109,40,217,0.08)',
-                  borderLeft: n.read ? 'none' : `3px solid ${color}`,
+                  borderLeft: 'none',
                   transition:'var(--transition)',
                 }}
                 onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.04)'}
