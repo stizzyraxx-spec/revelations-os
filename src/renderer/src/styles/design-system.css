@@ -20,8 +20,8 @@
   --radius: 12px;
   --radius-lg: 20px;
   --radius-xl: 28px;
-  --blur: blur(10px);
-  --blur-heavy: blur(16px);
+  --blur: blur(7px);
+  --blur-heavy: blur(10px);
   --shadow-lg: 0 24px 80px rgba(0,0,0,0.88);
   --shadow-glow: 0 0 24px rgba(255,255,255,0.08);
   --shadow-orb: 0 0 20px rgba(255,255,255,0.95), 0 0 50px rgba(255,255,255,0.5), 0 0 90px rgba(255,255,255,0.4);

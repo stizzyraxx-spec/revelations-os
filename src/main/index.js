@@ -385,8 +385,21 @@ ipcMain.handle('termx:cwd', () => termxGetCwd())
 
 ipcMain.handle('termx:run', async (event, command) => {
   if (!rateOk('termx')) return { output: 'Rate limit exceeded', cwd: termxGetCwd() }
-  const cmd = String(command || '').slice(0, 4000)
+  let cmd = String(command || '').slice(0, 4000)
   if (!cmd.trim()) return { output: '', cwd: termxGetCwd() }
+
+  // Interactive CLIs (Claude Code, Proverbs) would block forever in a one-shot
+  // shell. Rewrite bare `claude <text>` to headless print mode so it answers
+  // instead of hanging; the same for `proverbs`.
+  const low = cmd.trim().toLowerCase()
+  if (low === 'claude') {
+    return { output: 'Claude Code is connected. Ask a question directly:\n  claude how do I list files here?\n  claude -p "summarise this folder"', cwd: termxGetCwd() }
+  }
+  if (/^claude\s+/.test(low) && !/\s(-p|--print|--help|-h|--version|-v)\b|\b(mcp|config|setup-token|update|doctor)\b/.test(low)) {
+    const q = cmd.trim().slice(6).trim().replace(/"/g, '\\"')
+    cmd = `claude -p "${q}"`
+  }
+
   const marker = '<<<TERMX_CWD:9f3a1c>>>'
   return new Promise((resolve) => {
     const shell = IS_WIN ? 'powershell.exe' : (process.env.SHELL || '/bin/bash')
