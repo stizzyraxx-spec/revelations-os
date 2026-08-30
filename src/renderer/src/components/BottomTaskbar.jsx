@@ -32,7 +32,7 @@ export const TASKBAR_HEIGHT = 48
 
 const PINNED_KEY = 'revos_taskbar_pinned'
 // The default apps that sit on the taskbar like the Windows navbar.
-const DEFAULT_PINNED = ['ephesians', 'bible', 'files', 'notepad', 'terminal', 'calculator', 'music', 'settings']
+const DEFAULT_PINNED = ['ephesians', 'bible', 'files', 'notepad', 'terminalx', 'calculator', 'music', 'settings']
 
 function loadPinned() {
   try {

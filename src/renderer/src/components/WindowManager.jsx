@@ -4,6 +4,7 @@ import EphesiansBrowser from '../browser/EphesiansBrowser'
 import FileManager from './FileManager'
 import Settings from './Settings'
 import Terminal from './Terminal'
+import TerminalX from './TerminalX'
 import Notepad from './Notepad'
 import PCFixScan from './PCFixScan'
 import AppStore from './AppStore'
@@ -33,6 +34,7 @@ const APP_COMPONENTS = {
   files: FileManager,
   settings: Settings,
   terminal: Terminal,
+  terminalx: TerminalX,
   notepad: Notepad,
   pcscanfix: PCFixScan,
   appstore: AppStore,

@@ -372,6 +372,53 @@ ipcMain.handle('display:setMode', (event, mode) => {
   }
 })
 
+// ─── TERMINAL X — real system shell ──────────────────────────────────────────
+// Runs each command through the real system shell (PowerShell on Windows, bash
+// otherwise) and reports the actual output. The working directory persists
+// across commands by appending a marker that echoes $PWD after each run, so
+// `cd` behaves like a normal shell. (Interactive full-screen TUI programs and
+// $env/variable persistence across commands are out of scope.)
+let termxCwd = null
+function termxGetCwd() { if (!termxCwd) termxCwd = os.homedir(); return termxCwd }
+
+ipcMain.handle('termx:cwd', () => termxGetCwd())
+
+ipcMain.handle('termx:run', async (event, command) => {
+  if (!rateOk('termx')) return { output: 'Rate limit exceeded', cwd: termxGetCwd() }
+  const cmd = String(command || '').slice(0, 4000)
+  if (!cmd.trim()) return { output: '', cwd: termxGetCwd() }
+  const marker = '<<<TERMX_CWD:9f3a1c>>>'
+  return new Promise((resolve) => {
+    const shell = IS_WIN ? 'powershell.exe' : (process.env.SHELL || '/bin/bash')
+    const wrapped = IS_WIN
+      ? `${cmd}\r\nWrite-Output "${marker}$($PWD.Path)"`
+      : `${cmd}\necho "${marker}$PWD"`
+    const args = IS_WIN ? ['-NoLogo', '-NoProfile', '-Command', wrapped] : ['-lc', wrapped]
+    let out = ''
+    let done = false
+    const proc = spawn(shell, args, { cwd: termxGetCwd(), windowsHide: true, env: process.env })
+    proc.stdout.on('data', d => { out += d.toString() })
+    proc.stderr.on('data', d => { out += d.toString() })
+    const finish = () => {
+      if (done) return
+      done = true
+      let cwd = termxGetCwd()
+      const idx = out.lastIndexOf(marker)
+      if (idx !== -1) {
+        const after = out.slice(idx + marker.length)
+        const nl = after.search(/[\r\n]/)
+        cwd = (nl === -1 ? after : after.slice(0, nl)).trim() || cwd
+        out = out.slice(0, idx)
+      }
+      termxCwd = cwd
+      resolve({ output: out.replace(/\s+$/, ''), cwd })
+    }
+    proc.on('close', finish)
+    proc.on('error', (err) => { if (!done) { done = true; resolve({ output: `Failed to run: ${err.message}`, cwd: termxGetCwd() }) } })
+    setTimeout(() => { try { proc.kill() } catch {} ; finish() }, 60000)
+  })
+})
+
 ipcMain.handle('app:getVersion', () => app.getVersion())
 ipcMain.handle('app:checkUpdate', async () => ({ available: false, version: app.getVersion(), notes: '' }))
 ipcMain.handle('app:applyUpdate', async () => ({ scheduled: true }))

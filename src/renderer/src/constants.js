@@ -28,6 +28,7 @@ export const APP_REGISTRY = [
   { id: 'files', name: 'Files', icon: 'Folder', color: '#d97706', category: 'system', free: true, desc: 'File Manager' },
   { id: 'settings', name: 'Settings', icon: 'Settings2', color: '#6d28d9', category: 'system', free: true, desc: 'System Preferences' },
   { id: 'terminal', name: 'Terminal', icon: 'TerminalSquare', color: '#059669', category: 'system', free: true, desc: 'Developer Terminal + Proverbs' },
+  { id: 'terminalx', name: 'Terminal X', icon: 'TerminalSquare', color: '#10b981', category: 'system', free: true, desc: 'Real system shell — runs actual PowerShell commands' },
   { id: 'notepad', name: 'Notepad', icon: 'FileText', color: '#64748b', category: 'system', free: true, desc: 'Text Editor' },
   { id: 'pcscanfix', name: 'PCFixScan', icon: 'Shield', color: '#16a34a', category: 'system', free: true, desc: 'System Cleaner — FREE' },
   { id: 'appstore', name: 'App Store', icon: 'Store', color: '#7c3aed', category: 'system', free: true, desc: 'App Marketplace' },
