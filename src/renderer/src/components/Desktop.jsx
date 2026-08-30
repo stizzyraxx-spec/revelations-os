@@ -30,7 +30,22 @@ export default function Desktop() {
   const [pickerQuery, setPickerQuery] = useState('')
   const [wallpaper, setWallpaper] = useState(() => getSettings().wallpaper || 'nebula')
   const [desktopIcons, setDesktopIcons] = useState(loadDesktopIcons)
+  const [displayModalOpen, setDisplayModalOpen] = useState(false)
+  const [displayInfo, setDisplayInfo] = useState(null)
+  const [displayMsg, setDisplayMsg] = useState('')
   const hasWindows = windows.filter(w => !w.minimized).length > 0
+
+  const openDisplayModal = async () => {
+    setContextMenu(null); setDisplayMsg(''); setDisplayModalOpen(true)
+    try { setDisplayInfo(await window.nexus?.displayList?.()) } catch { setDisplayInfo(null) }
+  }
+  const applyDisplayMode = async (mode) => {
+    try {
+      const res = await window.nexus?.displaySetMode?.(mode)
+      setDisplayMsg(res?.ok ? `Applied: ${mode}` : (res?.reason || 'Display control unavailable'))
+      try { setDisplayInfo(await window.nexus?.displayList?.()) } catch {}
+    } catch { setDisplayMsg('Display control unavailable') }
+  }
 
   const allApps = [...APP_REGISTRY, ...customApps]
 
@@ -203,6 +218,9 @@ export default function Desktop() {
           <div className="context-menu-item" onClick={() => { setPickerOpen(true); setContextMenu(null) }}>
             ➕ Add App to Desktop
           </div>
+          <div className="context-menu-item" onClick={openDisplayModal}>
+            🖥 Display (Project to second screen)
+          </div>
           <div className="context-menu-separator" />
           <div style={{ padding: '6px 12px 4px', fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Change Background</div>
           <div style={{ display: 'flex', gap: 6, padding: '2px 12px 8px' }}>
@@ -276,6 +294,44 @@ export default function Desktop() {
                 )
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Display projection (multi-monitor) */}
+      {displayModalOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setDisplayModalOpen(false) }}
+        >
+          <div style={{ width: 420, maxWidth: '90vw', background: 'rgba(8,8,16,0.98)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', padding: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Display</div>
+              <button onClick={() => setDisplayModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 4 }}><X size={18} /></button>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 14 }}>
+              {displayInfo
+                ? (displayInfo.hasExternal ? `${displayInfo.count} displays detected` : 'Only one display detected — connect a second monitor to duplicate or extend.')
+                : 'Detecting displays…'}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {[
+                { mode: 'internal', label: 'PC screen only', icon: '🖥' },
+                { mode: 'duplicate', label: 'Duplicate', icon: '🖥🖥' },
+                { mode: 'extend', label: 'Extend', icon: '🖥➕' },
+                { mode: 'external', label: 'Second screen only', icon: '📺' },
+              ].map(opt => {
+                const disabled = opt.mode !== 'internal' && !(displayInfo?.hasExternal)
+                return (
+                  <button key={opt.mode} onClick={() => applyDisplayMode(opt.mode)} disabled={disabled}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '16px 8px', borderRadius: 12, cursor: disabled ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-primary)', opacity: disabled ? 0.45 : 1 }}>
+                    <span style={{ fontSize: 22 }}>{opt.icon}</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{opt.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {displayMsg && <div style={{ marginTop: 14, fontSize: '0.78rem', color: displayMsg.startsWith('Applied') ? '#6ee7b7' : '#fbbf24', textAlign: 'center' }}>{displayMsg}</div>}
           </div>
         </div>
       )}

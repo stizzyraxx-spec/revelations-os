@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, nativeTheme, shell, globalShortcut } = require('electron')
+const { app, BrowserWindow, ipcMain, session, nativeTheme, shell, globalShortcut, screen } = require('electron')
 const path = require('path')
 const os = require('os')
 const fs = require('fs')
@@ -286,6 +286,90 @@ ipcMain.handle('claude:run', async (event, cmd) => {
     // Claude runs can be long; allow up to 3 minutes before giving up.
     setTimeout(() => { try { proc.kill() } catch {} ; resolve(out || 'Claude command timed out after 180s') }, 180000)
   })
+})
+
+// ─── MULTI-MONITOR (Win+P style display projection) ──────────────────────────
+let secondaryWindow = null
+
+function loadRenderer(w) {
+  if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
+    w.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    w.loadFile(path.join(__dirname, '../renderer/index.html'))
+  }
+}
+
+function getExternalDisplay() {
+  const primary = screen.getPrimaryDisplay()
+  return screen.getAllDisplays().find((d) => d.id !== primary.id) || null
+}
+
+function closeSecondary() {
+  if (secondaryWindow && !secondaryWindow.isDestroyed()) secondaryWindow.close()
+  secondaryWindow = null
+}
+
+function openSecondaryOn(display) {
+  if (secondaryWindow && !secondaryWindow.isDestroyed()) {
+    secondaryWindow.setBounds(display.bounds)
+    secondaryWindow.setFullScreen(true)
+    return
+  }
+  secondaryWindow = new BrowserWindow({
+    x: display.bounds.x, y: display.bounds.y,
+    fullscreen: true, frame: false, backgroundColor: '#04040a', show: false,
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/index.js'),
+      contextIsolation: true, nodeIntegration: false, webviewTag: true,
+      sandbox: false, webSecurity: true, devTools: !app.isPackaged,
+    },
+  })
+  secondaryWindow.setWindowOpenHandler(() => ({ action: 'deny' }))
+  secondaryWindow.once('ready-to-show', () => secondaryWindow.show())
+  secondaryWindow.on('closed', () => { secondaryWindow = null })
+  loadRenderer(secondaryWindow)
+}
+
+// Move a fullscreen window to a target display (must leave fullscreen first).
+function moveWindowToDisplay(w, display) {
+  if (!w || w.isDestroyed()) return
+  w.setFullScreen(false)
+  w.setBounds(display.bounds)
+  w.setFullScreen(true)
+}
+
+ipcMain.handle('display:list', () => {
+  const primary = screen.getPrimaryDisplay()
+  const all = screen.getAllDisplays()
+  return {
+    count: all.length,
+    hasExternal: all.length > 1,
+    displays: all.map((d) => ({ id: d.id, primary: d.id === primary.id, width: d.size.width, height: d.size.height })),
+  }
+})
+
+// mode: 'internal' (PC only) | 'duplicate' | 'extend' | 'external' (second only)
+ipcMain.handle('display:setMode', (event, mode) => {
+  const primary = screen.getPrimaryDisplay()
+  const ext = getExternalDisplay()
+  if (mode !== 'internal' && !ext) return { ok: false, reason: 'No second display detected' }
+  try {
+    if (mode === 'internal') {
+      closeSecondary()
+      moveWindowToDisplay(mainWindow, primary)
+    } else if (mode === 'external') {
+      closeSecondary()
+      moveWindowToDisplay(mainWindow, ext)
+    } else if (mode === 'duplicate' || mode === 'extend') {
+      moveWindowToDisplay(mainWindow, primary)
+      openSecondaryOn(ext)
+    } else {
+      return { ok: false, reason: 'Unknown display mode' }
+    }
+    return { ok: true, mode }
+  } catch (err) {
+    return { ok: false, reason: err.message }
+  }
 })
 
 ipcMain.handle('app:getVersion', () => app.getVersion())

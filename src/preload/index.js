@@ -4,6 +4,7 @@ const VALID_SEND = ['app:exit', 'app:minimize', 'app:restore']
 const VALID_INVOKE = [
   'app:getSystemInfo', 'fs:scanDirectory', 'fs:readFile',
   'proverbs:run', 'claude:run', 'app:checkUpdate', 'app:applyUpdate', 'app:getVersion',
+  'display:list', 'display:setMode',
   'rev:update', 'rev:rebuild', 'rev:listRepos',
   'wifi:status', 'wifi:scan', 'wifi:connect', 'wifi:disconnect',
   'download:list', 'download:open', 'download:reveal', 'download:clear',
@@ -29,6 +30,8 @@ contextBridge.exposeInMainWorld('nexus', {
   readFile: (p) => safeInvoke('fs:readFile', p),
   runProverbs: (cmd) => safeInvoke('proverbs:run', String(cmd).slice(0, 200)),
   runClaude: (cmd) => safeInvoke('claude:run', String(cmd).slice(0, 2000)),
+  displayList: () => safeInvoke('display:list'),
+  displaySetMode: (mode) => safeInvoke('display:setMode', String(mode)),
   getVersion: () => safeInvoke('app:getVersion'),
   checkForUpdate: () => safeInvoke('app:checkUpdate'),
   applyUpdate: () => safeInvoke('app:applyUpdate'),
