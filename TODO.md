@@ -1,7 +1,7 @@
 # Revelations OS — TODO / Test Matrix
 
-> Revelations OS v1.0.0 | Electron 29 + React 18 | RAXX Beats Studios LLC
-> Last updated: 2026-06-04
+> Revelations OS v1.0.13 | Electron 29 + React 18 | RAXX Beats Studios LLC
+> Last updated: 2026-09-01
 
 ---
 
@@ -326,9 +326,25 @@
 - [x] `.text-gradient` animated gradient text (accent to blue)
 - [x] Animations: fade-in, fade-in-down, scale-in, nebula (float), orbPulse, spin, blink, shake, progress
 
+### Gatherings — believer-based event discovery (2026-09-01)
+- [x] `src/main/events.js` — all upstream HTTP in the main process (renderer is behind CSP/CORS)
+- [x] Geocoding with no API key — Zippopotam for US ZIPs, Nominatim for place names, cached 24h
+- [x] Four optional providers, fanned out with `Promise.allSettled` so one failure cannot sink a search: Ticketmaster Discovery (free key, geo-radius), SerpApi Google Events (paid key; the only practical route to Eventbrite listings the user does not own), Eventbrite (organizer-scoped — their public search API was retired in 2020), and church .ics feeds (no credentials at all)
+- [x] Faith relevance by positive signal only — an event must earn a Christian-vocabulary score to appear, so no reject-list of other religions is needed; a short block list covers adult/occult content; strict/balanced/broad thresholds
+- [x] Feeds the user added themselves are trusted — a church's non-keyword event is not filtered out
+- [x] RFC 5545 ICS parser — line unfolding, escaping, TZID / UTC / all-day dates, weekly+daily RRULE expansion
+- [x] Cross-provider dedupe keeping the richer record, distance filter, 10-min cache, rate limit that never blocks a cached repeat
+- [x] `GatheringsApp.jsx` — location/radius/range search, category chips, per-provider status strip, Sources tab
+- [x] "Add" writes into `revos_calendar_events`, the shape CalendarApp already reads, so saved events appear in Calendar with no sync step
+- [x] Keys stored locally and sent only to the provider they belong to; `events:openExternal` accepts https only
+- [x] Registered in `APP_REGISTRY` (faith, free) + `WindowManager`; MapPin added to `appIcons.js`
+
 ### App Registry
-- [x] 8 system apps (Ephesians, Files, Settings, Terminal, Notepad, PCFixScan, App Store, Celestia)
-- [x] 36 RAXX paid/free apps across 23 categories
+> Counts refreshed 2026-09-01 from `src/renderer/src/constants.js`. The catalogue
+> was refocused on faith + system apps; the old finance/legal/marketing RAXX apps
+> (TaxFlow Pro, LegalVault, GovcoreERP, CloutKiller, …) are gone.
+- [x] 39 apps total — 22 system, 15 faith, 1 dev (Proverbs), 1 admin (Admin Center)
+- [x] 1 paid app: The Condition of Man ($4.99/mo, 30-day trial); everything else is free
 - [x] `SYSTEM_APPS` + `RAXX_APPS` exports
 - [x] Each app: id, name, icon (Lucide name), color, category, free flag, desc, price, trial, liveUrl
 
@@ -336,26 +352,37 @@
 
 ## TEST MATRIX
 
-> Legend: open the built app at `dist/mac/Revelations.app` for each test.
-> Mark [ ] as [x] when verified passing.
+> Legend: open the built app for each test — `dist/mac/Revelations.app` on macOS,
+> or the installed **Revelations** shortcut on Windows (from `Revelations-Setup-<version>.exe`).
+> Mark [ ] as [x] when verified passing **on the machine you ran it on**; note the
+> platform beside anything that passes on one OS and not the other.
+>
+> These cases are hands-on QA: they require launching the app and looking at it.
+> They are deliberately still unchecked — nothing here has been verified by
+> reading the source, and a box should only be ticked by someone who ran it.
 
 ---
 
 ### LOGIN SCREEN
 
-- [ ] **LGN-01 Starfield renders** — Open app. Confirm 160 animated stars drift upward on canvas behind login card.
-- [ ] **LGN-02 Nebula blobs animate** — Confirm 3 blurred glowing orbs slowly pulsate in corners/center.
-- [ ] **LGN-03 Clock updates** — Bottom-right clock shows correct local time and increments every second.
-- [ ] **LGN-04 Date is correct** — Bottom-right date matches today (weekday, month, day, year).
-- [ ] **LGN-05 Empty username blocked** — Leave username blank, click "Sign In." Confirm error "Please enter your name" appears and input shakes.
-- [ ] **LGN-06 Any password accepted** — Enter any username + any password (or no password) and click Sign In. Confirm login proceeds after 800ms spinner.
-- [ ] **LGN-07 Enter key submits** — In username field, press Enter. In password field, press Enter. Both should submit the form.
-- [ ] **LGN-08 Password visibility toggle** — Click the Eye icon. Confirm password text becomes visible. Click again, confirm it hides.
-- [ ] **LGN-09 Spinner shows during auth** — Click Sign In. Confirm spinner appears for ~800ms before desktop loads.
-- [ ] **LGN-10 Fade transition to desktop** — After login, confirm fade-in animation plays on desktop div.
-- [ ] **LGN-11 Version text present** — Confirm "Revelations OS v1.0 © RAXX Beats Studios LLC" in bottom-left.
-- [ ] **LGN-12 Security note present** — Confirm "AES-256-GCM session encryption" text + Lock icon below sign-in button.
-- [ ] **LGN-13 Orb logo pulses** — Confirm the white/purple orb logo plays `orbPulse` animation continuously.
+> Rewritten 2026-09-01. The starfield/nebula/clock login card these cases used to
+> describe was replaced by the brimstone auth screen + horsemen cinematic; the old
+> LGN-01…LGN-13 tested a UI that no longer ships. Passwords are now really verified
+> (`auth/localAuth.js`), so "any password is accepted" is no longer true either.
+
+- [ ] **LGN-01 Brimstone background renders** — Open app. Confirm the dark red radial-gradient background fills the screen with the RAXX logo centred above the fields.
+- [ ] **LGN-02 First run offers Create Account** — With no saved account (`revos_accounts` absent from localStorage), confirm the form opens in "Create your account" mode with Full name, Email, Phone, Username, Create password and Confirm password fields.
+- [ ] **LGN-03 Returning user gets Sign in** — With at least one saved account, confirm the form opens in "Sign in to continue" mode showing only Username and Password.
+- [ ] **LGN-04 First field autofocuses** — On open, confirm the caret is already in Full name (create mode) or Username (sign-in mode) without clicking.
+- [ ] **LGN-05 Empty fields blocked** — In sign-in mode, click "Sign In" with either field blank. Confirm the error "Enter your username and password" appears and both inputs show the red error border.
+- [ ] **LGN-06 Wrong password rejected** — Enter a real username with the wrong password. Confirm "Incorrect username or password" shows and the password field is cleared. (Passwords are verified — a wrong one must NOT log in.)
+- [ ] **LGN-07 Correct password signs in** — Enter valid credentials. Confirm the cinematic stage begins.
+- [ ] **LGN-08 Password mismatch blocked** — In create mode, enter different values in Create password and Confirm password. Confirm "Passwords do not match" appears and no account is created.
+- [ ] **LGN-09 Enter key submits** — Press Enter from any field in either mode. Confirm the form submits.
+- [ ] **LGN-10 Password visibility toggle** — Click the Eye icon. Confirm both password fields become visible; click again to hide.
+- [ ] **LGN-11 Mode switch links** — Click "Create an account" then "Log in." Confirm the form swaps modes and clears any error each way.
+- [ ] **LGN-12 Busy state** — During submit, confirm the button reads "Please wait…", loses its arrow, and cannot be double-submitted.
+- [ ] **LGN-13 Cinematic then desktop** — After a successful sign-in, confirm the horsemen cinematic plays, the RAXX logo fades in ~400ms after arrival, and the desktop is revealed ~2s later.
 
 ---
 
@@ -394,11 +421,11 @@
 - [ ] **TBR-02 Clock updates live** — Observe TopBar clock. Confirm it updates every minute.
 - [ ] **TBR-03 Search opens on click** — Click "Search apps..." button. Confirm dropdown panel slides down with autofocused input.
 - [ ] **TBR-04 Search shows RECENT apps when empty** — Open search, type nothing. Confirm 4 free system apps listed under "RECENT."
-- [ ] **TBR-05 Search filters by name** — Type "Tax" in search. Confirm TaxFlow Pro appears in results.
+- [ ] **TBR-05 Search filters by name** — Type "Bible" in search. Confirm Bible, Bible Plans and Bible Games appear in results.
 - [ ] **TBR-06 Search filters by description** — Type "scanner" in search. Confirm PCFixScan (desc: "System Cleaner") or Terminal appears.
 - [ ] **TBR-07 Search max 8 results** — Type "a" (matches many apps). Confirm no more than 8 results shown.
 - [ ] **TBR-08 Search opens free app** — Search for "Files" and click it. Confirm Files window opens and search closes.
-- [ ] **TBR-09 Search opens subscription for paid app** — Search for "TaxFlow" and click. Confirm SubscriptionModal opens.
+- [ ] **TBR-09 Search opens subscription for paid app** — Search for "Condition" and click The Condition of Man (the only paid app in the catalogue). Confirm SubscriptionModal opens.
 - [ ] **TBR-10 Search: no results state** — Type "zzzzzzz". Confirm "No apps found" message shows.
 - [ ] **TBR-11 Search clear (X) button** — Type a query, click the X. Confirm input clears and results reset.
 - [ ] **TBR-12 Search Escape closes** — With search open and text typed, press Escape. Confirm dropdown closes.
@@ -425,14 +452,15 @@
 - [ ] **ORB-02 Orb hidden when windows open** — Open any window. Confirm orb fades out (opacity 0, pointer-events none).
 - [ ] **ORB-03 Orb click opens launcher** — Click the orb. Confirm full-screen OrbLauncher overlay opens.
 - [ ] **ORB-04 Launcher search autofocuses** — Open launcher. Confirm the search input has focus immediately.
-- [ ] **ORB-05 Launcher shows all 44 apps** — With "All" selected and no query, confirm all 44 apps from APP_REGISTRY are visible in the grid.
-- [ ] **ORB-06 Launcher search filters apps** — Type "school" in launcher search. Confirm School Manager appears, irrelevant apps filtered out.
-- [ ] **ORB-07 Launcher category filter: system** — Click "system" category. Confirm only 8 system apps shown.
-- [ ] **ORB-08 Launcher category filter: finance** — Click "finance." Confirm TaxFlow Pro and TradeIQ Desk shown.
-- [ ] **ORB-09 Launcher combined filter** — Select "marketing" category, type "cloud." Confirm only CloutKiller/CloutFinder shown.
+- [ ] **ORB-05 Launcher shows every app** — With "All" selected and no query, confirm the grid holds one tile per APP_REGISTRY entry (39 as of 2026-09-01 — count from `constants.js`, do not hard-code).
+- [ ] **ORB-06 Launcher search filters apps** — Type "prayer" in launcher search. Confirm Prayer Wall appears and unrelated apps are filtered out.
+- [ ] **ORB-07 Launcher category filter: system** — Click "system." Confirm only system-category apps are shown (22 as of 2026-09-01).
+- [ ] **ORB-08 Launcher category filter: faith** — Click "faith." Confirm only faith-category apps are shown (15 as of 2026-09-01), including Gatherings.
+- [ ] **ORB-09 Launcher combined filter** — Select "faith," then type "bible." Confirm only Bible, Bible Plans and Bible Games remain.
+- [ ] **ORB-09b Empty categories never listed** — Confirm every category chip shown matches at least one app (OrbLauncher filters `CATEGORIES` against APP_REGISTRY, so dead chips like the old "finance" must not appear).
 - [ ] **ORB-10 Free app opens from launcher** — Click "Ephesians" in launcher. Confirm Ephesians browser window opens and launcher closes.
-- [ ] **ORB-11 Paid app shows subscription from launcher** — Click "TaxFlow Pro." Confirm SubscriptionModal opens and launcher closes.
-- [ ] **ORB-12 Launcher price badge shown** — Paid apps should show a gold price badge (e.g., "$29/mo") on their card.
+- [ ] **ORB-11 Paid app shows subscription from launcher** — Click "The Condition of Man." Confirm SubscriptionModal opens and launcher closes.
+- [ ] **ORB-12 Launcher price badge shown** — Paid apps should show a gold price badge (The Condition of Man: "$4.99/mo") on their card.
 - [ ] **ORB-13 Launcher hover effect** — Hover over any app card. Confirm scale(1.06), purple background, accent border.
 - [ ] **ORB-14 Launcher X button closes** — Click the X button top-right of launcher. Confirm overlay closes.
 - [ ] **ORB-15 Launcher Escape closes** — With search focused, press Escape. Confirm launcher closes.
@@ -506,18 +534,18 @@
 
 ### SUBSCRIPTION MODAL
 
-- [ ] **SUB-01 Opens for paid app** — Click any paid app (e.g., TaxFlow Pro) in OrbLauncher. Confirm SubscriptionModal opens.
+- [ ] **SUB-01 Opens for paid app** — Click The Condition of Man in OrbLauncher. Confirm SubscriptionModal opens.
 - [ ] **SUB-02 App header correct** — Confirm app name, icon, category badge, description match the selected app.
 - [ ] **SUB-03 5-star rating shown** — Confirm 5 filled gold stars in the header.
 - [ ] **SUB-04 Feature list populated** — Confirm 5 feature bullets listed under "What's included" (category-matched or default).
-- [ ] **SUB-05 Price displayed** — Confirm app price shown (e.g., "$29/mo").
-- [ ] **SUB-06 Trial text shown** — For apps with trial (e.g., "14 days"), confirm green "✓ 14 days free trial — no credit card required" text appears.
+- [ ] **SUB-05 Price displayed** — Confirm app price shown ("$4.99/mo" for The Condition of Man).
+- [ ] **SUB-06 Trial text shown** — Confirm green "✓ 30 days free trial — no credit card required" text appears (The Condition of Man declares `trial: '30 days'`).
 - [ ] **SUB-07 Launch button opens webview window** — Click "Launch [App]." Confirm a new window opens with `appId: raxx_<id>` containing a webview pointing to the app's liveUrl.
 - [ ] **SUB-08 Later button closes modal** — Click "Later." Confirm modal closes without opening anything.
 - [ ] **SUB-09 Click outside closes** — Click backdrop. Confirm modal closes.
 - [ ] **SUB-10 Escape closes** — Press Escape. Confirm modal closes.
-- [ ] **SUB-11 Dynamic color theming** — Each app's header gradient uses its unique color from APP_REGISTRY. Open TaxFlow (blue) and LegalVault (slate) — confirm different header tints.
-- [ ] **SUB-12 Enterprise apps show correct trial** — Open FEMA Platform (trial: "Demo"). Confirm trial text says "Demo" not an error.
+- [ ] **SUB-11 Dynamic color theming** — Each app's header gradient uses its unique color from APP_REGISTRY. Compare The Condition of Man (#b91c1c crimson) with Admin Center (#4f46e5 indigo) — confirm different header tints.
+- [ ] **SUB-12 Non-standard trial renders verbatim** — Open Admin Center (`trial: 'N/A'`, `price: 'Internal'`). Confirm the modal prints those strings as-is rather than erroring or showing "undefined."
 
 ---
 
@@ -683,10 +711,10 @@
 ### APP STORE
 
 - [ ] **AST-01 Hero and search bar** — Open App Store. Confirm hero header, subtitle, and search input rendered.
-- [ ] **AST-02 Featured section visible** — Confirm 4 featured app cards visible (TaxFlow, LegalVault, GovcoreERP, CommandHQ) when no search and "All" selected.
+- [ ] **AST-02 Featured section visible** — Confirm 4 featured app cards visible (Celestia, Proverbs, Ephesians, The Condition of Man — the `FEATURED` ids) when no search and "All" selected.
 - [ ] **AST-03 Featured card hover** — Hover over a featured card. Confirm lift (translateY -2px) and border brightens.
-- [ ] **AST-04 Category filters** — Click "Finance." Confirm only finance apps shown. Click "All." Confirm all 44 apps return.
-- [ ] **AST-05 Fuzzy search** — Type "taxfl" in search. Confirm TaxFlow Pro appears (Fuse.js threshold 0.4).
+- [ ] **AST-04 Category filters** — Click "Faith." Confirm only faith apps are listed and the grid is NOT empty. Repeat for System, Developer, Admin. Click "All" and confirm the full catalogue returns. (Regression guard for ISS-17: the chips used to be a fixed Business/Finance/Legal/… list that matched no app, so every filter but "All" emptied the store.)
+- [ ] **AST-05 Fuzzy search** — Type "celesta" (deliberate typo) in search. Confirm Celestia still appears (Fuse.js threshold 0.4).
 - [ ] **AST-06 No results state** — Type "zzzzzz." Confirm "No apps found" message.
 - [ ] **AST-07 App row: Open/Get button (free app)** — Find a free app row (e.g., Celestia). Click "Open." Confirm Celestia window opens.
 - [ ] **AST-08 App row: Get button (paid app)** — Find a paid app row. Click "Get." Confirm SubscriptionModal opens.
@@ -694,8 +722,8 @@
 - [ ] **AST-10 App detail back button** — In detail view, click "← Back." Confirm returns to app list.
 - [ ] **AST-11 App detail: Subscribe & Open** — In detail view for a paid app, click "Subscribe & Open." Confirm SubscriptionModal opens.
 - [ ] **AST-12 App detail: Open App (free)** — In detail view for a free app, click "Open App." Confirm app window opens.
-- [ ] **AST-13 Stats footer** — Confirm footer shows app count (44 Apps), Enterprise Ready, Instant Access, Live Updates.
-- [ ] **AST-14 Star ratings displayed** — Confirm rated apps (TaxFlow: 4.9, pcscanfix: 5.0, etc.) show star + number in rows.
+- [ ] **AST-13 Stats footer** — Confirm footer shows the live app count from `APP_REGISTRY.length` (39 as of 2026-09-01), Enterprise Ready, Instant Access, Live Updates.
+- [ ] **AST-14 Star ratings displayed** — Confirm the rated apps show star + number in their rows (PCFixScan 5.0, Bible 5.0, Proverbs 4.9, Celestia 4.8, The Condition of Man 4.8, Ephesians 4.7). Every key in `RATINGS` must exist in APP_REGISTRY — a stale key renders nothing.
 
 ---
 
@@ -734,7 +762,7 @@
 
 ### RAXX APP VIEWER (LIVE WEBVIEW)
 
-- [ ] **RAX-01 Webview loads live URL** — Subscribe to any RAXX app (e.g., TaxFlow Pro). Confirm webview attempts to load `https://taxflow-pro.vercel.app`.
+- [ ] **RAX-01 Webview loads live URL** — Subscribe to The Condition of Man. Confirm the webview attempts to load `https://theconditionofman.com`.
 - [ ] **RAX-02 "Live" badge** — Confirm "Live" badge pill in the nav bar.
 - [ ] **RAX-03 HTTPS lock icon** — Confirm green lock icon for https:// URLs.
 - [ ] **RAX-04 Loading spinner in URL bar** — Confirm spinner appears while page loads.
@@ -757,6 +785,55 @@
 - [ ] **WGT-04 CPU updates** — CPU percentage changes every ~3 seconds (random delta animation).
 - [ ] **WGT-05 Quick Notes persists** — Type in Quick Notes widget, close the window and reopen OS (or just verify it saves between sessions via localStorage).
 - [ ] **WGT-06 Widgets hidden when windows open** — Confirm all 3 widgets fade to opacity 0 when any window is open (pointer-events none).
+
+---
+
+### GATHERINGS (believer-based events)
+
+> Added 2026-09-01. Pure functions (faith classifier, ICS parser, Google date
+> parser, distance) and the `events:search` IPC path are covered by automated
+> checks; everything below is the UI half that still needs a human.
+
+- [ ] **GAT-01 App present** — Confirm Gatherings appears on the Desktop, in Spotlight and in the App Store under Faith, with the MapPin icon (not the fallback globe).
+- [ ] **GAT-02 No-sources empty state** — On first open with nothing configured, confirm the "Connect a source to begin" panel shows and the Sources tab carries an amber dot.
+- [ ] **GAT-03 Search without sources** — Type a ZIP and press Search. Confirm the app switches to the Sources tab rather than erroring.
+- [ ] **GAT-04 ICS feed end-to-end** — Add a real church .ics URL in Sources, search a nearby ZIP. Confirm its events list with the church name as the organiser.
+- [ ] **GAT-05 Trusted feed keeps plain events** — Confirm a non-religious event on a subscribed church feed (e.g. "Pancake Breakfast") still appears — feeds the user added are trusted regardless of keywords.
+- [ ] **GAT-06 Recurrence expands** — With a `FREQ=WEEKLY` event on the feed, confirm multiple weekly occurrences appear across the selected range, each tagged "Recurring."
+- [ ] **GAT-07 Bad ZIP handled** — Search "00000" or gibberish. Confirm a readable error appears and the app does not hang.
+- [ ] **GAT-08 Ticketmaster key** — Paste a Ticketmaster consumer key, search a large city with 50 mi. Confirm gospel/worship events appear tagged "Ticketmaster" with distances.
+- [ ] **GAT-09 Provider failure is isolated** — Enter a deliberately invalid Ticketmaster key alongside a working ICS feed. Confirm the ICS results still render and the status strip shows Ticketmaster as failed.
+- [ ] **GAT-10 Strictness changes results** — Switch Strict → Balanced → Broad and re-search. Confirm the result count widens each step.
+- [ ] **GAT-11 Category chips** — Confirm chips show counts, that a zero-count chip is not clickable, and that selecting one narrows the list.
+- [ ] **GAT-12 Add to Calendar** — Click "Add" on a dated event. Confirm the button flips to "Added," then open the Calendar app and confirm the event is on the right day at the right time.
+- [ ] **GAT-13 Undated events** — For a Google Events result with no parsed date, confirm the card shows the raw "when" text and its Add button is disabled.
+- [ ] **GAT-14 Open in browser** — Click "Open" on an event. Confirm it opens in the system browser (https only — an http/file link must be refused).
+- [ ] **GAT-15 Keys persist, searches resume** — Close and reopen Gatherings. Confirm saved keys/feeds survive and the last search is re-run automatically.
+- [ ] **GAT-16 Repeat search is instant** — Press Search twice with identical inputs. Confirm the second returns immediately from cache and is NOT rejected as rate-limited.
+
+---
+
+### CROSS-PLATFORM PARITY (macOS vs Windows)
+
+> The same renderer bundle ships in the .dmg and the .exe, so anything naming a
+> path, a modifier key or a platform tool has to branch on `src/renderer/src/platform.js`.
+> Run each of these on BOTH machines and compare.
+
+- [ ] **PAR-01 Scrolls locations** — On Windows confirm the sidebar lists Videos, Program Files, Program Files (x86), This PC (C:). On macOS confirm Movies, Applications, Volumes — and that no Windows drive entries appear.
+- [ ] **PAR-02 Files quick access** — Same check for the Files app: Videos + This PC on Windows, Movies + Applications on macOS.
+- [ ] **PAR-03 Spotlight hint** — Confirm the footer hint reads "Ctrl Space" on Windows and "⌘ Space" on macOS, and that the shortcut itself works on both.
+- [ ] **PAR-04 Terminal `ls`** — Confirm the fake listing omits `Applications/` on Windows and includes it (with `Movies/`) on macOS.
+- [ ] **PAR-05 Terminal `rev rebuild` help** — Confirm the help line says "applies on next launch" on Windows, "install to /Applications" on macOS.
+- [ ] **PAR-06 Terminal rebuild result** — Run `rev rebuild`. Confirm Windows reports "updated sources load on next launch" and does not claim an /Applications install.
+- [ ] **PAR-07 Bluetooth toggle** — On Windows confirm the switch is enabled and opens Windows Bluetooth settings with a toast; on macOS without blueutil confirm it stays disabled with the Homebrew hint.
+- [ ] **PAR-08 Bluetooth guidance text** — Confirm Windows never shows `brew install blueutil`.
+- [ ] **PAR-09 neofetch** — Confirm the OS line reads "Windows" on Windows and "macOS (Darwin)" on macOS.
+- [ ] **PAR-10 Escape hatches on Windows** — Confirm F11 toggles fullscreen and Ctrl+Shift+M minimises (the frameless window has no native controls).
+- [ ] **PAR-11 Battery panel** — On a Windows laptop confirm percentage, charging state, health % and cycle count populate (powercfg report), and that a desktop with no battery degrades to "unknown" without crashing.
+- [ ] **PAR-12 Volume panel** — Confirm reading and setting the level and mute works on both (Windows drives IAudioEndpointVolume, macOS uses osascript).
+- [ ] **PAR-13 Wi-Fi panel** — Confirm status, scan, connect and disconnect all work on both (netsh vs airport).
+- [ ] **PAR-14 Terminal X** — Confirm the shell is PowerShell on Windows and bash/zsh on macOS, and `cd` persists between commands on both.
+- [ ] **PAR-15 File boundaries** — Confirm `scanDirectory` is limited to home/temp/drive roots on Windows and to the mac allowlist on macOS, with `~` expanding correctly on both.
 
 ---
 
@@ -787,14 +864,14 @@
 - [ ] **EDG-01 Drag window to screen corner** — Drag a window to top-left corner. Confirm clamped at x=0, y=40. Drag to bottom-right, confirm right/bottom clamp.
 - [ ] **EDG-02 Resize to minimum then back** — Shrink window to 320×200, then drag to enlarge. Confirm resumes growing normally.
 - [ ] **EDG-03 Open → minimize → maximize sequence** — Open a window, minimize it, restore it via TopBar, maximize it, restore from maximize. Confirm window is at correct position.
-- [ ] **EDG-04 All apps open simultaneously** — Open all 8 system apps. Confirm no crashes, all windows render, TopBar shows only 8 indicators max.
+- [ ] **EDG-04 Many apps open simultaneously** — Open a dozen system apps. Confirm no crashes, all windows render, and the TopBar still shows at most 8 indicator pills (`openWindows.slice(0,8)`).
 - [ ] **EDG-05 Rapid open/close cycles** — Rapidly click to open and close the same app 10 times. Confirm no ID collisions or state leaks.
 - [ ] **EDG-06 Notification center with 20+ notifications** — Trigger 20+ notifications. Confirm list scrolls properly and "9+" badge shows.
 - [ ] **EDG-07 Clear all notifications → empty state** — With many notifications, click "Clear." Confirm immediate empty state renders.
 - [ ] **EDG-08 Log out with windows open** — Open 5 windows, then Sign Out from user menu. Confirm all windows are cleared and LoginScreen shows.
 - [ ] **EDG-09 Resize window from maximized** — Maximize a window; confirm resize handle is hidden/disabled. Restore; confirm handle reappears.
 - [ ] **EDG-10 TopBar drag region** — Click and drag the TopBar region (not on a button or pill). Confirm the Electron window is dragged (native window move). This only applies to the packaged `.app`.
-- [ ] **EDG-11 Notepad: closing tabs with unsaved content** — With unsaved content (amber dot), close the tab. Confirm content is not persisted to localStorage after close (vs. autosave behavior). Note current behavior: there is no "Are you sure?" guard.
+- [ ] **EDG-11 Notepad: closing tabs with unsaved content** — With unsaved content (amber dot), close the tab. Confirm the "…has unsaved changes. Close anyway?" confirm dialog appears, that Cancel keeps the tab, and that OK closes it and flushes the remaining tabs to localStorage. (The old note here said no guard existed — ISS-06 added one; corrected 2026-09-01.)
 - [ ] **EDG-12 Celestia: open second file without closing first** — With a Word doc open, click "Open" again and pick an Excel file. Confirm it replaces the Word doc cleanly (no stale state from previous file type).
 - [ ] **EDG-13 Browser tab with failed page** — Navigate Ephesians to a non-existent domain. Confirm `did-fail-load` error state shown in that tab (not a crash).
 - [ ] **EDG-14 Settings persist after OS restart** — Change a setting (e.g., accent color), close the app, reopen. Confirm setting is loaded from localStorage.
@@ -822,6 +899,21 @@
 - [x] **ISS-14** ~~Red error for proverbs in dev mode~~ FIXED — now amber system-style message: "Proverbs CLI unavailable in dev mode — package the app to enable IPC."
 - [x] **ISS-15** VERIFIED — SubscriptionModal passes `props: { liveUrl, appId, appName }`; WindowManager's RAXXLiveApp forwards `url={liveUrl}` to RAXXAppViewer. No missing prop.
 - [x] **ISS-16** (found 2026-06-11) Duplicate `border` key in VolumePanel mute-button style — dead `border: 'none'` removed; build is warning-free.
-- [ ] **2026-07-22 12:41:13** `48b58c6a` — push to gh
-- [ ] **2026-08-29 23:42:31** `89a840e8` — I need to build a .exe file for revelations os and push it to the gh repo for revelations
-- [ ] **2026-08-29 23:42:51** `89a840e8` — Please ensure that it works and that I can install it on a windows seamlessly with the same functionality as on my mac
+- [x] **2026-07-22 12:41:13** `48b58c6a` — ~~push to gh~~ DONE — `main` tracks `origin/main` at 0 ahead / 0 behind (verified 2026-09-01).
+- [x] **2026-08-29 23:42:31** `89a840e8` — ~~build a .exe and push it to the gh repo~~ DONE — `.github/workflows/build.yml` builds on every `v*` tag; release **v1.0.13** carries `Revelations-Setup-1.0.13.exe` (105 MB) plus `Revelations-1.0.13.dmg` (141 MB). Last run succeeded 2026-08-30.
+- [x] **2026-08-29 23:42:51** `89a840e8` — ~~ensure it installs on Windows with the same functionality as on mac~~ DONE for the main process, FIXED in the renderer — `platform-win.js` already covered battery/volume/wifi/bluetooth/fs/shell, but the renderer still shipped mac-only text and paths in five places (ISS-18…ISS-22 below). Remaining verification is hands-on: see the new **CROSS-PLATFORM PARITY** section.
+
+### Found 2026-09-01 (audit of the test matrix against the source)
+
+- [x] **ISS-17** App Store category chips matched nothing — `CATEGORIES` was a fixed `['Business','Finance','Legal','Healthcare',…]` list while apps declare `faith`/`system`/`dev`/`admin`, so every filter except "All" emptied the store. FIXED — chips are now derived from `APP_REGISTRY` (with a label map), so they cannot drift again. `RATINGS` was likewise keyed on five deleted apps and has been re-keyed to apps that exist.
+- [x] **ISS-18** Scrolls showed Windows-only locations on macOS — Program Files, Program Files (x86) and This PC (C:) were unconditional. FIXED — drive roots on Windows, /Applications + /Volumes on macOS, and Videos/Movies follows the host.
+- [x] **ISS-19** Spotlight hint hardcoded `⌘Space` on Windows. FIXED — uses `MOD_KEY` from the new `platform.js`.
+- [x] **ISS-20** Terminal printed mac-only recovery steps on Windows — `rev rebuild` help promised an /Applications install, the `rev:update` fallback told users to `cp -R dist/mac/Revelations.app`, the success line claimed /Applications was updated (the main process only rebuilds sources there), and `ls` listed `Applications/`. FIXED — all four branch on platform.
+- [x] **ISS-21** Bluetooth panel told Windows users to `brew install blueutil` and disabled a toggle that does work there (the main process opens `ms-settings:bluetooth`). FIXED — switch stays live on Windows with a toast, and the guidance text is per-platform.
+- [x] **ISS-22** Platform detection was duplicated and weak — FileManager sniffed the deprecated `navigator.platform`. FIXED — single `src/renderer/src/platform.js` reading `window.nexus.platform`, with a userAgent fallback for dev-in-browser.
+- [x] **ISS-23** Login screen never focused its first field — `firstInput` ref was passed but nothing called `focus()`. FIXED — focuses on mount and on mode switch.
+- [x] **ISS-24** (Gatherings, found by its own tests) Google Events times like "7 – 9 PM" parsed as the **end** time, and the search rate limiter ran ahead of the cache so an identical repeat search was rejected instead of served instantly. Both FIXED.
+
+### Open
+
+- [ ] **ENV-01** Dependencies cannot be installed on the current Windows dev machine — `npm install` fails with `ERR_SSL_SSL/TLS_ALERT_HANDSHAKE_FAILURE` against registry.npmjs.org (general HTTPS is fine; the registry specifically is blocked). `node_modules` is therefore absent and `npm run build` / `npm run dev` cannot run locally. CI is unaffected — GitHub Actions builds both installers fine. Needs a network where npm works, a proxy/registry mirror, or an offline npm cache.

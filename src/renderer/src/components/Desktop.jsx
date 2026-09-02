@@ -8,7 +8,7 @@ import OrbLauncher from './OrbLauncher'
 import WindowManager from './WindowManager'
 import NotificationCenter from './NotificationCenter'
 import Widgets from './Widgets'
-import BottomTaskbar, { TASKBAR_HEIGHT } from './BottomTaskbar'
+import BottomTaskbar from './BottomTaskbar'
 import horsemenLogo from '../assets/raxx-logo.png'
 import { WALLPAPERS, getSettings } from '../theme'
 import { X, Search } from 'lucide-react'
@@ -195,23 +195,6 @@ export default function Desktop() {
 
       {/* Notification center */}
       <NotificationCenter />
-
-      {/* Footer — support link (only visible when no windows open) */}
-      <div style={{
-        position: 'absolute', bottom: TASKBAR_HEIGHT + 8, left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', gap: 16, zIndex: 6, pointerEvents: hasWindows ? 'none' : 'all',
-        opacity: hasWindows ? 0 : 0.45, transition: 'opacity 0.4s ease',
-      }}>
-        {[
-          { label: 'Support', appId: 'support', title: 'Support' },
-        ].map(({ label, appId, title }) => (
-          <button key={appId} onClick={() => openWindow({ appId, title, width: 780, height: 560 })}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem', textDecoration: 'underline', textUnderlineOffset: 2, padding: 0 }}>
-            {label}
-          </button>
-        ))}
-        <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.7rem' }}>· RAXX BEATS STUDIOS LLC</span>
-      </div>
 
       {/* Desktop right-click menu */}
       {contextMenu && (

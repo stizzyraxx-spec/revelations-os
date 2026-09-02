@@ -10,6 +10,9 @@ const IS_WIN = process.platform === 'win32'
 // left as an external require and the file is missing from the packaged app.
 // The module itself touches nothing platform-specific at load time.
 const win = require('./platform-win')
+// Gatherings — believer-based event discovery (all upstream HTTP lives there).
+const { registerEventsIpc } = require('./events')
+registerEventsIpc()
 
 // Security: disable remote debugging
 app.commandLine.appendSwitch('remote-debugging-port', '0')

@@ -1,8 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Home, Folder, FileText, Download, Music2, Video, Search, ArrowLeft } from 'lucide-react'
+import { IS_WIN } from '../platform'
 
 // Scrolls — a Finder/Explorer-style file browser with a Locations sidebar and
 // machine search, built on the OS file-system bridge (window.nexus).
+//
+// The same bundle ships on both platforms, so the machine-level entries below
+// the home folders have to follow the host: drive roots on Windows, /Applications
+// and /Volumes on a Mac. Home folders are identical apart from Movies vs Videos.
 const LOCATIONS = [
   { label: 'Home', path: '~', icon: Home },
   { label: 'Desktop', path: '~/Desktop', icon: Folder },
@@ -10,10 +15,19 @@ const LOCATIONS = [
   { label: 'Downloads', path: '~/Downloads', icon: Download },
   { label: 'Pictures', path: '~/Pictures', icon: Folder },
   { label: 'Music', path: '~/Music', icon: Music2 },
-  { label: 'Videos', path: '~/Videos', icon: Video },
-  { label: 'Program Files', path: 'C:\\Program Files', icon: Folder },
-  { label: 'Program Files (x86)', path: 'C:\\Program Files (x86)', icon: Folder },
-  { label: 'This PC (C:)', path: 'C:\\', icon: Folder },
+  IS_WIN
+    ? { label: 'Videos', path: '~/Videos', icon: Video }
+    : { label: 'Movies', path: '~/Movies', icon: Video },
+  ...(IS_WIN
+    ? [
+        { label: 'Program Files', path: 'C:\\Program Files', icon: Folder },
+        { label: 'Program Files (x86)', path: 'C:\\Program Files (x86)', icon: Folder },
+        { label: 'This PC (C:)', path: 'C:\\', icon: Folder },
+      ]
+    : [
+        { label: 'Applications', path: '/Applications', icon: Folder },
+        { label: 'Volumes', path: '/Volumes', icon: Folder },
+      ]),
 ]
 
 function fmtSize(n) {

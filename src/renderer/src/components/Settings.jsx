@@ -384,33 +384,104 @@ function UpdatesPanel() {
   )
 }
 
+// Windows-style About: a device header, then collapsible "specifications" cards
+// each with its own Copy button, mirroring Settings > System > About.
 function AboutPanel() {
-  return (
-    <div style={sectionStyle}>
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-        <div style={{ width: 80, height: 80, borderRadius: 20, background: 'linear-gradient(135deg, #7c3aed, #1e40af)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>⚔️</div>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Revelations OS</div>
-          <div style={{ color: 'var(--text-muted)', marginTop: 4 }}>Version 1.0.0</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>© 2025 Revelations OS</div>
-        </div>
+  const [sys, setSys] = useState(null)
+  const [version, setVersion] = useState('')
+  const [copied, setCopied] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    Promise.all([
+      window.nexus?.getSystemInfo?.() ?? null,
+      window.nexus?.getVersion?.() ?? '',
+    ]).then(([info, ver]) => {
+      if (!alive) return
+      setSys(info)
+      setVersion(ver || '')
+    }).catch(() => {})
+    return () => { alive = false }
+  }, [])
+
+  const v = window.nexus?.versions || {}
+  const platform = window.nexus?.platform || ''
+  const platformName = { win32: 'Windows', darwin: 'macOS', linux: 'Linux' }[platform] || platform || 'Unknown'
+  const dash = '—'
+
+  const deviceSpecs = [
+    ['Device name', sys?.hostname ?? dash],
+    ['Processor', sys?.cpuModel ? `${sys.cpuModel} (${sys.cpuCount} cores)` : dash],
+    ['Installed RAM', sys ? `${sys.totalRam} GB (${sys.freeRam} GB free)` : dash],
+    ['System type', sys ? `${sys.arch === 'x64' ? '64-bit' : sys.arch} operating system, ${sys.arch} processor` : dash],
+    ['Host OS', sys ? `${platformName} ${sys.osRelease}` : platformName],
+    ['Signed in as', sys?.username ?? dash],
+    ['Uptime', sys ? `${sys.uptime} hour${sys.uptime === 1 ? '' : 's'}` : dash],
+  ]
+
+  const osSpecs = [
+    ['Edition', 'Revelations OS'],
+    ['Version', version || dash],
+    ['Electron', v.electron ?? dash],
+    ['Chromium', v.chrome ?? dash],
+    ['Node.js', v.node ?? dash],
+    ['Security', 'AES-256-GCM + contextIsolation'],
+  ]
+
+  const supportSpecs = [
+    ['Developer', 'Shane Bedasee'],
+    ['Company', 'RAXX Beats Studios LLC'],
+    ['UEI', 'QHGHVKNDMQ33'],
+    ['CAGE', '19WS9'],
+  ]
+
+  const copy = (label, rows) => {
+    const text = rows.map(([k, val]) => `${k}: ${val}`).join('\n')
+    navigator.clipboard?.writeText(text)
+      .then(() => {
+        setCopied(label)
+        setTimeout(() => setCopied(c => (c === label ? '' : c)), 1600)
+      })
+      .catch(() => {})
+  }
+
+  const SpecCard = ({ title, rows }) => (
+    <div style={{ ...sectionStyle, padding: 16, marginTop: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</span>
+        <button onClick={() => copy(title, rows)}
+          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '4px 12px', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+          {copied === title ? 'Copied' : 'Copy'}
+        </button>
       </div>
-      <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {[
-          ['Built with', 'Electron 29 + React 18'],
-          ['Runtime', 'Node.js + Chromium'],
-          ['Security', 'AES-256-GCM + contextIsolation'],
-          ['Developer', 'Shane Bedasee'],
-          ['Company', 'Revelations OS'],
-          ['UEI', 'QHGHVKNDMQ33'],
-          ['CAGE', '19WS9'],
-        ].map(([k, v]) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {rows.map(([k, val]) => (
           <div key={k} style={{ display: 'flex', gap: 12, fontSize: 13 }}>
-            <span style={{ color: 'var(--text-muted)', width: 100, flexShrink: 0 }}>{k}</span>
-            <span style={{ color: 'var(--text-secondary)' }}>{v}</span>
+            <span style={{ color: 'var(--text-muted)', width: 130, flexShrink: 0 }}>{k}</span>
+            <span style={{ color: 'var(--text-secondary)', wordBreak: 'break-word' }}>{val}</span>
           </div>
         ))}
       </div>
+    </div>
+  )
+
+  return (
+    <div>
+      {/* Device header */}
+      <div style={{ ...sectionStyle, padding: 20, flexDirection: 'row', gap: 20, alignItems: 'center' }}>
+        <div style={{ width: 72, height: 72, borderRadius: 18, background: 'linear-gradient(135deg, #7c3aed, #1e40af)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0 }}>⚔️</div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{sys?.hostname || 'Revelations OS'}</div>
+          <div style={{ color: 'var(--text-muted)', marginTop: 4, fontSize: 13 }}>
+            Revelations OS{version ? ` · Version ${version}` : ''}
+          </div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>© 2026 RAXX Beats Studios LLC. All rights reserved.</div>
+        </div>
+      </div>
+
+      <SpecCard title="Device specifications" rows={deviceSpecs} />
+      <SpecCard title="Revelations OS specifications" rows={osSpecs} />
+      <SpecCard title="Support information" rows={supportSpecs} />
     </div>
   )
 }

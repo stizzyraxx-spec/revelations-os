@@ -26,6 +26,10 @@ export default function LoginScreen() {
   const timers = useRef([])
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
 
+  // `firstInput` marks whichever field leads the current mode (full name when
+  // creating, username when signing in) — focus it so the user can just type.
+  useEffect(() => { firstInput.current?.focus() }, [mode])
+
   const set = (k) => (e) => { setF((prev) => ({ ...prev, [k]: e.target.value })); setError('') }
 
   const enterOS = (name) => { nameRef.current = name || 'User'; setStage('cinematic') }

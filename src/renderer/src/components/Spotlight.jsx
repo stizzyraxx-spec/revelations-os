@@ -3,6 +3,7 @@ import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import { Search, X } from 'lucide-react'
 import { getAppIcon } from './appIcons'
+import { MOD_KEY } from '../platform'
 
 export default function Spotlight({ open, onClose }) {
   const { openWindow } = useOSStore()
@@ -129,7 +130,7 @@ export default function Spotlight({ open, onClose }) {
         </div>
 
         <div style={{ padding: '8px 18px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 16 }}>
-          {[['↑↓', 'Navigate'], ['↵', 'Open'], ['⌘Space', 'Toggle']].map(([key, label]) => (
+          {[['↑↓', 'Navigate'], ['↵', 'Open'], [`${MOD_KEY} Space`, 'Toggle']].map(([key, label]) => (
             <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <kbd style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, padding: '2px 6px', fontSize: '0.68rem', color: '#777' }}>{key}</kbd>
               <span style={{ fontSize: '0.68rem', color: '#555' }}>{label}</span>

@@ -12,6 +12,7 @@ const VALID_INVOKE = [
   'bt:status', 'bt:toggle', 'bt:connect', 'bt:disconnect',
   'battery:status',
   'volume:get', 'volume:set', 'volume:mute',
+  'events:search', 'events:geocode', 'events:openExternal',
 ]
 
 function safeSend(ch, ...args) {
@@ -65,6 +66,10 @@ contextBridge.exposeInMainWorld('nexus', {
   volumeGet: () => safeInvoke('volume:get'),
   volumeSet: (level) => safeInvoke('volume:set', level),
   volumeMute: (mute) => safeInvoke('volume:mute', mute),
+  // Gatherings — believer-based events near you
+  eventsSearch: (params) => safeInvoke('events:search', params),
+  eventsGeocode: (location) => safeInvoke('events:geocode', String(location).slice(0, 200)),
+  eventsOpenExternal: (url) => safeInvoke('events:openExternal', String(url).slice(0, 2000)),
   onNotification: (cb) => {
     const fn = (_e, data) => { if (data?.title) cb(data) }
     ipcRenderer.on('notification:push', fn)

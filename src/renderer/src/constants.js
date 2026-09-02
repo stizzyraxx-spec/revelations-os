@@ -12,6 +12,7 @@ export const APP_REGISTRY = [
   { id: 'faith-games', name: 'Bible Games', icon: 'Gamepad2', color: '#06b6d4', category: 'faith', free: true, desc: 'Interactive faith-based games and quizzes', liveUrl: 'https://theconditionofman.com/games' },
   { id: 'bookmarks', name: 'Bookmarks', icon: 'BookMarked', color: '#84cc16', category: 'faith', free: true, desc: 'Saved verses, sermons and study content', liveUrl: 'https://theconditionofman.com/profile' },
   { id: 'donate-faith', name: 'Give / Tithe', icon: 'DollarSign', color: '#22c55e', category: 'faith', free: true, desc: 'Donations, tithes and offerings', liveUrl: 'https://theconditionofman.com/donate' },
+  { id: 'gatherings', name: 'Gatherings', icon: 'MapPin', color: '#7c3aed', category: 'faith', free: true, desc: 'Find believer-based events near you — church calendars, conferences, worship nights' },
   { id: 'my-profile', name: 'My Profile', icon: 'UserCircle', color: '#a78bfa', category: 'faith', free: true, desc: 'Your account, badges and activity history', liveUrl: 'https://theconditionofman.com/profile' },
   { id: 'calculator', name: 'Calculator', icon: 'Calculator', color: '#374151', category: 'system', free: true, desc: 'Scientific calculator with history' },
   { id: 'clock', name: 'Clock', icon: 'Clock', color: '#0891b2', category: 'system', free: true, desc: 'World clock, alarms, stopwatch & timer' },

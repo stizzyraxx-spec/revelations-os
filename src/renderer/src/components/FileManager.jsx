@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { Home, ChevronRight, Folder, File, ArrowLeft, ArrowRight, RefreshCw, Grid, List, Search, HardDrive, Download, Music, Image, Video, FileText } from 'lucide-react'
 import { categorizeFile, sortFiles } from '../ai/LocalAI'
 import { useOSStore } from '../store'
+import { IS_WIN } from '../platform'
 
 // Windows names the video folder "Videos" and has no /Applications; everything
 // else maps 1:1 between the two platforms.
-const IS_WIN = typeof navigator !== 'undefined' && /win/i.test(navigator.userAgentData?.platform || navigator.platform || '')
 
 const QUICK_ACCESS = [
   { label: 'Home', path: '~', icon: Home },

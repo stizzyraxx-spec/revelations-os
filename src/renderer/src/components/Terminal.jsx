@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { suggestCommand } from '../ai/LocalAI'
 import { logError } from '../updater/UpdateSystem'
+import { IS_WIN } from '../platform'
 
 const BANNER = `\x1b[35m
 ██████╗ ███████╗██╗   ██╗███████╗██╗      █████╗ ████████╗██╗ ██████╗ ███╗   ██╗███████╗
@@ -41,7 +42,7 @@ const REV_HELP = `\x1b[35m[rev]\x1b[0m Proverbs-powered OS repair system
 \x1b[33mUsage:\x1b[0m
   \x1b[36mrev update\x1b[0m              Enter interactive issue description mode
   \x1b[36mrev update <message>\x1b[0m    Fix the described issue immediately
-  \x1b[36mrev rebuild\x1b[0m             Rebuild Revelations OS source + install to /Applications
+  \x1b[36mrev rebuild\x1b[0m             ${IS_WIN ? 'Rebuild Revelations OS source (applies on next launch)' : 'Rebuild Revelations OS source + install to /Applications'}
   \x1b[36mrev repos\x1b[0m               List all registered app repos and their status
   \x1b[36mrev status\x1b[0m              Show results from the last rev update run
 
@@ -226,7 +227,9 @@ export default function Terminal() {
         addLine(`/home/${userName}`)
         break
       case 'ls':
-        addLine('Applications/  Desktop/  Documents/  Downloads/  Music/  Pictures/  Videos/')
+        addLine(IS_WIN
+          ? 'Desktop/  Documents/  Downloads/  Music/  Pictures/  Videos/'
+          : 'Applications/  Desktop/  Documents/  Downloads/  Movies/  Music/  Pictures/')
         break
       case 'echo':
         addLine(rest || '')
@@ -281,7 +284,9 @@ export default function Terminal() {
   // ─── REV HANDLERS ─────────────────────────────────────────────────────────
   const handleRevUpdate = async (issue) => {
     if (!window.nexus?.revUpdate) {
-      addLine('\x1b[31m[rev] rev:update IPC not available — app must be rebuilt first.\x1b[0m\nRun: cd ~/revelations-os && npm run build && cp -R dist/mac/Revelations.app /Applications/', 'html')
+      addLine('\x1b[31m[rev] rev:update IPC not available — app must be rebuilt first.\x1b[0m\n' + (IS_WIN
+        ? 'Run: cd %USERPROFILE%\\revelations-os ; npm run dist:win  then reinstall from dist\\Revelations-Setup-<version>.exe'
+        : 'Run: cd ~/revelations-os && npm run build && cp -R dist/mac/Revelations.app /Applications/'), 'html')
       return
     }
     setBusy(true)
@@ -318,7 +323,11 @@ export default function Terminal() {
     try {
       const result = await window.nexus.revRebuild()
       if (result.ok) {
-        addLine(`\x1b[32m[rev] ✓ Rebuild complete — /Applications/Revelations.app updated\x1b[0m`, 'html')
+        // On Windows a running .exe cannot overwrite itself, so the main process
+        // only rebuilds the sources — say that rather than claiming an install.
+        addLine(IS_WIN
+          ? `\x1b[32m[rev] ✓ Rebuild complete — updated sources load on next launch\x1b[0m`
+          : `\x1b[32m[rev] ✓ Rebuild complete — /Applications/Revelations.app updated\x1b[0m`, 'html')
         addLine(`\x1b[33m[rev] Restart Revelations OS to use the updated version\x1b[0m`, 'html')
       } else {
         addLine(`\x1b[31m[rev] Rebuild failed\x1b[0m`, 'html')

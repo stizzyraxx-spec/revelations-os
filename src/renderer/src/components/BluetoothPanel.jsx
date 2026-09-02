@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Bluetooth, BluetoothOff, Smartphone, Headphones, Laptop, Keyboard, Mouse, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { IS_WIN } from '../platform'
+
+// Connect/disconnect needs blueutil on macOS and has no stock equivalent on
+// Windows — point each platform at the right remedy instead of at Homebrew.
+const NO_CONTROL_MSG = IS_WIN
+  ? 'Pair and connect devices from Windows Bluetooth settings'
+  : 'Install blueutil for device control'
 
 function deviceIcon(type) {
   const t = (type || '').toLowerCase()
@@ -66,17 +73,23 @@ export default function BluetoothPanel() {
 
   useEffect(() => { load() }, [])
 
+  // macOS drives the radio through blueutil; Windows has no stock CLI for it, so
+  // the main process opens the Windows Bluetooth settings instead. Either way
+  // there is something to do, so the switch stays live on both platforms.
+  const canToggle = !!state?.hasBlueutil || IS_WIN
+
   const handleToggle = async () => {
-    if (!state?.hasBlueutil) return
+    if (!canToggle) return
     setToggling(true)
-    await window.nexus?.btToggle(!state.powered)
+    const r = await window.nexus?.btToggle(!state.powered)
+    if (r?.openedSettings) showToast('Opened Windows Bluetooth settings')
     await new Promise(r => setTimeout(r, 800))
     await load()
     setToggling(false)
   }
 
   const handleConnect = async (address) => {
-    if (!state?.hasBlueutil) { showToast('Install blueutil for device control', false); return }
+    if (!state?.hasBlueutil) { showToast(NO_CONTROL_MSG, false); return }
     setLoading(address)
     const r = await window.nexus?.btConnect(address)
     setLoading(null)
@@ -85,7 +98,7 @@ export default function BluetoothPanel() {
   }
 
   const handleDisconnect = async (address) => {
-    if (!state?.hasBlueutil) { showToast('Install blueutil for device control', false); return }
+    if (!state?.hasBlueutil) { showToast(NO_CONTROL_MSG, false); return }
     setLoading(address)
     const r = await window.nexus?.btDisconnect(address)
     setLoading(null)
@@ -112,10 +125,10 @@ export default function BluetoothPanel() {
             {/* Power toggle */}
             <button
               onClick={handleToggle}
-              disabled={toggling || !state?.hasBlueutil}
-              title={state?.hasBlueutil ? 'Toggle Bluetooth' : 'Install blueutil via Homebrew to toggle'}
+              disabled={toggling || !canToggle}
+              title={state?.hasBlueutil ? 'Toggle Bluetooth' : IS_WIN ? 'Open Windows Bluetooth settings' : 'Install blueutil via Homebrew to toggle'}
               style={{
-                width: 44, height: 24, borderRadius: 12, border: 'none', cursor: state?.hasBlueutil ? 'pointer' : 'default',
+                width: 44, height: 24, borderRadius: 12, border: 'none', cursor: canToggle ? 'pointer' : 'default',
                 background: state?.powered ? '#2563eb' : 'rgba(255,255,255,0.12)',
                 position: 'relative', transition: 'background 0.2s', flexShrink: 0,
               }}
@@ -131,7 +144,11 @@ export default function BluetoothPanel() {
 
         {!state?.hasBlueutil && (
           <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', fontSize: '0.72rem', color: '#fbbf24' }}>
-            Install blueutil for full control: <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 }}>brew install blueutil</code>
+            {IS_WIN ? (
+              <>Windows has no command-line Bluetooth control — the switch above opens Windows Bluetooth settings, where you can pair and connect devices.</>
+            ) : (
+              <>Install blueutil for full control: <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 }}>brew install blueutil</code></>
+            )}
           </div>
         )}
       </div>

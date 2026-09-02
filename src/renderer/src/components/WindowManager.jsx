@@ -26,6 +26,7 @@ import MeetingsApp from './MeetingsApp'
 import NotificationsManager from './NotificationsManager'
 import CalendarConnector from './CalendarConnector'
 import IdeaPlanner from './IdeaPlanner'
+import GatheringsApp from './GatheringsApp'
 
 function PrivacyApp(props) { return <PrivacySupport {...props} initialTab="privacy" /> }
 function SupportApp(props) { return <PrivacySupport {...props} initialTab="support" /> }
@@ -57,6 +58,7 @@ const APP_COMPONENTS = {
   notifications: NotificationsManager,
   calconnect: CalendarConnector,
   ideaplanner: IdeaPlanner,
+  gatherings: GatheringsApp,
 }
 
 function RAXXLiveApp({ appId, liveUrl, appName }) {

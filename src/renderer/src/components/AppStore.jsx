@@ -6,11 +6,21 @@ import AppTile from './AppTile'
 import { useOSStore } from '../store'
 import Fuse from 'fuse.js'
 
-const CATEGORIES = ['All', 'Business', 'Finance', 'Legal', 'Healthcare', 'Entertainment', 'Productivity', 'Security']
+// Derived from the registry rather than hand-listed: a chip that matches no app
+// would filter the store down to nothing, and the previous fixed list had drifted
+// out of step with the catalogue entirely. OrbLauncher guards its list the same way.
+const CATEGORY_LABELS = { faith: 'Faith', system: 'System', dev: 'Developer', admin: 'Admin' }
+const CATEGORIES = [
+  { id: 'All', label: 'All' },
+  ...[...new Set(APP_REGISTRY.map((a) => a.category))].map((id) => ({
+    id,
+    label: CATEGORY_LABELS[id] || id.charAt(0).toUpperCase() + id.slice(1),
+  })),
+]
 
 const FEATURED = ['celestia', 'proverbs', 'ephesians', 'tcom']
 
-const RATINGS = { taxflow: 4.9, legalvault: 4.8, govcoreerp: 4.7, bowdwn: 4.6, pcscanfix: 5.0, celestia: 4.8, commandhq: 4.9 }
+const RATINGS = { pcscanfix: 5.0, celestia: 4.8, proverbs: 4.9, ephesians: 4.7, tcom: 4.8, bible: 5.0 }
 
 const fuse = new Fuse(APP_REGISTRY, { keys: ['name', 'desc', 'category'], threshold: 0.4 })
 
@@ -145,17 +155,17 @@ export default function AppStore() {
         <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
           {CATEGORIES.map((c) => (
             <button
-              key={c}
-              onClick={() => setCategory(c)}
+              key={c.id}
+              onClick={() => setCategory(c.id)}
               style={{
                 padding: '5px 14px', borderRadius: 99, border: '1px solid',
-                borderColor: category === c ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
-                background: category === c ? 'rgba(109,40,217,0.3)' : 'rgba(255,255,255,0.04)',
-                color: category === c ? 'var(--accent)' : 'var(--text-secondary)',
+                borderColor: category === c.id ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
+                background: category === c.id ? 'rgba(109,40,217,0.3)' : 'rgba(255,255,255,0.04)',
+                color: category === c.id ? 'var(--accent)' : 'var(--text-secondary)',
                 cursor: 'pointer', fontSize: 12, fontWeight: 500,
               }}
             >
-              {c}
+              {c.label}
             </button>
           ))}
         </div>
