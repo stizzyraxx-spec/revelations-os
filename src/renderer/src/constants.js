@@ -17,6 +17,8 @@ export const APP_REGISTRY = [
   { id: 'calculator', name: 'Calculator', icon: 'Calculator', color: '#374151', category: 'system', free: true, desc: 'Scientific calculator with history' },
   { id: 'clock', name: 'Clock', icon: 'Clock', color: '#0891b2', category: 'system', free: true, desc: 'World clock, alarms, stopwatch & timer' },
   { id: 'music', name: 'Music', icon: 'Music2', color: '#7c3aed', category: 'system', free: true, desc: 'Worship music player' },
+  { id: 'photos', name: 'Photos', icon: 'Image', color: '#0284c7', category: 'system', free: true, desc: 'Browse your photo library — grid view, full-screen viewer and zoom' },
+  { id: 'videos', name: 'Videos', icon: 'Film', color: '#db2777', category: 'system', free: true, desc: 'Play your video library — thumbnails, durations and full-screen playback' },
   { id: 'calendar', name: 'Calendar', icon: 'Calendar', color: '#dc2626', category: 'system', free: true, desc: 'Personal calendar & events' },
   { id: 'privacy', name: 'Privacy Policy', icon: 'Shield', color: '#065f46', category: 'system', free: true, desc: 'Privacy policy and data usage' },
   { id: 'support', name: 'Support', icon: 'HelpCircle', color: '#1d4ed8', category: 'system', free: true, desc: 'Help center, FAQ and contact support' },
@@ -38,7 +40,9 @@ export const APP_REGISTRY = [
   // Subscription apps (liveUrl = embedded webview; updates auto-sync from live deployment)
   { id: 'proverbs', name: 'Proverbs', icon: 'BookOpen', color: '#6d28d9', category: 'dev', free: true, desc: 'Developer intelligence and code scanning', liveUrl: 'https://proverbs.cloutkiller.com' },
   { id: 'ideaplanner', name: 'IdeaPlanner', icon: 'Lightbulb', color: '#b45309', category: 'system', free: true, desc: 'Canvas mind-map and ideation tool — runs locally' },
-  { id: 'tcom', name: 'The Condition of Man', icon: 'BookHeart', color: '#b91c1c', category: 'faith', price: '$4.99/mo', trial: '30 days', free: false, desc: 'Bible study and Christian community platform', liveUrl: 'https://theconditionofman.com' },
+  // The Condition of Man is no longer a single paid app — its features ship as
+  // the individual free faith apps above, each opening its own section of the
+  // platform.
   { id: 'admincenter', name: 'Admin Center', icon: 'LayoutDashboard', color: '#4f46e5', category: 'admin', price: 'Internal', trial: 'N/A', free: true, desc: 'App metrics dashboard', liveUrl: 'https://admin-center.vercel.app' },
 ]
 

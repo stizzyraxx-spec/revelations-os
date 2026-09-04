@@ -8,7 +8,7 @@ import {
   Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
   MessageSquare, UserCircle, ScrollText, DollarSign,
   Clock, Calendar, HelpCircle, MapPin,
-  Mail, Video, StickyNote, Bell, CalendarDays, Info,
+  Mail, Video, StickyNote, Bell, CalendarDays, Info, Image, Film,
 } from 'lucide-react'
 
 export const ICON_MAP = {
@@ -21,7 +21,7 @@ export const ICON_MAP = {
   Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
   MessageSquare, UserCircle, ScrollText, DollarSign,
   Clock, Calendar, HelpCircle, MapPin,
-  Mail, Video, StickyNote, Bell, CalendarDays, Info,
+  Mail, Video, StickyNote, Bell, CalendarDays, Info, Image, Film,
 }
 
 export function getAppIcon(name) {

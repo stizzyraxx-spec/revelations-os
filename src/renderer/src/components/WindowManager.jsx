@@ -27,6 +27,8 @@ import NotificationsManager from './NotificationsManager'
 import CalendarConnector from './CalendarConnector'
 import IdeaPlanner from './IdeaPlanner'
 import GatheringsApp from './GatheringsApp'
+import PhotosApp from './PhotosApp'
+import VideosApp from './VideosApp'
 
 function PrivacyApp(props) { return <PrivacySupport {...props} initialTab="privacy" /> }
 function SupportApp(props) { return <PrivacySupport {...props} initialTab="support" /> }
@@ -49,6 +51,8 @@ const APP_COMPONENTS = {
   calculator: Calculator,
   clock: ClockAlarm,
   music: MusicPlayer,
+  photos: PhotosApp,
+  videos: VideosApp,
   calendar: CalendarApp,
   privacy: PrivacyApp,
   support: SupportApp,

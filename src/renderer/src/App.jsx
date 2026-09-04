@@ -13,6 +13,9 @@ export default function App() {
   const [loginOpacity, setLoginOpacity] = useState(1)
   const [spotlightOpen, setSpotlightOpen] = useState(false)
   const timers = useRef([])
+  // The splash belongs to opening the app — once we've signed in, a later
+  // inactivity lock returns straight to the sign-in screen.
+  const bootSplash = useRef(true)
 
   // Global Cmd+Space → Spotlight (available after login)
   useEffect(() => {
@@ -38,6 +41,7 @@ export default function App() {
   // React to login state — fade out LoginScreen, show Desktop
   useEffect(() => {
     if (!user.loggedIn) return
+    bootSplash.current = false
     clearTimers()
     // Begin fading login screen out
     const t1 = setTimeout(() => setLoginOpacity(0), 50)
@@ -66,12 +70,17 @@ export default function App() {
     return () => { clearTimeout(timer); window.removeEventListener('mousemove', reset); window.removeEventListener('keydown', reset) }
   }, [user.loggedIn])
 
+  // Update check — shortly after sign-in, then every 6 hours for long sessions.
+  // The banner is the only thing that surfaces it, so a miss here means the user
+  // never learns an update exists; hence on every launch rather than Mondays.
   useEffect(() => {
-    if (!user.loggedIn) return
-    const day = new Date().getDay()
-    if (day === 1 && window.nexus?.checkForUpdate) {
-      window.nexus.checkForUpdate().then(r => { if (r?.available) setPendingUpdate(r) }).catch(() => {})
-    }
+    if (!user.loggedIn || !window.nexus?.checkForUpdate) return
+    const check = () => window.nexus.checkForUpdate()
+      .then(r => { if (r?.available) setPendingUpdate(r) })
+      .catch(() => {})
+    const first = setTimeout(check, 8000)
+    const iv = setInterval(check, 6 * 60 * 60 * 1000)
+    return () => { clearTimeout(first); clearInterval(iv) }
   }, [user.loggedIn])
 
   return (
@@ -90,7 +99,7 @@ export default function App() {
           willChange: 'opacity',
           pointerEvents: loginOpacity > 0 ? 'all' : 'none',
         }}>
-          <LoginScreen />
+          <LoginScreen splash={bootSplash.current} />
         </div>
       )}
 

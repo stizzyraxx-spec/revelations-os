@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('nexus', {
   getVersion: () => safeInvoke('app:getVersion'),
   checkForUpdate: () => safeInvoke('app:checkUpdate'),
   applyUpdate: () => safeInvoke('app:applyUpdate'),
+  onUpdateProgress: (cb) => { const fn = (_e, d) => cb(d); ipcRenderer.on('update:progress', fn); return () => ipcRenderer.removeListener('update:progress', fn) },
   // rev update — Proverbs-powered OS + repo fixer
   revUpdate: (issue) => safeInvoke('rev:update', String(issue).slice(0, 2000)),
   revRebuild: () => safeInvoke('rev:rebuild'),

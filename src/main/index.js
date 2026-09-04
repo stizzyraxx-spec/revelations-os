@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, session, nativeTheme, shell, globalShortcut
 const path = require('path')
 const os = require('os')
 const fs = require('fs')
+const https = require('https')
 const { spawn } = require('child_process')
 
 const IS_WIN = process.platform === 'win32'
@@ -436,8 +437,118 @@ ipcMain.handle('termx:run', async (event, command) => {
 })
 
 ipcMain.handle('app:getVersion', () => app.getVersion())
-ipcMain.handle('app:checkUpdate', async () => ({ available: false, version: app.getVersion(), notes: '' }))
-ipcMain.handle('app:applyUpdate', async () => ({ scheduled: true }))
+
+// ─── Updates — driven off GitHub Releases ────────────────────────────────────
+// The build workflow attaches a .exe and a .dmg to each v* release, so "is there
+// an update" is just "is the latest release newer than us". Done with plain
+// https rather than electron-updater: no extra dependency, and the NSIS/dmg
+// installers already produced by the pipeline are exactly what we hand back to
+// the user. We download the installer and launch it; it upgrades in place.
+const UPDATE_REPO = 'stizzyraxx-spec/revelations-os'
+
+function httpsGet(url, opts = {}, redirects = 0) {
+  return new Promise((resolve, reject) => {
+    if (redirects > 5) return reject(new Error('Too many redirects'))
+    const req = https.get(url, {
+      headers: { 'User-Agent': 'RevelationsOS-Updater', Accept: 'application/vnd.github+json', ...(opts.headers || {}) },
+    }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume()
+        return resolve(httpsGet(res.headers.location, opts, redirects + 1))
+      }
+      if (res.statusCode !== 200) {
+        res.resume()
+        return reject(new Error(`HTTP ${res.statusCode}`))
+      }
+      resolve(res)
+    })
+    req.on('error', reject)
+    req.setTimeout(20000, () => { req.destroy(new Error('Update check timed out')) })
+  })
+}
+
+async function getJson(url) {
+  const res = await httpsGet(url)
+  let body = ''
+  for await (const chunk of res) body += chunk
+  return JSON.parse(body)
+}
+
+// Compare dotted numeric versions. Returns >0 when a is newer than b.
+function cmpVersion(a, b) {
+  const pa = String(a).split('.').map(n => parseInt(n, 10) || 0)
+  const pb = String(b).split('.').map(n => parseInt(n, 10) || 0)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0)
+    if (d) return d
+  }
+  return 0
+}
+
+function pickAsset(assets = []) {
+  const ext = process.platform === 'darwin' ? '.dmg' : '.exe'
+  return assets.find(a => String(a.name).toLowerCase().endsWith(ext)) || null
+}
+
+let _latestRelease = null
+
+ipcMain.handle('app:checkUpdate', async () => {
+  const current = app.getVersion()
+  try {
+    const rel = await getJson(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`)
+    const version = String(rel.tag_name || '').replace(/^v/i, '')
+    const asset = pickAsset(rel.assets)
+    _latestRelease = { version, asset }
+    return {
+      available: !!(version && asset && cmpVersion(version, current) > 0),
+      version: version || current,
+      current,
+      notes: String(rel.body || '').slice(0, 4000),
+      url: rel.html_url,
+      // No installer for this platform on the release — tell the renderer so it
+      // can point at the release page instead of offering a broken Install.
+      asset: asset ? { name: asset.name, size: asset.size } : null,
+    }
+  } catch (e) {
+    return { available: false, version: current, current, error: e.message }
+  }
+})
+
+ipcMain.handle('app:applyUpdate', async () => {
+  if (!rateOk('app:applyUpdate')) return { ok: false, error: 'Rate limit exceeded' }
+  const asset = _latestRelease?.asset
+  if (!asset) return { ok: false, error: 'Run a check for updates first' }
+
+  const send = (channel, payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload)
+  }
+
+  const dest = path.join(app.getPath('temp'), asset.name)
+  try {
+    const res = await httpsGet(asset.browser_download_url, { headers: { Accept: 'application/octet-stream' } })
+    const total = parseInt(res.headers['content-length'], 10) || asset.size || 0
+    let received = 0
+    await new Promise((resolve, reject) => {
+      const out = fs.createWriteStream(dest)
+      res.on('data', (c) => {
+        received += c.length
+        if (total) send('update:progress', { percent: Math.round((received / total) * 100), received, total })
+      })
+      res.on('error', reject)
+      out.on('error', reject)
+      out.on('finish', resolve)
+      res.pipe(out)
+    })
+  } catch (e) {
+    return { ok: false, error: `Download failed: ${e.message}` }
+  }
+
+  // Hand the installer to the OS and step aside so it can replace our files.
+  const opened = await shell.openPath(dest)
+  if (opened) return { ok: false, error: opened }
+  setTimeout(() => app.quit(), 1200)
+  return { ok: true, installer: dest, quitting: true }
+})
 
 // sys:openPrefs no longer needed — all panels are native now
 

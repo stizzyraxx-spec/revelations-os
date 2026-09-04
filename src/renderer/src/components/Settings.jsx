@@ -479,9 +479,63 @@ function AboutPanel() {
         </div>
       </div>
 
+      <UpdateCard currentVersion={version} />
       <SpecCard title="Device specifications" rows={deviceSpecs} />
       <SpecCard title="Revelations OS specifications" rows={osSpecs} />
       <SpecCard title="Support information" rows={supportSpecs} />
+    </div>
+  )
+}
+
+// Manual "check now", so the user never has to wait for the background check.
+// Finding an update pushes it into the store, which raises the UpdateBanner.
+function UpdateCard({ currentVersion }) {
+  const setPendingUpdate = useOSStore(s => s.setPendingUpdate)
+  const [state, setState] = useState('idle') // idle | checking | current | found | error
+  const [info, setInfo] = useState(null)
+
+  const check = async () => {
+    setState('checking')
+    try {
+      const r = await window.nexus?.checkForUpdate?.()
+      if (!r) { setState('error'); setInfo({ error: 'Updates are unavailable in this build' }); return }
+      setInfo(r)
+      if (r.error) { setState('error'); return }
+      if (r.available) { setPendingUpdate(r); setState('found') }
+      else setState('current')
+    } catch (e) {
+      setInfo({ error: e?.message || 'Check failed' })
+      setState('error')
+    }
+  }
+
+  const message = {
+    idle: 'Check whether a newer version of Revelations OS has been released.',
+    checking: 'Checking for updates…',
+    current: `You're up to date${currentVersion ? ` — v${currentVersion} is the latest release` : ''}.`,
+    found: `Version ${info?.version} is available. Use the banner at the top to install it.`,
+    error: `Couldn't check for updates — ${info?.error || 'unknown error'}.`,
+  }[state]
+
+  return (
+    <div style={{ ...sectionStyle, padding: 16, marginTop: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Revelations OS updates</div>
+          <div style={{
+            fontSize: 12, marginTop: 4,
+            color: state === 'error' ? '#f87171' : state === 'found' ? 'var(--accent)' : 'var(--text-muted)',
+          }}>{message}</div>
+        </div>
+        <button onClick={check} disabled={state === 'checking'}
+          style={{
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6,
+            padding: '7px 14px', color: 'var(--text-secondary)', fontSize: 12, flexShrink: 0,
+            cursor: state === 'checking' ? 'default' : 'pointer', opacity: state === 'checking' ? 0.6 : 1,
+          }}>
+          {state === 'checking' ? 'Checking…' : 'Check for updates'}
+        </button>
+      </div>
     </div>
   )
 }

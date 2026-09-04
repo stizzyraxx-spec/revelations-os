@@ -34,6 +34,8 @@ export default function Spotlight({ open, onClose }) {
         ...(app.id === 'clock' ? { width: 480, height: 560 } : {}),
         ...(app.id === 'calendar' ? { width: 780, height: 560 } : {}),
         ...(app.id === 'music' ? { width: 680, height: 480 } : {}),
+        ...(app.id === 'photos' ? { width: 1000, height: 680 } : {}),
+        ...(app.id === 'videos' ? { width: 1040, height: 700 } : {}),
       })
     } else {
       useOSStore.getState().openSubscription(app)

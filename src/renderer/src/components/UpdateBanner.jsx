@@ -1,22 +1,38 @@
-import { useState } from 'react'
-import { Download, X, RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Download, X, RefreshCw, ExternalLink } from 'lucide-react'
 import { useOSStore } from '../store'
 
 export default function UpdateBanner() {
   const { pendingUpdate, setPendingUpdate, addNotification } = useOSStore()
   const [installing, setInstalling] = useState(false)
+  const [percent, setPercent] = useState(0)
+
+  // Main streams download progress while the installer comes down.
+  useEffect(() => {
+    if (!window.nexus?.onUpdateProgress) return
+    return window.nexus.onUpdateProgress((d) => setPercent(d?.percent ?? 0))
+  }, [])
 
   if (!pendingUpdate) return null
 
+  // A release with no installer for this platform can still be opened on the
+  // web — offering "Install" there would just fail.
+  const canInstall = !!pendingUpdate.asset
+
   const install = async () => {
     setInstalling(true)
+    setPercent(0)
     try {
-      await window.nexus?.applyUpdate?.()
-      addNotification({ title: 'Update', body: 'Update applied — restart to finish.', type: 'success' })
-      setPendingUpdate(null)
-    } catch {
-      addNotification({ title: 'Update Failed', body: 'Could not apply the update. Try again later.', type: 'error' })
-    } finally {
+      const res = await window.nexus?.applyUpdate?.()
+      if (res?.ok) {
+        addNotification({ title: 'Update', body: 'Installer launched — Revelations will close to finish updating.', type: 'success' })
+        setPendingUpdate(null)
+      } else {
+        addNotification({ title: 'Update Failed', body: res?.error || 'Could not download the update.', type: 'error' })
+        setInstalling(false)
+      }
+    } catch (e) {
+      addNotification({ title: 'Update Failed', body: e?.message || 'Could not apply the update.', type: 'error' })
       setInstalling(false)
     }
   }
@@ -26,17 +42,35 @@ export default function UpdateBanner() {
       position: 'fixed', top: 48, left: '50%', transform: 'translateX(-50%)', zIndex: 9500,
       display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
       borderRadius: 12, border: '1px solid var(--border-accent)', boxShadow: 'var(--shadow-glow)',
+      overflow: 'hidden',
     }}>
-      <Download size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-      <div style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>
+      {/* Download progress fills the banner behind its contents */}
+      {installing && (
+        <div style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0, width: `${percent}%`,
+          background: 'var(--accent)', opacity: 0.18, transition: 'width 0.25s ease', pointerEvents: 'none',
+        }} />
+      )}
+
+      <Download size={16} style={{ color: 'var(--accent)', flexShrink: 0, position: 'relative' }} />
+      <div style={{ fontSize: '0.82rem', color: 'var(--text-primary)', position: 'relative' }}>
         <strong>Update available</strong>
         {pendingUpdate.version ? ` — v${pendingUpdate.version}` : ''}
+        {installing && percent > 0 ? ` · ${percent}%` : ''}
       </div>
-      <button onClick={install} disabled={installing} className="btn-primary" style={{ padding: '5px 14px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 5 }}>
-        {installing ? <RefreshCw size={12} className="animate-spin" /> : <Download size={12} />}
-        {installing ? 'Installing…' : 'Install'}
-      </button>
-      <button onClick={() => setPendingUpdate(null)} title="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 3, display: 'flex' }}>
+
+      {canInstall ? (
+        <button onClick={install} disabled={installing} className="btn-primary" style={{ padding: '5px 14px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 5, position: 'relative' }}>
+          {installing ? <RefreshCw size={12} className="animate-spin" /> : <Download size={12} />}
+          {installing ? (percent >= 100 ? 'Starting…' : 'Downloading…') : 'Install'}
+        </button>
+      ) : (
+        <button onClick={() => window.nexus?.eventsOpenExternal?.(pendingUpdate.url)} className="btn-primary" style={{ padding: '5px 14px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 5, position: 'relative' }}>
+          <ExternalLink size={12} /> View release
+        </button>
+      )}
+
+      <button onClick={() => setPendingUpdate(null)} title="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 3, display: 'flex', position: 'relative' }}>
         <X size={14} />
       </button>
     </div>

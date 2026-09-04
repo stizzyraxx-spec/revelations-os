@@ -18,9 +18,9 @@ const CATEGORIES = [
   })),
 ]
 
-const FEATURED = ['celestia', 'proverbs', 'ephesians', 'tcom']
+const FEATURED = ['celestia', 'proverbs', 'ephesians', 'bible']
 
-const RATINGS = { pcscanfix: 5.0, celestia: 4.8, proverbs: 4.9, ephesians: 4.7, tcom: 4.8, bible: 5.0 }
+const RATINGS = { pcscanfix: 5.0, celestia: 4.8, proverbs: 4.9, ephesians: 4.7, bible: 5.0 }
 
 const fuse = new Fuse(APP_REGISTRY, { keys: ['name', 'desc', 'category'], threshold: 0.4 })
 

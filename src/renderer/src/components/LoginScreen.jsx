@@ -5,9 +5,10 @@ import LoginCinematic from './LoginCinematic'
 import { hasAccounts, createAccount, verifyLogin } from '../auth/localAuth'
 import { User, Lock, Mail, Phone, Eye, EyeOff, ArrowRight, UserCircle } from 'lucide-react'
 
-// Flow: sign in / create account first, THEN the horsemen cinematic runs and
-// resolves into the logo, and finally the desktop is revealed.
-export default function LoginScreen() {
+// Flow: a splash holds the four-horse logo full-screen on black, settles into
+// the sign in / create account screen, and THEN the horsemen cinematic runs and
+// resolves into the logo before the desktop is revealed.
+export default function LoginScreen({ splash = false }) {
   const login = useOSStore((s) => s.login)
   const [stage, setStage] = useState('auth') // 'auth' | 'cinematic'
   const nameRef = useRef('User')
@@ -26,9 +27,49 @@ export default function LoginScreen() {
   const timers = useRef([])
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
 
+  // ── Splash state ──────────────────────────────────────────────────────────
+  // The splash and the sign-in screen share one logo element. We lay the sign-in
+  // screen out first, measure where the logo lands, then offset that same
+  // element to screen-centre at splash size (FLIP). Dropping the offset animates
+  // it back down into place, so there is no cross-fade seam between the two.
+  // 'measure' holds a black screen while the logo loads and we take its sign-in
+  // rect, 'hold' is the splash itself, 'exit' the logo settling into place, and
+  // 'done' the sign-in screen at rest.
+  const [splashPhase, setSplashPhase] = useState(splash ? 'measure' : 'done')
+  const [splashTf, setSplashTf] = useState(null)
+  const logoRef = useRef(null)
+  const splashTimers = useRef([])
+  const measured = useRef(false)
+  useEffect(() => () => splashTimers.current.forEach(clearTimeout), [])
+
+  const measureSplash = () => {
+    if (measured.current || !splash) return
+    const r = logoRef.current?.getBoundingClientRect()
+    if (!r?.width || !r?.height) return
+    measured.current = true
+    const target = Math.min(440, window.innerWidth * 0.72)
+    const dx = window.innerWidth / 2 - (r.left + r.width / 2)
+    const dy = window.innerHeight / 2 - (r.top + r.height / 2)
+    setSplashTf(`translate(${dx}px, ${dy}px) scale(${target / r.width})`)
+    setSplashPhase('hold')
+    splashTimers.current.push(setTimeout(() => setSplashPhase('exit'), 2100))
+    splashTimers.current.push(setTimeout(() => setSplashPhase('done'), 3450))
+  }
+
+  useEffect(() => {
+    if (!splash) return
+    // Cached images can finish loading before React attaches onLoad.
+    if (logoRef.current?.complete) measureSplash()
+    // If the logo never resolves, don't strand the user on a black screen.
+    splashTimers.current.push(setTimeout(() => {
+      if (!measured.current) { measured.current = true; setSplashPhase('done') }
+    }, 1500))
+  }, [])
+
   // `firstInput` marks whichever field leads the current mode (full name when
   // creating, username when signing in) — focus it so the user can just type.
-  useEffect(() => { firstInput.current?.focus() }, [mode])
+  // Re-runs as the splash lifts, so the form is focused the moment it appears.
+  useEffect(() => { firstInput.current?.focus() }, [mode, splashPhase])
 
   const set = (k) => (e) => { setF((prev) => ({ ...prev, [k]: e.target.value })); setError('') }
 
@@ -83,59 +124,105 @@ export default function LoginScreen() {
   }
 
   // ── Auth stage: sign in / create on the brimstone background ───────────────
+  const inSplash = splashPhase === 'measure' || splashPhase === 'hold'
+
   return (
     <div style={{
-      position: 'fixed', inset: 0, overflow: 'auto',
+      position: 'fixed', inset: 0,
+      // Stay clipped until the logo has finished settling — while it is still
+      // scaled up it would otherwise push scrollable overflow.
+      overflow: splashPhase === 'done' ? 'auto' : 'hidden',
       background: 'radial-gradient(ellipse at 50% 122%, #4a0d02 0%, #250701 30%, #120300 55%, #050100 78%, #000000 100%)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '28px 16px',
+      display: 'flex', flexDirection: 'column',
     }}>
-      <img src={raxxLogo} alt="Revelations OS" style={{ width: 190, maxWidth: '46vw', flexShrink: 0, filter: 'drop-shadow(0 0 40px rgba(255,120,40,0.28)) drop-shadow(0 0 90px rgba(200,40,10,0.2))' }} />
+      {/* Splash backdrop — pure black, lifts to reveal the brimstone sign-in screen */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0, background: '#000', pointerEvents: 'none',
+        opacity: inSplash ? 1 : 0,
+        transition: 'opacity 1.15s cubic-bezier(0.16, 1, 0.3, 1)',
+      }} />
 
-      <div style={{ width: 380, maxWidth: '90vw', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>
-          {isCreate ? 'Create your account' : 'Sign in to continue'}
-        </div>
-
-        {isCreate && (
-          <>
-            <Field icon={UserCircle} placeholder="Full name" value={f.name} onChange={set('name')} onKeyDown={onKeyDown} inputRef={firstInput} />
-            <Field icon={Mail} placeholder="Email" type="email" value={f.email} onChange={set('email')} onKeyDown={onKeyDown} />
-            <Field icon={Phone} placeholder="Phone (optional)" value={f.phone} onChange={set('phone')} onKeyDown={onKeyDown} />
-          </>
-        )}
-
-        <Field icon={User} placeholder="Username" value={f.username} onChange={set('username')} onKeyDown={onKeyDown} inputRef={isCreate ? undefined : firstInput} error={!!error} />
-
-        <Field
-          icon={Lock} placeholder={isCreate ? 'Create password' : 'Password'} value={f.password} onChange={set('password')} onKeyDown={onKeyDown}
-          type={show ? 'text' : 'password'} error={!!error}
-          trailing={<button onClick={() => setShow((v) => !v)} tabIndex={-1} style={iconBtn}>{show ? <EyeOff size={15} /> : <Eye size={15} />}</button>}
-        />
-
-        {isCreate && (
-          <Field icon={Lock} placeholder="Confirm password" type={show ? 'text' : 'password'} value={f.confirm} onChange={set('confirm')} onKeyDown={onKeyDown} />
-        )}
-
-        {error && <div style={{ color: '#f87171', fontSize: '0.76rem', textAlign: 'center' }}>{error}</div>}
-
-        <button onClick={submit} disabled={busy} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2,
-          padding: '11px 0', borderRadius: 10, border: 'none', cursor: busy ? 'default' : 'pointer',
-          background: '#ffffff', color: '#000000', fontSize: 14, fontWeight: 600, opacity: busy ? 0.7 : 1,
+      <div style={{
+        position: 'relative', zIndex: 1, flex: 1, minHeight: 0,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '32px 16px 10px',
+      }}>
+        <div style={{
+          flexShrink: 0,
+          // The jump to splash size must be instant — only the settle back down
+          // to the sign-in position is animated, so `transform` is left out of
+          // the transition until we're on the way out.
+          transform: splashPhase === 'hold' ? splashTf : 'none',
+          opacity: splashPhase === 'measure' ? 0 : 1,
+          transition: inSplash
+            ? 'opacity 0.8s ease'
+            : 'transform 1.25s cubic-bezier(0.16, 1, 0.3, 1), filter 1.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          willChange: 'transform',
+          filter: inSplash
+            ? 'drop-shadow(0 0 48px rgba(255,255,255,0.24)) drop-shadow(0 0 110px rgba(255,90,30,0.26))'
+            : 'drop-shadow(0 0 40px rgba(255,120,40,0.28)) drop-shadow(0 0 90px rgba(200,40,10,0.2))',
         }}>
-          {busy ? 'Please wait…' : isCreate ? 'Create Account' : 'Sign In'}
-          {!busy && <ArrowRight size={16} />}
-        </button>
-
-        <div style={{ textAlign: 'center', fontSize: '0.76rem', color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
-          {isCreate ? (
-            <>Already have an account?{' '}
-              <button onClick={() => { setMode('signin'); setError('') }} style={linkBtn}>Log in</button></>
-          ) : (
-            <>New here?{' '}
-              <button onClick={() => { setMode('create'); setError('') }} style={linkBtn}>Create an account</button></>
-          )}
+          <img ref={logoRef} onLoad={measureSplash} src={raxxLogo} alt="Revelations OS"
+            style={{ display: 'block', width: 190, maxWidth: '46vw' }} />
         </div>
+
+        <div style={{
+          width: 380, maxWidth: '90vw', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12,
+          opacity: inSplash ? 0 : 1,
+          pointerEvents: inSplash ? 'none' : 'auto',
+          transition: 'opacity 0.75s ease 0.4s',
+        }}>
+          <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>
+            {isCreate ? 'Create your account' : 'Sign in to continue'}
+          </div>
+
+          {isCreate && (
+            <>
+              <Field icon={UserCircle} placeholder="Full name" value={f.name} onChange={set('name')} onKeyDown={onKeyDown} inputRef={firstInput} />
+              <Field icon={Mail} placeholder="Email" type="email" value={f.email} onChange={set('email')} onKeyDown={onKeyDown} />
+              <Field icon={Phone} placeholder="Phone (optional)" value={f.phone} onChange={set('phone')} onKeyDown={onKeyDown} />
+            </>
+          )}
+
+          <Field icon={User} placeholder="Username" value={f.username} onChange={set('username')} onKeyDown={onKeyDown} inputRef={isCreate ? undefined : firstInput} error={!!error} />
+
+          <Field
+            icon={Lock} placeholder={isCreate ? 'Create password' : 'Password'} value={f.password} onChange={set('password')} onKeyDown={onKeyDown}
+            type={show ? 'text' : 'password'} error={!!error}
+            trailing={<button onClick={() => setShow((v) => !v)} tabIndex={-1} style={iconBtn}>{show ? <EyeOff size={15} /> : <Eye size={15} />}</button>}
+          />
+
+          {isCreate && (
+            <Field icon={Lock} placeholder="Confirm password" type={show ? 'text' : 'password'} value={f.confirm} onChange={set('confirm')} onKeyDown={onKeyDown} />
+          )}
+
+          {error && <div style={{ color: '#f87171', fontSize: '0.76rem', textAlign: 'center' }}>{error}</div>}
+
+          <button onClick={submit} disabled={busy} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2,
+            padding: '11px 0', borderRadius: 10, border: 'none', cursor: busy ? 'default' : 'pointer',
+            background: '#ffffff', color: '#000000', fontSize: 14, fontWeight: 600, opacity: busy ? 0.7 : 1,
+          }}>
+            {busy ? 'Please wait…' : isCreate ? 'Create Account' : 'Sign In'}
+            {!busy && <ArrowRight size={16} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Switching between sign in and create account lives at the bottom of the
+          screen, clear of the form it swaps. */}
+      <div style={{
+        position: 'relative', zIndex: 1, flexShrink: 0,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, padding: '0 16px 30px',
+        opacity: inSplash ? 0 : 1,
+        pointerEvents: inSplash ? 'none' : 'auto',
+        transition: 'opacity 0.75s ease 0.5s',
+      }}>
+        <div style={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.45)' }}>
+          {isCreate ? 'Already have an account?' : 'New here?'}
+        </div>
+        <button onClick={() => { setMode(isCreate ? 'signin' : 'create'); setError('') }} style={switchBtn}>
+          {isCreate ? 'Log In' : 'Create Account'}
+        </button>
       </div>
     </div>
   )
@@ -162,4 +249,10 @@ function Field({ icon: Icon, placeholder, value, onChange, onKeyDown, type = 'te
 }
 
 const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', display: 'flex', padding: 0 }
-const linkBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#ffffff', fontSize: '0.76rem', fontWeight: 600, padding: 0, textDecoration: 'underline' }
+// Secondary to the white Sign In button above — outlined so it reads as the
+// alternative path, not the action the user came here for.
+const switchBtn = {
+  width: 380, maxWidth: '90vw', padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+  border: '1px solid rgba(255,255,255,0.26)', background: 'rgba(255,255,255,0.06)',
+  color: '#ffffff', fontSize: 14, fontWeight: 600,
+}
