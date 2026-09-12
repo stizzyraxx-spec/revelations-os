@@ -245,6 +245,40 @@ ipcMain.handle('proverbs:run', async (event, cmd) => {
   })
 })
 
+// Locate the Claude Code CLI. A packaged Electron app inherits PATH from
+// Explorer, which often misses the npm global bin and the native installer's
+// directory — so when `claude` is not directly runnable, look where it actually
+// installs before declaring it missing.
+function resolveClaude() {
+  const home = os.homedir()
+  const candidates = IS_WIN
+    ? [
+        path.join(process.env.APPDATA || '', 'npm', 'claude.cmd'),
+        path.join(home, 'AppData', 'Roaming', 'npm', 'claude.cmd'),
+        path.join(home, '.local', 'bin', 'claude.exe'),
+        path.join(home, '.claude', 'local', 'claude.exe'),
+        path.join(process.env.LOCALAPPDATA || '', 'Programs', 'claude', 'claude.exe'),
+      ]
+    : [
+        '/usr/local/bin/claude',
+        '/opt/homebrew/bin/claude',
+        path.join(home, '.local', 'bin', 'claude'),
+        path.join(home, '.claude', 'local', 'claude'),
+        path.join(home, '.npm-global', 'bin', 'claude'),
+      ]
+  for (const c of candidates) {
+    try { if (c && fs.existsSync(c)) return c } catch {}
+  }
+  return null
+}
+
+const CLAUDE_MISSING = [
+  'Claude Code CLI not found on this machine.',
+  'Install it, then run `claude` again:',
+  '  npm install -g @anthropic-ai/claude-code',
+  '  (or see https://claude.com/claude-code)',
+].join('\n')
+
 // Run the Claude Code CLI installed on the host machine. Output is streamed
 // back to the OS Terminal. If `claude` is not on PATH we return install
 // guidance rather than an opaque spawn error.
@@ -267,9 +301,12 @@ ipcMain.handle('claude:run', async (event, cmd) => {
       'For a full interactive Claude session, open a system PowerShell and run \x1b[32mclaude\x1b[0m.',
     ].join('\n')
   }
+  // Prefer an absolute path when PATH doesn't carry claude into this process.
+  const bin = resolveClaude()
+  const exe = bin ? `"${bin}"` : 'claude'
   const cmdline = safe.startsWith('-')
-    ? `claude ${safe}`
-    : `claude -p "${safe.replace(/"/g, '\\"')}"`
+    ? `${exe} ${safe}`
+    : `${exe} -p "${safe.replace(/"/g, '\\"')}"`
 
   return new Promise(resolve => {
     const proc = spawn(cmdline, [], {
@@ -280,13 +317,13 @@ ipcMain.handle('claude:run', async (event, cmd) => {
     let out = ''
     proc.stdout.on('data', d => { out += d.toString() })
     proc.stderr.on('data', d => { out += d.toString() })
-    proc.on('close', () => resolve(out || '(no output)'))
-    proc.on('error', () => resolve(
-      'Claude Code CLI not found on this machine.\n' +
-      'Install it, then run `claude` again:\n' +
-      '  npm install -g @anthropic-ai/claude-code\n' +
-      '  (or see https://claude.com/claude-code)'
-    ))
+    // With shell:true a missing binary isn't a spawn error — the shell reports
+    // it on stderr and exits non-zero, so catch that wording too.
+    proc.on('close', () => {
+      if (/not recognized as|command not found|is not recognized/i.test(out)) return resolve(CLAUDE_MISSING)
+      resolve(out || '(no output)')
+    })
+    proc.on('error', () => resolve(CLAUDE_MISSING))
     // Claude runs can be long; allow up to 3 minutes before giving up.
     setTimeout(() => { try { proc.kill() } catch {} ; resolve(out || 'Claude command timed out after 180s') }, 180000)
   })
@@ -397,11 +434,18 @@ ipcMain.handle('termx:run', async (event, command) => {
   // instead of hanging; the same for `proverbs`.
   const low = cmd.trim().toLowerCase()
   if (low === 'claude') {
-    return { output: 'Claude Code is connected. Ask a question directly:\n  claude how do I list files here?\n  claude -p "summarise this folder"', cwd: termxGetCwd() }
+    return {
+      output: 'Claude Code is connected. Ask a question directly:\n  claude how do I list files here?\n  claude -p "summarise this folder"',
+      cwd: termxGetCwd(),
+    }
   }
-  if (/^claude\s+/.test(low) && !/\s(-p|--print|--help|-h|--version|-v)\b|\b(mcp|config|setup-token|update|doctor)\b/.test(low)) {
-    const q = cmd.trim().slice(6).trim().replace(/"/g, '\\"')
-    cmd = `claude -p "${q}"`
+  if (/^claude\b/.test(low)) {
+    // Same PATH problem as claude:run — use the resolved binary when we have it.
+    const bin = resolveClaude()
+    const rest = cmd.trim().slice(6).trim()
+    const passthrough = /^(-|mcp|config|setup-token|update|doctor)/i.test(rest)
+    const exe = bin ? `"${bin}"` : 'claude'
+    cmd = passthrough ? `${exe} ${rest}` : `${exe} -p "${rest.replace(/"/g, '\\"')}"`
   }
 
   const marker = '<<<TERMX_CWD:9f3a1c>>>'
@@ -525,38 +569,131 @@ ipcMain.handle('app:checkUpdate', async () => {
   }
 })
 
+function sendToRenderer(channel, payload) {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload)
+}
+
+// Download a release asset to temp, streaming progress to the renderer.
+// Resolves with the path on disk.
+async function downloadAsset(asset, { progress = true } = {}) {
+  const dest = path.join(app.getPath('temp'), asset.name)
+  const res = await httpsGet(asset.browser_download_url, { headers: { Accept: 'application/octet-stream' } })
+  const total = parseInt(res.headers['content-length'], 10) || asset.size || 0
+  let received = 0
+  await new Promise((resolve, reject) => {
+    const out = fs.createWriteStream(dest)
+    res.on('data', (c) => {
+      received += c.length
+      if (total && progress) sendToRenderer('update:progress', { percent: Math.round((received / total) * 100), received, total })
+    })
+    res.on('error', reject)
+    out.on('error', reject)
+    out.on('finish', resolve)
+    res.pipe(out)
+  })
+  // A truncated download would hand the user a broken installer — treat a short
+  // file as a failure rather than running it.
+  if (total && received < total) throw new Error('Download incomplete')
+  return dest
+}
+
+// ─── Automatic updates ───────────────────────────────────────────────────────
+// Updates install themselves: the app checks in the background, downloads the
+// installer, and runs it silently when the app exits, so a user never has to go
+// and install a new version by hand. `_pendingInstall` holds a downloaded
+// installer that is waiting for that exit.
+let _pendingInstall = null   // { version, file }
+let _installLaunched = false
+let _autoBusy = false
+
+// Windows: electron-builder's NSIS accepts /S for a silent install; --force-run
+// relaunches us afterwards, so the user lands back where they were.
+// macOS: a .dmg cannot be applied silently without a signed installer, so the
+// image is opened on exit and the user drags it across — same as before.
+function runPendingInstaller() {
+  if (!_pendingInstall || _installLaunched) return
+  _installLaunched = true
+  try {
+    if (IS_WIN) {
+      spawn(_pendingInstall.file, ['/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref()
+    } else {
+      shell.openPath(_pendingInstall.file)
+    }
+  } catch (e) {
+    console.error('[update] could not start installer:', e.message)
+  }
+}
+
+// Installing on exit only works if the installer is actually launched on the way
+// out — before-quit covers Exit OS, the window close and an OS shutdown.
+app.on('before-quit', runPendingInstaller)
+
+async function checkAndStageUpdate() {
+  // In dev there is nothing to replace, and a packaged build is the only thing
+  // the installer knows how to update.
+  if (!app.isPackaged || _autoBusy || _pendingInstall) return
+  _autoBusy = true
+  try {
+    const current = app.getVersion()
+    const rel = await getJson(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`)
+    const version = String(rel.tag_name || '').replace(/^v/i, '')
+    const asset = pickAsset(rel.assets)
+    _latestRelease = { version, asset }
+    if (!version || !asset || cmpVersion(version, current) <= 0) return
+
+    sendToRenderer('update:state', { status: 'downloading', version })
+    const file = await downloadAsset(asset, { progress: false })
+    _pendingInstall = { version, file }
+    // The renderer turns this into "restart to finish" — the update is already
+    // on disk at this point, so there is nothing left for the user to fetch.
+    sendToRenderer('update:state', { status: 'ready', version, silent: IS_WIN })
+  } catch (e) {
+    sendToRenderer('update:state', { status: 'error', error: e.message })
+  } finally {
+    _autoBusy = false
+  }
+}
+
+// First pass shortly after launch so a stale install catches up right away,
+// then every six hours for machines that stay signed in.
+app.whenReady().then(() => {
+  setTimeout(checkAndStageUpdate, 25000)
+  setInterval(checkAndStageUpdate, 6 * 60 * 60 * 1000)
+})
+
+// Restart now rather than waiting for the next exit.
+ipcMain.handle('app:restartForUpdate', async () => {
+  if (!_pendingInstall) return { ok: false, error: 'No update is ready yet' }
+  // relaunch() is a no-op once the NSIS installer relaunches us itself, but it
+  // is what brings the app back on macOS after the dmg is opened.
+  setTimeout(() => app.quit(), 250)
+  return { ok: true, version: _pendingInstall.version }
+})
+
+ipcMain.handle('app:updateState', async () => ({
+  current: app.getVersion(),
+  pending: _pendingInstall ? { version: _pendingInstall.version, silent: IS_WIN } : null,
+}))
+
+// Manual path — Settings' "Check for updates" when someone would rather not
+// wait for the background pass.
 ipcMain.handle('app:applyUpdate', async () => {
   if (!rateOk('app:applyUpdate')) return { ok: false, error: 'Rate limit exceeded' }
+  if (_pendingInstall) {
+    setTimeout(() => app.quit(), 250)
+    return { ok: true, installer: _pendingInstall.file, quitting: true }
+  }
   const asset = _latestRelease?.asset
   if (!asset) return { ok: false, error: 'Run a check for updates first' }
 
-  const send = (channel, payload) => {
-    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload)
-  }
-
-  const dest = path.join(app.getPath('temp'), asset.name)
+  let dest
   try {
-    const res = await httpsGet(asset.browser_download_url, { headers: { Accept: 'application/octet-stream' } })
-    const total = parseInt(res.headers['content-length'], 10) || asset.size || 0
-    let received = 0
-    await new Promise((resolve, reject) => {
-      const out = fs.createWriteStream(dest)
-      res.on('data', (c) => {
-        received += c.length
-        if (total) send('update:progress', { percent: Math.round((received / total) * 100), received, total })
-      })
-      res.on('error', reject)
-      out.on('error', reject)
-      out.on('finish', resolve)
-      res.pipe(out)
-    })
+    dest = await downloadAsset(asset)
   } catch (e) {
     return { ok: false, error: `Download failed: ${e.message}` }
   }
 
-  // Hand the installer to the OS and step aside so it can replace our files.
-  const opened = await shell.openPath(dest)
-  if (opened) return { ok: false, error: opened }
+  _pendingInstall = { version: _latestRelease.version, file: dest }
   setTimeout(() => app.quit(), 1200)
   return { ok: true, installer: dest, quitting: true }
 })

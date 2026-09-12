@@ -110,6 +110,9 @@ export default function Terminal() {
   const [suggestions, setSuggestions] = useState([])
   const [busy, setBusy] = useState(false)
   const [busyLabel, setBusyLabel] = useState('')
+  // Working directory of the real shell behind this terminal, kept in step with
+  // main so `cd` sticks between commands.
+  const [shellCwd, setShellCwd] = useState('')
   // rev update interactive mode
   const [revMode, setRevMode] = useState(false) // awaiting issue description
   const [lastRevResult, setLastRevResult] = useState(null)
@@ -121,6 +124,11 @@ export default function Terminal() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [lines])
+
+  // Start the prompt where the real shell starts.
+  useEffect(() => {
+    window.nexus?.termxCwd?.().then(c => { if (c) setShellCwd(typeof c === 'string' ? c : c.cwd || '') }).catch(() => {})
+  }, [])
 
   // Subscribe to rev:progress streaming from main process
   useEffect(() => {
@@ -223,14 +231,6 @@ export default function Terminal() {
       case 'date':
         addLine(new Date().toLocaleString())
         break
-      case 'pwd':
-        addLine(`/home/${userName}`)
-        break
-      case 'ls':
-        addLine(IS_WIN
-          ? 'Desktop/  Documents/  Downloads/  Music/  Pictures/  Videos/'
-          : 'Applications/  Desktop/  Documents/  Downloads/  Movies/  Music/  Pictures/')
-        break
       case 'echo':
         addLine(rest || '')
         break
@@ -276,8 +276,29 @@ export default function Terminal() {
         setBusy(false)
         setBusyLabel('')
         break
-      default:
-        addLine(`\x1b[31mCommand not found:\x1b[0m ${base}. Type \x1b[33mhelp\x1b[0m for commands.`, 'html')
+      // Anything the OS Terminal doesn't implement itself goes to the real
+      // shell on this machine — pwd, ls, dir, cd, git, npm and the rest behave
+      // as they do in PowerShell / bash rather than reporting "command not
+      // found" for everything outside a short built-in list.
+      default: {
+        if (!window.nexus?.termxRun) {
+          addLine(`\x1b[31mCommand not found:\x1b[0m ${base}. Type \x1b[33mhelp\x1b[0m for commands.`, 'html')
+          break
+        }
+        setBusy(true)
+        setBusyLabel('Running...')
+        try {
+          const res = await window.nexus.termxRun(cmd)
+          if (res?.output) addLine(res.output, 'output')
+          if (res?.cwd) setShellCwd(res.cwd)
+        } catch (err) {
+          logError('Terminal:shell', err.message)
+          addLine(`\x1b[31mError: ${err.message}\x1b[0m`, 'html')
+        } finally {
+          setBusy(false)
+          setBusyLabel('')
+        }
+      }
     }
   }, [revMode, addLine, history, lastRevResult, userName])
 
@@ -421,9 +442,13 @@ export default function Terminal() {
     )
   }
 
+  // Show the directory the real shell is actually in, so `cd` is visible.
+  const shortCwd = shellCwd
+    ? shellCwd.replace(/^.*[\\/]([^\\/]*[\\/][^\\/]*)$/, '$1')
+    : '~'
   const prompt = revMode
     ? `\x1b[35m[rev]\x1b[0m Issue > `
-    : `${userName}@revelations-os:~$`
+    : `${userName}@revelations-os:${shortCwd}$`
 
   return (
     <div

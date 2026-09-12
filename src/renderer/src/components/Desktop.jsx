@@ -16,6 +16,19 @@ import { X, Search } from 'lucide-react'
 
 const DESKTOP_ICONS_KEY = 'revos_desktop_icons'
 const DESKTOP_SEEDED_KEY = 'revos_desktop_seeded_v1'
+const DESKTOP_POS_KEY = 'revos_desktop_positions'
+// Profiles seeded before RaxxWare joined the defaults already carry the seeded
+// flag, so the icon would never appear for them. This adds it once, on its own
+// key, instead of re-running the whole seed and resurrecting icons the user
+// deliberately removed.
+const RAXXWARE_ICON_KEY = 'revos_desktop_raxxware_v1'
+
+// Free-placement grid. Icons snap to it when dropped, and unplaced icons fill
+// the first column down the left, clear of the widgets panel at the top.
+const GRID_X = 92
+const GRID_Y = 104
+const ORIGIN_X = 12
+const ORIGIN_Y = 300
 
 // Placed on the desktop the first time a profile signs in. Filtered through the
 // same profile gating as every other listing, so a user who cannot see RaxxWare
@@ -32,6 +45,35 @@ function loadDesktopIcons() {
 function saveDesktopIcons(ids) {
   try { localStorage.setItem(DESKTOP_ICONS_KEY, JSON.stringify(ids)) } catch {}
 }
+function loadPositions() {
+  try { return JSON.parse(localStorage.getItem(DESKTOP_POS_KEY) || '{}') } catch { return {} }
+}
+function savePositions(map) {
+  try { localStorage.setItem(DESKTOP_POS_KEY, JSON.stringify(map)) } catch {}
+}
+
+// Snap a dropped icon to the nearest cell, kept inside the desktop: clear of the
+// top bar, and clear of the taskbar at the bottom.
+function snapToGrid(x, y) {
+  const maxX = Math.max(ORIGIN_X, window.innerWidth - 96)
+  const maxY = Math.max(56, window.innerHeight - 150)
+  const sx = ORIGIN_X + Math.round((x - ORIGIN_X) / GRID_X) * GRID_X
+  const sy = ORIGIN_Y + Math.round((y - ORIGIN_Y) / GRID_Y) * GRID_Y
+  return {
+    x: Math.min(Math.max(sx, 8), maxX),
+    y: Math.min(Math.max(sy, 56), maxY),
+  }
+}
+
+// Where an icon sits when it has never been dragged: down the left edge, then
+// into the next column once it would run into the taskbar.
+function autoSlot(index) {
+  const perColumn = Math.max(1, Math.floor((window.innerHeight - ORIGIN_Y - 120) / GRID_Y))
+  return {
+    x: ORIGIN_X + Math.floor(index / perColumn) * GRID_X,
+    y: ORIGIN_Y + (index % perColumn) * GRID_Y,
+  }
+}
 
 const WALLPAPER_LABELS = { brimstone: 'Brimstone', nebula: 'Nebula', cosmos: 'Cosmos', aurora: 'Aurora', void: 'Void' }
 
@@ -47,6 +89,9 @@ export default function Desktop() {
   const [pickerQuery, setPickerQuery] = useState('')
   const [wallpaper, setWallpaper] = useState(() => getSettings().wallpaper || 'brimstone')
   const [desktopIcons, setDesktopIcons] = useState(loadDesktopIcons)
+  const [iconPos, setIconPos] = useState(loadPositions)
+  const [dragging, setDragging] = useState(null) // { id, x, y } while a drag is live
+  const [selectedIcon, setSelectedIcon] = useState(null)
   const [displayModalOpen, setDisplayModalOpen] = useState(false)
   const [displayInfo, setDisplayInfo] = useState(null)
   const [displayMsg, setDisplayMsg] = useState('')
@@ -66,6 +111,21 @@ export default function Desktop() {
       return next
     })
     try { localStorage.setItem(DESKTOP_SEEDED_KEY, '1') } catch {}
+  }, [APP_REGISTRY])
+
+  // RaxxWare is how this machine reaches the programs and files on the gateway,
+  // so make sure the shortcut exists even on a profile that was seeded before
+  // RaxxWare was a default. Runs once, and only for profiles that can see it.
+  useEffect(() => {
+    if (localStorage.getItem(RAXXWARE_ICON_KEY)) return
+    if (!APP_REGISTRY.some(a => a.id === 'raxxware')) return
+    setDesktopIcons(prev => {
+      if (prev.includes('raxxware')) return prev
+      const next = ['raxxware', ...prev]
+      saveDesktopIcons(next)
+      return next
+    })
+    try { localStorage.setItem(RAXXWARE_ICON_KEY, '1') } catch {}
   }, [APP_REGISTRY])
 
   const openDisplayModal = async () => {
@@ -119,6 +179,46 @@ export default function Desktop() {
       saveDesktopIcons(next)
       return next
     })
+    setIconPos(prev => {
+      if (!(id in prev)) return prev
+      const next = { ...prev }
+      delete next[id]
+      savePositions(next)
+      return next
+    })
+  }
+
+  // Drag an icon to a new spot. A press that never travels more than a few
+  // pixels is left alone so it still registers as a click / double-click.
+  const startIconDrag = (e, id, from) => {
+    if (e.button !== 0) return
+    e.preventDefault()
+    setSelectedIcon(id)
+    const startX = e.clientX
+    const startY = e.clientY
+    let moved = false
+
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX
+      const dy = ev.clientY - startY
+      if (!moved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return
+      moved = true
+      setDragging({ id, x: from.x + dx, y: from.y + dy })
+    }
+    const onUp = (ev) => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      setDragging(null)
+      if (!moved) return
+      const dropped = snapToGrid(from.x + (ev.clientX - startX), from.y + (ev.clientY - startY))
+      setIconPos(prev => {
+        const next = { ...prev, [id]: dropped }
+        savePositions(next)
+        return next
+      })
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
   }
 
   const handleContextMenu = (e) => {
@@ -129,7 +229,7 @@ export default function Desktop() {
     }
   }
 
-  const handleClick = () => { setContextMenu(null); setIconMenu(null) }
+  const handleClick = () => { setContextMenu(null); setIconMenu(null); setSelectedIcon(null) }
 
   const pickerApps = pickerQuery.trim()
     ? allApps.filter(a => a.name.toLowerCase().includes(pickerQuery.toLowerCase()))
@@ -166,29 +266,46 @@ export default function Desktop() {
         />
       </div>
 
-      {/* Desktop icons (saved app shortcuts) */}
+      {/* Desktop icons (saved app shortcuts) — drag to rearrange, double-click
+          to open. The layer itself ignores the mouse so right-clicking bare
+          desktop still reaches the wallpaper menu; each icon opts back in. */}
       <div style={{
-        position: 'absolute', top: 300, left: 12, zIndex: 5,
-        display: 'flex', flexDirection: 'column', flexWrap: 'wrap', maxHeight: 'calc(100vh - 380px)', gap: 4,
-        pointerEvents: hasWindows ? 'none' : 'all', opacity: hasWindows ? 0 : 1, transition: 'opacity 0.3s ease',
+        position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none',
+        opacity: hasWindows ? 0 : 1, transition: 'opacity 0.3s ease',
       }}>
-        {desktopIcons.map(id => {
+        {desktopIcons.map((id) => {
           const app = allApps.find(a => a.id === id)
           if (!app) return null
+          // Icons that have never been dragged fill the default column in
+          // order, ignoring the ones the user has already placed by hand.
+          const home = iconPos[id] || autoSlot(desktopIcons.filter(x => !iconPos[x]).indexOf(id))
+          const live = dragging?.id === id ? dragging : home
+          const isDragging = dragging?.id === id
+          const selected = selectedIcon === id
           return (
             <div
               key={id}
               className="rx-icon-host"
+              onMouseDown={(e) => startIconDrag(e, id, home)}
               onDoubleClick={() => launchById(id)}
-              onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu(null); setIconMenu({ id, x: e.clientX, y: e.clientY }) }}
-              title={`${app.name} — double-click to open`}
+              onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu(null); setSelectedIcon(id); setIconMenu({ id, x: e.clientX, y: e.clientY }) }}
+              title={`${app.name} — double-click to open, drag to move`}
               style={{
-                width: 84, padding: '10px 4px', borderRadius: 10, cursor: 'default',
+                position: 'absolute', left: live.x, top: live.y,
+                width: 84, padding: '10px 4px', borderRadius: 10,
+                cursor: isDragging ? 'grabbing' : 'default',
+                pointerEvents: hasWindows ? 'none' : 'auto',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                transition: 'background 0.12s',
+                background: selected ? 'rgba(255,255,255,0.14)' : 'transparent',
+                border: `1px solid ${selected ? 'rgba(255,255,255,0.22)' : 'transparent'}`,
+                boxSizing: 'border-box',
+                zIndex: isDragging ? 2 : 1,
+                opacity: isDragging ? 0.85 : 1,
+                userSelect: 'none',
+                transition: isDragging ? 'none' : 'background 0.12s, left 0.12s, top 0.12s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
+              onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = 'transparent' }}
             >
               <AppIcon3D app={app} size={46} />
               <span style={{ fontSize: '0.68rem', color: '#fff', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>

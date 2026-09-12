@@ -4,6 +4,7 @@ const VALID_SEND = ['app:exit', 'app:minimize', 'app:restore']
 const VALID_INVOKE = [
   'app:getSystemInfo', 'fs:scanDirectory', 'fs:readFile',
   'proverbs:run', 'claude:run', 'app:checkUpdate', 'app:applyUpdate', 'app:getVersion',
+  'app:restartForUpdate', 'app:updateState',
   'display:list', 'display:setMode',
   'termx:run', 'termx:cwd',
   'rev:update', 'rev:rebuild', 'rev:listRepos',
@@ -40,6 +41,10 @@ contextBridge.exposeInMainWorld('nexus', {
   checkForUpdate: () => safeInvoke('app:checkUpdate'),
   applyUpdate: () => safeInvoke('app:applyUpdate'),
   onUpdateProgress: (cb) => { const fn = (_e, d) => cb(d); ipcRenderer.on('update:progress', fn); return () => ipcRenderer.removeListener('update:progress', fn) },
+  // Background updater: main downloads on its own and reports where it is.
+  updateState: () => safeInvoke('app:updateState'),
+  restartForUpdate: () => safeInvoke('app:restartForUpdate'),
+  onUpdateState: (cb) => { const fn = (_e, d) => cb(d); ipcRenderer.on('update:state', fn); return () => ipcRenderer.removeListener('update:state', fn) },
   // rev update — Proverbs-powered OS + repo fixer
   revUpdate: (issue) => safeInvoke('rev:update', String(issue).slice(0, 2000)),
   revRebuild: () => safeInvoke('rev:rebuild'),

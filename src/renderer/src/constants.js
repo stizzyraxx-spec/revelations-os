@@ -56,8 +56,20 @@ export const APP_REGISTRY = [
 // `profiles` appears only for those users. This is presentation-level gating —
 // it keeps RaxxWare off other people's launchers, it is NOT an access control.
 // The gateway does its own authentication and must keep doing so.
-export const isAppVisible = (app, userName) =>
-  !app.profiles || app.profiles.some((p) => p.toLowerCase() === String(userName || '').trim().toLowerCase())
+//
+// Matching is on the leading name rather than the whole string: the same
+// operator signs in as "Stizz", "Stizzy" or "StizzyRaxx" depending on how the
+// profile was created, and an exact compare silently hid RaxxWare from them
+// everywhere — launcher, desktop, taskbar and search at once.
+export const isAppVisible = (app, userName) => {
+  if (!app.profiles) return true
+  const name = String(userName || '').trim().toLowerCase()
+  if (!name) return false
+  return app.profiles.some((p) => {
+    const token = String(p).trim().toLowerCase()
+    return name === token || name.startsWith(token)
+  })
+}
 
 export const appsFor = (userName) => APP_REGISTRY.filter((a) => isAppVisible(a, userName))
 
