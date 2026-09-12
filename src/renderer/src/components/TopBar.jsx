@@ -6,7 +6,7 @@ import {
   Bell, Wifi, WifiOff, Battery, BatteryCharging, Volume2, Bluetooth, Search, ChevronDown, LogOut,
   Power, Settings2, Shield, User, X, Globe
 } from 'lucide-react'
-import { getAppIcon } from './appIcons'
+import AppIcon3D from './AppIcon3D'
 
 const VERSES = [
   { text: 'For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.', ref: 'John 3:16' },
@@ -184,15 +184,12 @@ export default function TopBar() {
             {searchResults.length > 0 ? (
               <div style={{ padding:6 }}>
                 {searchResults.map(app => {
-                  const AppIcon = getAppIcon(app.icon)
                   return (
-                  <button key={app.id} onClick={()=>handleSearchApp(app)} style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'none', border:'none', cursor:'pointer', borderRadius:10, color:'var(--text-primary)' }}
+                  <button key={app.id} className="rx-icon-host" onClick={()=>handleSearchApp(app)} style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'none', border:'none', cursor:'pointer', borderRadius:10, color:'var(--text-primary)' }}
                     onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
                     onMouseLeave={e=>e.currentTarget.style.background='none'}
                   >
-                    <div style={{ width:32,height:32,borderRadius:9,background:`linear-gradient(135deg,${app.color}44,${app.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
-                      <AppIcon size={16} color={app.color}/>
-                    </div>
+                    <AppIcon3D app={app} size={32} />
                     <div style={{ flex:1, textAlign:'left' }}>
                       <div style={{ fontSize:'0.82rem', fontWeight:500 }}>{app.name}</div>
                       <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{app.category}</div>

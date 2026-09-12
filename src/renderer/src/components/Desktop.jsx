@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import { useVisibleApps } from '../useVisibleApps'
-import { getAppIcon } from './appIcons'
+import AppIcon3D from './AppIcon3D'
 import AppTile from './AppTile'
 import TopBar from './TopBar'
 import OrbLauncher from './OrbLauncher'
@@ -175,10 +175,10 @@ export default function Desktop() {
         {desktopIcons.map(id => {
           const app = allApps.find(a => a.id === id)
           if (!app) return null
-          const Icon = getAppIcon(app.icon)
           return (
             <div
               key={id}
+              className="rx-icon-host"
               onDoubleClick={() => launchById(id)}
               onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu(null); setIconMenu({ id, x: e.clientX, y: e.clientY }) }}
               title={`${app.name} — double-click to open`}
@@ -190,9 +190,7 @@ export default function Desktop() {
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
             >
-              <div style={{ width: 46, height: 46, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${app.color}44, ${app.color}99)`, border: `1px solid ${app.color}55` }}>
-                <Icon size={24} style={{ color: app.color }} />
-              </div>
+              <AppIcon3D app={app} size={46} />
               <span style={{ fontSize: '0.68rem', color: '#fff', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
                 {app.name}
               </span>

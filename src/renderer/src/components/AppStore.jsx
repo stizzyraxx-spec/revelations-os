@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Search, Star, Download, ExternalLink, Shield, Zap, Users, TrendingUp } from 'lucide-react'
 import { APP_REGISTRY } from '../constants'
 import { useVisibleApps } from '../useVisibleApps'
-import { getAppIcon } from './appIcons'
+import AppIcon3D from './AppIcon3D'
 import AppTile from './AppTile'
 import { useOSStore } from '../store'
 import Fuse from 'fuse.js'
@@ -216,9 +216,9 @@ export default function AppStore() {
 }
 
 function FeaturedCard({ app, rating, onClick }) {
-  const IconComp = getAppIcon(app.icon)
   return (
     <div
+      className="rx-icon-host"
       onClick={onClick}
       style={{
         padding: 14, borderRadius: 12, cursor: 'pointer',
@@ -229,7 +229,7 @@ function FeaturedCard({ app, rating, onClick }) {
       onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'rgba(109,40,217,0.5)' }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.borderColor = 'rgba(109,40,217,0.25)' }}
     >
-      <div style={{ marginBottom: 8 }}><IconComp size={32} style={{ color: app.color || 'var(--accent)' }} /></div>
+      <div style={{ marginBottom: 10 }}><AppIcon3D app={app} size={44} /></div>
       <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{app.name}</div>
       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, lineHeight: 1.4 }}>{app.desc?.slice(0, 60)}...</div>
       {rating && <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#fbbf24', fontSize: 11 }}><Star size={11} fill="#fbbf24" /> {rating}</div>}
@@ -238,10 +238,9 @@ function FeaturedCard({ app, rating, onClick }) {
 }
 
 function AppRow({ app, rating, onDetail, onOpen }) {
-  const IconComp = getAppIcon(app.icon)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer' }} onClick={onDetail}>
-      <div style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'rgba(109,40,217,0.15)' }}><IconComp size={24} style={{ color: app.color || 'var(--accent)' }} /></div>
+    <div className="rx-icon-host" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer' }} onClick={onDetail}>
+      <AppIcon3D app={app} size={44} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>{app.name}</div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.desc}</div>
@@ -264,7 +263,6 @@ function AppRow({ app, rating, onDetail, onOpen }) {
 }
 
 function AppDetail({ app, onBack, onOpen }) {
-  const IconComp = getAppIcon(app.icon)
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#080812' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -272,7 +270,7 @@ function AppDetail({ app, onBack, onOpen }) {
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
         <div style={{ display: 'flex', gap: 20, marginBottom: 24 }}>
-          <div style={{ width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 18, background: 'rgba(109,40,217,0.15)' }}><IconComp size={48} style={{ color: app.color || 'var(--accent)' }} /></div>
+          <div className="rx-icon-host" style={{ display: 'flex', alignItems: 'flex-start' }}><AppIcon3D app={app} size={80} /></div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{app.name}</div>
             <div style={{ color: 'var(--text-muted)', marginTop: 4 }}>{app.desc}</div>

@@ -1,27 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
-import {
-  Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store,
-  FileStack, Calculator, ShoppingBag, Music2, Scale, AlertTriangle, Heart,
-  Microscope, Wine, Target, BookOpen, Lightbulb, Send, TrendingUp, Search,
-  LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
-  Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
-  Building2, ShoppingCart, Waves, BookHeart,
-  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
-  MessageSquare, UserCircle, ScrollText, DollarSign,
-} from 'lucide-react'
-
-const ICON_MAP = {
-  Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store,
-  FileStack, Calculator, ShoppingBag, Music2, Scale, AlertTriangle, Heart,
-  Microscope, Wine, Target, BookOpen, Lightbulb, Send, TrendingUp, Search,
-  LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
-  Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
-  Building2, ShoppingCart, Waves, BookHeart,
-  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
-  MessageSquare, UserCircle, ScrollText, DollarSign,
-}
+import AppIcon3D from './AppIcon3D'
 
 const STORAGE_KEY = 'revos_dock_pinned'
 
@@ -137,7 +117,7 @@ export default function Dock() {
       }}>
         {dockItems.map((item) => {
           const reg = APP_REGISTRY.find(a => a.id === item.appId)
-          const IconComp = ICON_MAP[reg?.icon] || Globe
+          const app = reg || { id: item.appId, icon: 'Globe', color: '#6d28d9' }
           const color = reg?.color || '#6d28d9'
           const label = reg?.name || item.appId
           const isActive = item.window && item.window.focused
@@ -172,34 +152,29 @@ export default function Dock() {
           return (
             <div
               key={`${item.appId}-${item.winId}`}
+              className="rx-icon-host"
               title={label}
               onClick={handleClick}
               onContextMenu={handleContextMenu}
               style={{
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 borderRadius: 12,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: isActive
-                  ? `linear-gradient(135deg, ${color}55, ${color}99)`
-                  : isMinimized
-                  ? 'rgba(255,255,255,0.05)'
-                  : 'rgba(255,255,255,0.04)',
-                border: isActive
-                  ? `1px solid ${color}88`
-                  : `1px solid rgba(255,255,255,0.08)`,
+                background: isActive ? 'rgba(255,255,255,0.12)' : 'transparent',
+                border: `1px solid ${isActive ? 'rgba(255,255,255,0.16)' : 'transparent'}`,
                 cursor: 'pointer',
                 position: 'relative',
-                transition: 'background 0.15s, transform 0.15s, border-color 0.15s',
-                opacity: item.window === null ? 0.55 : 1,
+                transition: 'background 0.15s, border-color 0.15s',
+                opacity: item.window === null ? 0.62 : 1,
                 flexShrink: 0,
               }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.background = `linear-gradient(135deg, ${color}44, ${color}77)` }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = isActive ? `linear-gradient(135deg, ${color}55, ${color}99)` : isMinimized ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.04)' }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
             >
-              <IconComp size={22} color={isActive ? '#fff' : color} />
+              <AppIcon3D app={app} size={32} />
 
               {/* Minimized indicator dot */}
               {isMinimized && (

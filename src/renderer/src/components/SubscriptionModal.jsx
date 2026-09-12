@@ -1,16 +1,7 @@
 import { useEffect } from 'react'
 import { useOSStore } from '../store'
 import { X, ExternalLink, Star, Check } from 'lucide-react'
-import {
-  Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store,
-  FileStack, Calculator, ShoppingBag, Music2, Scale, AlertTriangle, Heart,
-  Microscope, Wine, Target, BookOpen, Lightbulb, Send, TrendingUp, Search,
-  LayoutDashboard, Mic, PawPrint, Scissors, BarChart2, Headphones,
-  Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
-  Building2, ShoppingCart, Waves, BookHeart,
-} from 'lucide-react'
-
-const ICON_MAP = { Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store, FileStack, Calculator, ShoppingBag, Music2, Scale, AlertTriangle, Heart, Microscope, Wine, Target, BookOpen, Lightbulb, Send, TrendingUp, Search, LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones, Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car, Building2, ShoppingCart, Waves, BookHeart }
+import AppIcon3D from './AppIcon3D'
 
 const FEATURES_BY_CATEGORY = {
   finance: ['Real-time financial reporting', 'Multi-account management', 'Tax compliance automation', 'Invoice & billing system', 'AI-powered insights'],
@@ -35,7 +26,6 @@ export default function SubscriptionModal() {
 
   if (!subscriptionApp) return null
   const app = subscriptionApp
-  const IconComp = ICON_MAP[app.icon] || Globe
   const features = FEATURES_BY_CATEGORY[app.category] || FEATURES_BY_CATEGORY.default
 
   return (
@@ -54,8 +44,8 @@ export default function SubscriptionModal() {
             <X size={16}/>
           </button>
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-            <div style={{ width:64, height:64, borderRadius:18, background:`linear-gradient(135deg, ${app.color}55, ${app.color}cc)`, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 8px 24px ${app.color}44` }}>
-              <IconComp size={32} color="#fff"/>
+            <div className="rx-icon-host" style={{ display:'flex' }}>
+              <AppIcon3D app={app} size={64}/>
             </div>
             <div>
               <h2 style={{ fontSize:'1.4rem', fontWeight:800, marginBottom:4 }}>{app.name}</h2>

@@ -5,29 +5,8 @@ import { useVisibleApps } from '../useVisibleApps'
 import horsemenLogo from '../assets/raxx-logo.png'
 import whiteHorse from '../assets/white-horse.png'
 import AppTile from './AppTile'
-import {
-  Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store,
-  FileStack, Calculator, ShoppingBag, Music2, Scale, AlertTriangle, Heart,
-  Microscope, Wine, Target, BookOpen, Lightbulb, Send, TrendingUp, Search,
-  LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
-  Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
-  Building2, ShoppingCart, Waves, BookHeart,
-  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
-  MessageSquare, UserCircle, ScrollText, DollarSign,
-  Clock, Calendar, HelpCircle, Mail, Video, StickyNote, Bell, CalendarDays, X,
-} from 'lucide-react'
-
-const ICON_MAP = {
-  Globe, Folder, Settings2, TerminalSquare, FileText, Shield, Store,
-  FileStack, Calculator, ShoppingBag, Music2, Scale, AlertTriangle, Heart,
-  Microscope, Wine, Target, BookOpen, Lightbulb, Send, TrendingUp, Search,
-  LayoutDashboard, Mic, PawPrint, Scissors, Star, BarChart2, Headphones,
-  Briefcase, Building, GraduationCap, Hammer, Trophy, Command, Car,
-  Building2, ShoppingCart, Waves, BookHeart,
-  Flame, Users, Radio, Compass, Gamepad2, BookMarked, HandHeart,
-  MessageSquare, UserCircle, ScrollText, DollarSign,
-  Clock, Calendar, HelpCircle, Mail, Video, StickyNote, Bell, CalendarDays,
-}
+import AppIcon3D from './AppIcon3D'
+import { Search } from 'lucide-react'
 
 export const TASKBAR_HEIGHT = 48
 
@@ -226,7 +205,7 @@ export default function BottomTaskbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflowX: 'auto', flex: 1, scrollbarWidth: 'none' }}>
           {taskItems.map((item) => {
             const reg = allApps.find((a) => a.id === item.appId)
-            const IconComp = ICON_MAP[reg?.icon] || Globe
+            const app = reg || { id: item.appId, icon: 'Globe', color: '#6d28d9' }
             const color = reg?.color || '#6d28d9'
             const label = reg?.name || item.appId
             const isActive = item.window && item.window.focused && !item.window.minimized
@@ -234,19 +213,20 @@ export default function BottomTaskbar() {
             return (
               <button
                 key={item.appId}
+                className="rx-icon-host"
                 onClick={() => handleTaskClick(item)}
                 title={label}
                 style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 38,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', width: 42, height: 38,
                   borderRadius: 9, cursor: 'pointer', flexShrink: 0, position: 'relative',
-                  background: isActive ? `linear-gradient(135deg, ${color}44, ${color}77)` : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${isActive ? color + '88' : 'rgba(255,255,255,0.07)'}`,
+                  background: isActive ? 'rgba(255,255,255,0.12)' : 'transparent',
+                  border: `1px solid ${isActive ? 'rgba(255,255,255,0.16)' : 'transparent'}`,
                   transition: 'background 0.15s, border-color 0.15s',
                 }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.09)' }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
               >
-                <IconComp size={20} color={isActive ? '#fff' : color} style={{ flexShrink: 0 }} />
+                <AppIcon3D app={app} size={26} style={{ marginBottom: isOpen ? 3 : 0 }} />
                 {/* Running indicator */}
                 {isOpen && (
                   <span style={{

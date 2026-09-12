@@ -1,0 +1,211 @@
+/* ---------------------------------------------------------------------------
+   Revelations app icons — bevelled 3D plates (see components/AppIcon3D.jsx)
+
+   Depth comes from four stacked cues, not from a glow:
+     1. a two-stop colour gradient lit from the top-left
+     2. a hard rim light on the top edge + shaded bottom edge (the bevel)
+     3. a contact shadow + cast shadow underneath the plate
+     4. a real 3D tilt on hover, with the glyph parallaxing forward
+   --------------------------------------------------------------------------- */
+
+.rx-icon {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  width: var(--rx-size, 48px);
+  height: var(--rx-size, 48px);
+  perspective: calc(var(--rx-size, 48px) * 5);
+}
+
+/* Cast shadow on the "floor" beneath the plate — grows and softens on lift. */
+.rx-icon::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -7%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 72%);
+  opacity: 0.65;
+  filter: blur(2px);
+  transition: opacity 320ms cubic-bezier(0.2, 0.8, 0.3, 1), transform 320ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  pointer-events: none;
+}
+
+.rx-icon__stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform:
+    rotateX(var(--rx-rx, 0deg))
+    rotateY(var(--rx-ry, 0deg))
+    scale(var(--rx-scale, 1));
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  will-change: transform;
+}
+
+/* ---- the plate ---------------------------------------------------------- */
+
+.rx-icon__plate {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--rx-radius, 12px);
+  background:
+    linear-gradient(148deg,
+      var(--rx-from) 0%,
+      var(--rx-mid) 48%,
+      var(--rx-to) 100%);
+  box-shadow:
+    /* bevel: rim light along the top, shade along the bottom and right */
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 1px 0 0 rgba(255, 255, 255, 0.18),
+    inset -1.5px 0 0 rgba(0, 0, 0, 0.22),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.34),
+    inset 0 -8px 12px -6px rgba(0, 0, 0, 0.4),
+    /* body: tight contact shadow + wider cast shadow */
+    0 1px 1px rgba(0, 0, 0, 0.4),
+    0 4px 8px -2px rgba(0, 0, 0, 0.45),
+    0 10px 20px -8px var(--rx-deep, rgba(0, 0, 0, 0.6));
+  transition: box-shadow 320ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* Glossy top face + a clean horizon line where the face rolls under. */
+.rx-icon__plate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 84% at 24% 4%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 56%),
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.04) 44%,
+      rgba(0, 0, 0, 0.06) 52%,
+      rgba(0, 0, 0, 0.16) 100%);
+}
+
+/* Inner engraved edge — the extra hairline that makes the shape read as solid. */
+.rx-icon__plate::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(var(--rx-radius, 12px) - 1px);
+  box-shadow:
+    inset 0 1px 0 var(--rx-edge, rgba(255, 255, 255, 0.6)),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28);
+  opacity: 0.8;
+}
+
+/* ---- specular sweep ----------------------------------------------------- */
+
+.rx-icon__sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--rx-radius, 12px);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+  transform: translateZ(1px);
+}
+
+.rx-icon__sheen::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(38% 38% at var(--rx-mx, 30%) var(--rx-my, 22%),
+    rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%);
+}
+
+/* ---- glyph -------------------------------------------------------------- */
+
+.rx-icon__glyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateZ(var(--rx-pop, 0px));
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.3, 1), filter 320ms ease;
+  /* Carved look: a bright top edge behind the stroke, dark weight below it. */
+  filter:
+    drop-shadow(0 -0.5px 0 rgba(255, 255, 255, 0.35))
+    drop-shadow(0 1px 0 rgba(0, 0, 0, 0.28))
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.32));
+}
+
+.rx-icon__glyph svg {
+  display: block;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---- hover -------------------------------------------------------------- */
+
+.rx-icon:not(.rx-icon--static):hover,
+.rx-icon-host:hover .rx-icon:not(.rx-icon--static) {
+  /* Resting tilt so the 3D reads even before the pointer reaches the plate;
+     AppIcon3D's inline vars take over once it does. */
+  --rx-rx: 7deg;
+  --rx-ry: -9deg;
+  --rx-scale: 1.09;
+  /* Lift the glyph off the plate proportionally, so a 26px taskbar icon and an
+     80px store icon pop by the same amount relative to their own size. */
+  --rx-pop: calc(var(--rx-size, 48px) * 0.26);
+}
+
+.rx-icon:not(.rx-icon--static):hover .rx-icon__sheen,
+.rx-icon-host:hover .rx-icon:not(.rx-icon--static) .rx-icon__sheen {
+  opacity: 1;
+}
+
+.rx-icon:not(.rx-icon--static):hover .rx-icon__plate,
+.rx-icon-host:hover .rx-icon:not(.rx-icon--static) .rx-icon__plate {
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.62),
+    inset 1px 0 0 rgba(255, 255, 255, 0.2),
+    inset -1.5px 0 0 rgba(0, 0, 0, 0.24),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.36),
+    inset 0 -10px 14px -6px rgba(0, 0, 0, 0.42),
+    0 2px 2px rgba(0, 0, 0, 0.4),
+    0 10px 18px -4px rgba(0, 0, 0, 0.5),
+    0 22px 38px -12px var(--rx-deep, rgba(0, 0, 0, 0.65));
+}
+
+.rx-icon:not(.rx-icon--static):hover .rx-icon__glyph,
+.rx-icon-host:hover .rx-icon:not(.rx-icon--static) .rx-icon__glyph {
+  filter:
+    drop-shadow(0 -0.5px 0 rgba(255, 255, 255, 0.45))
+    drop-shadow(0 2px 0 rgba(0, 0, 0, 0.3))
+    drop-shadow(0 6px 8px rgba(0, 0, 0, 0.45));
+}
+
+.rx-icon:not(.rx-icon--static):hover::after,
+.rx-icon-host:hover .rx-icon:not(.rx-icon--static)::after {
+  opacity: 0.5;
+  transform: translateY(3px) scaleX(1.12);
+}
+
+/* Pressing pushes the plate back into the surface. */
+.rx-icon-host:active .rx-icon:not(.rx-icon--static) {
+  --rx-scale: 1.01;
+  --rx-pop: calc(var(--rx-size, 48px) * 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rx-icon__stack,
+  .rx-icon__glyph,
+  .rx-icon__plate,
+  .rx-icon::after {
+    transition: none;
+  }
+  .rx-icon:not(.rx-icon--static):hover,
+  .rx-icon-host:hover .rx-icon:not(.rx-icon--static) {
+    --rx-rx: 0deg;
+    --rx-ry: 0deg;
+    --rx-scale: 1.03;
+    --rx-pop: 0px;
+  }
+}

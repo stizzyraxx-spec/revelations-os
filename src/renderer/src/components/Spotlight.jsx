@@ -3,7 +3,7 @@ import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import { useVisibleApps } from '../useVisibleApps'
 import { Search, X } from 'lucide-react'
-import { getAppIcon } from './appIcons'
+import AppIcon3D from './AppIcon3D'
 import { MOD_KEY } from '../platform'
 
 export default function Spotlight({ open, onClose }) {
@@ -103,10 +103,10 @@ export default function Spotlight({ open, onClose }) {
             <div style={{ padding: '4px 12px 6px', fontSize: '0.68rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Launch</div>
           )}
           {results.map((app, i) => {
-            const Icon = getAppIcon(app.icon)
             return (
               <button
                 key={app.id}
+                className="rx-icon-host"
                 onClick={() => launch(app)}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px',
@@ -117,9 +117,7 @@ export default function Spotlight({ open, onClose }) {
                 }}
                 onMouseEnter={() => setSel(i)}
               >
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: `linear-gradient(135deg, ${app.color}44, ${app.color}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon size={18} color={app.color} />
-                </div>
+                <AppIcon3D app={app} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.name}</div>
                   <div style={{ fontSize: '0.72rem', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.desc}</div>

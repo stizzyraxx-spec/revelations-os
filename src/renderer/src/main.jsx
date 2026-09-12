@@ -4,6 +4,7 @@ import App from './App'
 import './index.css'
 import './styles/design-system.css'
 import './styles/animations.css'
+import './styles/app-icons.css'
 import { applySavedTheme } from './theme'
 applySavedTheme()
 ReactDOM.createRoot(document.getElementById('root')).render(
