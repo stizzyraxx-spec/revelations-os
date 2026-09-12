@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useOSStore } from './store'
 import LoginScreen from './components/LoginScreen'
+import SetPasswordModal from './components/SetPasswordModal'
 import Desktop from './components/Desktop'
 import ExitOSModal from './components/ExitOSModal'
 import SubscriptionModal from './components/SubscriptionModal'
@@ -8,7 +9,7 @@ import UpdateBanner from './components/UpdateBanner'
 import Spotlight from './components/Spotlight'
 
 export default function App() {
-  const { user, addNotification, pendingUpdate, setPendingUpdate } = useOSStore()
+  const { user, booting, hydrate, addNotification, pendingUpdate, setPendingUpdate } = useOSStore()
   const [showLogin, setShowLogin] = useState(true)
   const [loginOpacity, setLoginOpacity] = useState(1)
   const [spotlightOpen, setSpotlightOpen] = useState(false)
@@ -16,6 +17,19 @@ export default function App() {
   // The splash belongs to opening the app — once we've signed in, a later
   // inactivity lock returns straight to the sign-in screen.
   const bootSplash = useRef(true)
+
+  // Ask once, before anything renders, whether we already know who this is --
+  // from the gateway that served the page, or from a stored session. Until that
+  // resolves we show nothing rather than flashing the login screen at someone
+  // who is already signed in.
+  useEffect(() => {
+    hydrate().then(() => {
+      // Dismiss the login screen outright rather than letting it mount and fade.
+      // The fade belongs to an actual sign-in; a restored session should land on
+      // the desktop with no intermediate screen at all.
+      if (useOSStore.getState().user.loggedIn) { setShowLogin(false); setLoginOpacity(0) }
+    })
+  }, [])
 
   // Global Cmd+Space → Spotlight (available after login)
   useEffect(() => {
@@ -83,8 +97,13 @@ export default function App() {
     return () => { clearTimeout(first); clearInterval(iv) }
   }, [user.loggedIn])
 
+  // Nothing until hydrate() has answered. A black frame for one tick beats
+  // showing a "create account" screen to someone who is already signed in.
+  if (booting) return <div style={{ position: 'fixed', inset: 0, background: '#000' }} />
+
   return (
     <>
+      <SetPasswordModal />
       {/* Desktop always in DOM, always fully visible — LoginScreen sits on top */}
       <div style={{ position: 'fixed', inset: 0 }}>
         <Desktop />

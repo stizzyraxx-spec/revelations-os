@@ -63,11 +63,72 @@ export async function createAccount({ username, name, email, phone, password }) 
 
 // Verify sign-in. Returns the public account on success, else null.
 export async function verifyLogin(username, password) {
-  const uname = String(username || '').trim().toLowerCase()
-  const account = getAccounts().find((a) => a.username.toLowerCase() === uname)
+  const account = findAccount(username)
   if (!account) return null
+  // A provisioned account has no hash yet. It must never be signable-into with
+  // an empty password -- the set-password prompt is the only way in.
+  if (!account.hash || account.pendingPassword) return null
   const candidate = await sha256Hex(account.salt + password)
   return candidate === account.hash ? publicAccount(account) : null
+}
+
+// Usernames are matched case-insensitively everywhere, so STIZZ, Stizz and
+// stizz are one account. The original casing is kept only for display.
+export function findAccount(username) {
+  const u = String(username || '').trim().toLowerCase()
+  if (!u) return null
+  return getAccounts().find((a) => a.username.toLowerCase() === u) || null
+}
+
+// Create a local account for an identity the gateway has already authenticated.
+// No password is set: the operator proved who they were to code.raxxware.com to
+// load this page at all, and inventing one for them would be worse than asking.
+// `pendingPassword` makes the OS prompt on arrival.
+export function provisionAccount({ username, name, role }) {
+  const uname = String(username || '').trim()
+  if (!uname) return null
+  const existing = findAccount(uname)
+  if (existing) return publicAccount(existing)
+
+  const account = {
+    username: uname,
+    // "stizz" reads better as "Stizz" on a lock screen.
+    name: String(name || '').trim() || uname.charAt(0).toUpperCase() + uname.slice(1),
+    email: '', phone: '',
+    salt: randomSalt(),
+    hash: null,
+    pendingPassword: true,
+    provisionedFrom: 'gateway',
+    role: role || null,
+    createdAt: Date.now(),
+  }
+  const list = getAccounts()
+  list.push(account)
+  saveAccounts(list)
+  return publicAccount(account)
+}
+
+export function needsPassword(username) {
+  const a = findAccount(username)
+  return !!(a && (a.pendingPassword || !a.hash))
+}
+
+// Set (or reset) the password on an existing account.
+export async function setPassword(username, password) {
+  if (String(password || '').length < 6) {
+    return { ok: false, error: 'Password must be at least 6 characters' }
+  }
+  const list = getAccounts()
+  const u = String(username || '').trim().toLowerCase()
+  const i = list.findIndex((a) => a.username.toLowerCase() === u)
+  if (i < 0) return { ok: false, error: 'No such account' }
+
+  // Fresh salt on every set, so a reset never reuses the old one.
+  list[i].salt = randomSalt()
+  list[i].hash = await sha256Hex(list[i].salt + password)
+  list[i].pendingPassword = false
+  saveAccounts(list)
+  return { ok: true, account: publicAccount(list[i]) }
 }
 
 function publicAccount(a) {

@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { resolveIdentity, saveSession, clearSession } from '../auth/session'
+import { provisionAccount, findAccount, needsPassword } from '../auth/localAuth'
 
 // ─── CUSTOM (INTERNET-INSTALLED) APPS ─────────────────────────────────────────
 const CUSTOM_APPS_KEY = 'revos_custom_apps'
@@ -18,10 +20,53 @@ function normalizeUrl(raw) {
 
 export const useOSStore = create((set, get) => ({
   // ─── USER ───────────────────────────────────────────────────────────────────
-  user: { name: '', loggedIn: false, avatar: null },
+  user: { name: '', loggedIn: false, avatar: null, username: '', source: null },
 
-  login: (name) => {
-    set({ user: { name, loggedIn: true, avatar: null } })
+  // True until hydrate() has decided whether we already know who this is.
+  // Without it the login screen flashes on every reload before the stored
+  // session resolves, which is most of what made the OS feel forgetful.
+  booting: true,
+
+  // Resolve an identity without asking: the gateway first (authoritative when
+  // the OS is served from code.raxxware.com), then a stored session. Only when
+  // both come back empty does the login screen appear.
+  hydrate: async () => {
+    try {
+      const id = await resolveIdentity()
+      if (!id) return set({ booting: false })
+
+      // A gateway identity may have no local account yet -- provision one so
+      // preferences and the password prompt have something to attach to.
+      if (id.source === 'gateway') {
+        provisionAccount({ username: id.username, name: id.name, role: id.role })
+      }
+      const acct = findAccount(id.username) || {}
+      set({
+        user: {
+          name: acct.name || id.name,
+          username: id.username,
+          loggedIn: true,
+          avatar: null,
+          source: id.source,
+        },
+        // Surfaced by App as a prompt. A provisioned account has no password
+        // yet, and we ask rather than invent one.
+        passwordSetupFor: needsPassword(id.username) ? id.username : null,
+        booting: false,
+      })
+    } catch {
+      set({ booting: false })
+    }
+  },
+
+  passwordSetupFor: null,
+  clearPasswordSetup: () => set({ passwordSetupFor: null }),
+
+  login: (name, meta = {}) => {
+    const username = meta.username || name
+    set({ user: { name, username, loggedIn: true, avatar: null, source: meta.source || 'local' } })
+    saveSession({ name, username, source: meta.source || 'local' })
+    set({ passwordSetupFor: needsPassword(username) ? username : null })
     get().addNotification({
       title: 'Welcome back!',
       body: `Logged in as ${name}`,
@@ -30,8 +75,10 @@ export const useOSStore = create((set, get) => ({
   },
 
   logout: () => {
+    clearSession()
     set({
-      user: { name: '', loggedIn: false, avatar: null },
+      user: { name: '', loggedIn: false, avatar: null, username: '', source: null },
+      passwordSetupFor: null,
       windows: [],
       nextId: 1,
       nextZ: 10,

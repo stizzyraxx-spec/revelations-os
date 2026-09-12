@@ -12,6 +12,7 @@ export default function LoginScreen({ splash = false }) {
   const login = useOSStore((s) => s.login)
   const [stage, setStage] = useState('auth') // 'auth' | 'cinematic'
   const nameRef = useRef('User')
+  const usernameRef = useRef('')
 
   // Auth form state
   const [mode, setMode] = useState(() => (hasAccounts() ? 'signin' : 'create'))
@@ -73,7 +74,13 @@ export default function LoginScreen({ splash = false }) {
 
   const set = (k) => (e) => { setF((prev) => ({ ...prev, [k]: e.target.value })); setError('') }
 
-  const enterOS = (name) => { nameRef.current = name || 'User'; setStage('cinematic') }
+  // Carry the username through as well as the display name: the session store
+  // and the password prompt both key off username, not the label on screen.
+  const enterOS = (name, username) => {
+    nameRef.current = name || 'User'
+    usernameRef.current = username || name || 'User'
+    setStage('cinematic')
+  }
 
   const submit = async () => {
     if (busy) return
@@ -83,7 +90,7 @@ export default function LoginScreen({ splash = false }) {
       setBusy(true)
       const acct = await verifyLogin(f.username, f.password)
       setBusy(false)
-      if (acct) enterOS(acct.name || acct.username)
+      if (acct) enterOS(acct.name || acct.username, acct.username)
       else { setError('Incorrect username or password'); setF((p) => ({ ...p, password: '' })) }
       return
     }
@@ -91,7 +98,7 @@ export default function LoginScreen({ splash = false }) {
     setBusy(true)
     const res = await createAccount(f)
     setBusy(false)
-    if (res.ok) enterOS(res.account.name || res.account.username)
+    if (res.ok) enterOS(res.account.name || res.account.username, res.account.username)
     else setError(res.error || 'Could not create account')
   }
 
@@ -103,7 +110,7 @@ export default function LoginScreen({ splash = false }) {
     setPhase(1)
     const t1 = setTimeout(() => setLogoVisible(true), 400)
     const t2 = setTimeout(() => setPhase(2), 1200)
-    const t3 = setTimeout(() => login(nameRef.current), 2000)
+    const t3 = setTimeout(() => login(nameRef.current, { username: usernameRef.current, source: 'local' }), 2000)
     timers.current = [t1, t2, t3]
   }
 
