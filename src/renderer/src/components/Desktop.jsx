@@ -15,6 +15,17 @@ import { WALLPAPERS, getSettings } from '../theme'
 import { X, Search } from 'lucide-react'
 
 const DESKTOP_ICONS_KEY = 'revos_desktop_icons'
+const DESKTOP_SEEDED_KEY = 'revos_desktop_seeded_v1'
+
+// Placed on the desktop the first time a profile signs in. Filtered through the
+// same profile gating as every other listing, so a user who cannot see RaxxWare
+// does not get an icon for it.
+//
+// Whether seeding has happened is recorded under its own key rather than
+// inferred from an empty icon list — otherwise clearing every icon would look
+// identical to a first run and they would all come back on the next load.
+const DEFAULT_DESKTOP_ICONS = ['raxxware', 'files', 'terminal', 'settings']
+
 function loadDesktopIcons() {
   try { return JSON.parse(localStorage.getItem(DESKTOP_ICONS_KEY) || '[]') } catch { return [] }
 }
@@ -40,6 +51,22 @@ export default function Desktop() {
   const [displayInfo, setDisplayInfo] = useState(null)
   const [displayMsg, setDisplayMsg] = useState('')
   const hasWindows = windows.filter(w => !w.minimized).length > 0
+
+  // Seed the default icons once per browser profile. Runs after APP_REGISTRY is
+  // resolved so gated apps are filtered out, and re-runs if the signed-in
+  // profile changes from one that could not see RaxxWare to one that can.
+  useEffect(() => {
+    if (localStorage.getItem(DESKTOP_SEEDED_KEY)) return
+    if (!APP_REGISTRY.length) return // registry not resolved yet
+    const seed = DEFAULT_DESKTOP_ICONS.filter(id => APP_REGISTRY.some(a => a.id === id))
+    if (!seed.length) return
+    setDesktopIcons(prev => {
+      const next = [...new Set([...prev, ...seed])]
+      saveDesktopIcons(next)
+      return next
+    })
+    try { localStorage.setItem(DESKTOP_SEEDED_KEY, '1') } catch {}
+  }, [APP_REGISTRY])
 
   const openDisplayModal = async () => {
     setContextMenu(null); setDisplayMsg(''); setDisplayModalOpen(true)
