@@ -444,7 +444,13 @@ ipcMain.handle('app:getVersion', () => app.getVersion())
 // https rather than electron-updater: no extra dependency, and the NSIS/dmg
 // installers already produced by the pipeline are exactly what we hand back to
 // the user. We download the installer and launch it; it upgrades in place.
-const UPDATE_REPO = 'stizzyraxx-spec/revelations-os'
+//
+// This MUST point at a repo whose releases are publicly readable. The source
+// repo is private, and GitHub answers 404 (not 403) for unauthenticated reads
+// of a private repo's releases — so a private target makes every check fail.
+// Shipping a token to work around that would leak it to anyone who unpacks the
+// app, so the release feed is public instead of the client being authenticated.
+const UPDATE_REPO = process.env.REVOS_UPDATE_REPO || 'stizzyraxx-spec/revelations-os'
 
 function httpsGet(url, opts = {}, redirects = 0) {
   return new Promise((resolve, reject) => {
@@ -510,7 +516,12 @@ ipcMain.handle('app:checkUpdate', async () => {
       asset: asset ? { name: asset.name, size: asset.size } : null,
     }
   } catch (e) {
-    return { available: false, version: current, current, error: e.message }
+    // 404 here almost always means the release feed isn't publicly readable
+    // rather than "no releases" — say so instead of surfacing a bare status.
+    const error = e.message === 'HTTP 404'
+      ? `No public releases found for ${UPDATE_REPO} — the update feed must be a public repo`
+      : e.message
+    return { available: false, version: current, current, error }
   }
 })
 
