@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, Star, Download, ExternalLink, Shield, Zap, Users, TrendingUp } from 'lucide-react'
 import { APP_REGISTRY } from '../constants'
+import { useVisibleApps } from '../useVisibleApps'
 import { getAppIcon } from './appIcons'
 import AppTile from './AppTile'
 import { useOSStore } from '../store'
@@ -25,6 +26,10 @@ const RATINGS = { pcscanfix: 5.0, celestia: 4.8, proverbs: 4.9, ephesians: 4.7, 
 const fuse = new Fuse(APP_REGISTRY, { keys: ['name', 'desc', 'category'], threshold: 0.4 })
 
 export default function AppStore() {
+  // Registry as this profile sees it; shadows the module import so every
+  // listing below is profile-filtered. See useVisibleApps.js.
+  const APP_REGISTRY = useVisibleApps()
+
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [detail, setDetail] = useState(null)
@@ -44,7 +49,10 @@ export default function AppStore() {
     : customApps
 
   const results = search
-    ? fuse.search(search).map((r) => r.item)
+    // The Fuse index is built once at module scope over the full registry, so
+    // search results have to be re-filtered against this profile — otherwise a
+    // gated app is hidden from the grid but still findable by typing its name.
+    ? fuse.search(search).map((r) => r.item).filter((a) => APP_REGISTRY.some((v) => v.id === a.id))
     : category === 'All'
     ? APP_REGISTRY
     : APP_REGISTRY.filter((a) => a.category === category)

@@ -44,7 +44,22 @@ export const APP_REGISTRY = [
   // the individual free faith apps above, each opening its own section of the
   // platform.
   { id: 'admincenter', name: 'Admin Center', icon: 'LayoutDashboard', color: '#4f46e5', category: 'admin', price: 'Internal', trial: 'N/A', free: true, desc: 'App metrics dashboard', liveUrl: 'https://admin-center.vercel.app' },
+  // RaxxWare — the shell gateway on the Hetzner box. Renders in a <webview>, which
+  // is a separate browsing context, so the gateway's `frame-ancestors 'none'` and
+  // X-Frame-Options do not apply and nothing server-side needs changing. In a web
+  // build of this OS that becomes an <iframe> and those headers WILL block it —
+  // see infra/code-server/README before shipping RaxxWare to the browser target.
+  { id: 'raxxware', name: 'RaxxWare', icon: 'TerminalSquare', color: '#f6aa28', category: 'dev', free: true, profiles: ['Stizz'], desc: 'Remote shell gateway — real terminals on the RaxxWare server', liveUrl: 'https://code.raxxware.com' },
 ]
+
+// An app with no `profiles` key is visible to everyone. An app that declares
+// `profiles` appears only for those users. This is presentation-level gating —
+// it keeps RaxxWare off other people's launchers, it is NOT an access control.
+// The gateway does its own authentication and must keep doing so.
+export const isAppVisible = (app, userName) =>
+  !app.profiles || app.profiles.some((p) => p.toLowerCase() === String(userName || '').trim().toLowerCase())
+
+export const appsFor = (userName) => APP_REGISTRY.filter((a) => isAppVisible(a, userName))
 
 export const SYSTEM_APPS = APP_REGISTRY.filter(a => a.category === 'system')
 export const RAXX_APPS = APP_REGISTRY.filter(a => a.category !== 'system')

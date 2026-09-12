@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
+import { useVisibleApps } from '../useVisibleApps'
 import {
   Bell, Wifi, WifiOff, Battery, BatteryCharging, Volume2, Bluetooth, Search, ChevronDown, LogOut,
   Power, Settings2, Shield, User, X, Globe
@@ -58,6 +59,10 @@ function useBibleVerse() {
 }
 
 export default function TopBar() {
+  // Registry as this profile sees it; shadows the module import so every
+  // listing below is profile-filtered. See useVisibleApps.js.
+  const APP_REGISTRY = useVisibleApps()
+
   const {
     user, windows, notifications, currentTime, notificationPanelOpen, toggleNotificationPanel,
     openWindow, focusWindow, restoreWindow, closeWindow, logout, openExitModal, toggleOrbLauncher,

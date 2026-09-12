@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
+import { useVisibleApps } from '../useVisibleApps'
 import horsemenLogo from '../assets/raxx-logo.png'
 import whiteHorse from '../assets/white-horse.png'
 import AppTile from './AppTile'
@@ -55,6 +56,10 @@ function launchApp(app, { openWindow, openSubscription }) {
 }
 
 export default function BottomTaskbar() {
+  // Registry as this profile sees it; shadows the module import so every
+  // listing below is profile-filtered. See useVisibleApps.js.
+  const APP_REGISTRY = useVisibleApps()
+
   const { windows, openWindow, openSubscription, focusWindow, minimizeWindow, restoreWindow, customApps } = useOSStore()
   const [startOpen, setStartOpen] = useState(false)
   const [query, setQuery] = useState('')

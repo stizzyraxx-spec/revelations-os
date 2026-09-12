@@ -2,6 +2,10 @@ import { useState, useRef } from 'react'
 import { RotateCcw, X, ExternalLink, ArrowLeft, ArrowRight, Lock, Globe } from 'lucide-react'
 
 
+// Electron exposes process.versions.electron to the renderer even with context
+// isolation on. Absent means we are running as a plain web page.
+const IS_ELECTRON = typeof navigator !== 'undefined' && /electron/i.test(navigator.userAgent)
+
 export default function RAXXAppViewer({ url, title, appId }) {
   const [loading, setLoading] = useState(true)
   const [currentUrl, setCurrentUrl] = useState(url)
@@ -61,7 +65,7 @@ export default function RAXXAppViewer({ url, title, appId }) {
               Retry
             </button>
           </div>
-        ) : (
+        ) : IS_ELECTRON ? (
           <webview
             ref={setupListeners}
             src={url}
@@ -69,6 +73,21 @@ export default function RAXXAppViewer({ url, title, appId }) {
             useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
             webpreferences="allowRunningInsecureContent=no"
+          />
+        ) : (
+          // Browser build: <webview> is an Electron tag and does not exist here.
+          // An iframe is subject to the embedded site's frame-ancestors and
+          // X-Frame-Options, so a cross-origin app that forbids framing will
+          // render blank. Same-origin apps (RaxxWare served beside the gateway)
+          // are fine. goBack/goForward are unavailable — cross-origin history
+          // is not readable from the parent — so the nav buttons stay disabled.
+          <iframe
+            title={title}
+            src={url}
+            onLoad={() => setLoading(false)}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+            allow="clipboard-read; clipboard-write"
           />
         )}
       </div>

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
+import { useVisibleApps } from '../useVisibleApps'
 import AppTile from './AppTile'
 import horsemenLogo from '../assets/raxx-logo.png'
 import {
@@ -36,6 +37,10 @@ const TAB_REVEAL_DELAY   = 2000
 const BUSINESS_FOLDER = { id: '__business_folder__', name: 'Business Apps', icon: 'Briefcase', color: '#6d28d9' }
 
 export default function OrbLauncher() {
+  // Registry as this profile sees it; shadows the module import so every
+  // listing below is profile-filtered. See useVisibleApps.js.
+  const APP_REGISTRY = useVisibleApps()
+
   const { orbLauncherOpen, toggleOrbLauncher, openWindow, openSubscription, windows } = useOSStore()
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')

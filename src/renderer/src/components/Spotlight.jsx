@@ -1,11 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
+import { useVisibleApps } from '../useVisibleApps'
 import { Search, X } from 'lucide-react'
 import { getAppIcon } from './appIcons'
 import { MOD_KEY } from '../platform'
 
 export default function Spotlight({ open, onClose }) {
+  // Registry as this profile sees it; shadows the module import so every
+  // listing below is profile-filtered. See useVisibleApps.js.
+  const APP_REGISTRY = useVisibleApps()
+
   const { openWindow } = useOSStore()
   const [query, setQuery] = useState('')
   const [sel, setSel] = useState(0)

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
+import { useVisibleApps } from '../useVisibleApps'
 import { getAppIcon } from './appIcons'
 import AppTile from './AppTile'
 import TopBar from './TopBar'
@@ -24,6 +25,10 @@ function saveDesktopIcons(ids) {
 const WALLPAPER_LABELS = { brimstone: 'Brimstone', nebula: 'Nebula', cosmos: 'Cosmos', aurora: 'Aurora', void: 'Void' }
 
 export default function Desktop() {
+  // Registry as this profile sees it; shadows the module import so every
+  // listing below is profile-filtered. See useVisibleApps.js.
+  const APP_REGISTRY = useVisibleApps()
+
   const { windows, addNotification, openWindow, openSubscription, toggleOrbLauncher, customApps } = useOSStore()
   const [contextMenu, setContextMenu] = useState(null)
   const [iconMenu, setIconMenu] = useState(null)
