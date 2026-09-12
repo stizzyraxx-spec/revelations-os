@@ -90,25 +90,24 @@ export const useOSStore = create((set, get) => ({
   nextId: 1,
   nextZ: 10,
 
-  openWindow: ({ appId, title, width = 960, height = 640, props = {} }) => {
-    const { windows, nextId, nextZ, focusWindow } = get()
+  openWindow: ({ appId, title, width = 960, height = 640, props = {}, maximized = true }) => {
+    const { windows, nextId, nextZ, focusWindow, activeDesktop } = get()
     const existing = windows.find((w) => w.appId === appId)
     if (existing) {
-      // If minimized, restore it; otherwise just focus
-      if (existing.minimized) {
-        set((s) => ({
-          windows: s.windows.map((w) =>
-            w.id === existing.id ? { ...w, minimized: false } : w
-          ),
-        }))
-      }
+      // If minimized, restore it; otherwise just focus. An app opened from
+      // another desktop comes to the one you are looking at.
+      set((s) => ({
+        windows: s.windows.map((w) =>
+          w.id === existing.id ? { ...w, minimized: false, desktop: activeDesktop } : w
+        ),
+      }))
       focusWindow(existing.id)
       return
     }
     const vw = window.innerWidth || 1280
     const vh = window.innerHeight || 800
-    // Center every window in the usable area (below the 40px top bar, above the
-    // 48px taskbar), so apps always open centered on screen.
+    // Centred bounds are what the window restores to when un-maximized; it
+    // opens full screen, which is what you want from a launcher.
     const TOP = 40, BOTTOM = 48
     const x = Math.max(0, Math.floor((vw - width) / 2))
     const y = Math.max(TOP, Math.floor((vh - TOP - BOTTOM - height) / 2) + TOP)
@@ -121,6 +120,11 @@ export const useOSStore = create((set, get) => ({
       width,
       height,
       minimized: false,
+      maximized,
+      // Bounds to return to when leaving maximized/snapped.
+      restore: { x, y, width, height },
+      snap: null,
+      desktop: activeDesktop,
       focused: true,
       zIndex: nextZ,
       props,
@@ -129,6 +133,137 @@ export const useOSStore = create((set, get) => ({
       windows: s.windows.map((w) => ({ ...w, focused: false })).concat(newWin),
       nextId: s.nextId + 1,
       nextZ: s.nextZ + 1,
+    }))
+  },
+
+  // ─── WINDOW LAYOUT ──────────────────────────────────────────────────────────
+  // The usable desktop: below the top bar, above the taskbar.
+  workArea: () => {
+    const TOP = 40, BOTTOM = 48
+    return {
+      x: 0,
+      y: TOP,
+      width: window.innerWidth || 1280,
+      height: (window.innerHeight || 800) - TOP - BOTTOM,
+    }
+  },
+
+  toggleMaximize: (id) => {
+    set((s) => ({
+      windows: s.windows.map((w) => {
+        if (w.id !== id) return w
+        if (w.maximized) {
+          const r = w.restore || { x: w.x, y: w.y, width: w.width, height: w.height }
+          return { ...w, maximized: false, snap: null, ...r }
+        }
+        return {
+          ...w,
+          maximized: true,
+          snap: null,
+          restore: { x: w.x, y: w.y, width: w.width, height: w.height },
+        }
+      }),
+    }))
+    get().focusWindow(id)
+  },
+
+  // Dragging the title bar of a maximized window pops it back to its restored
+  // size under the cursor, the way Windows does, instead of refusing to move.
+  popOutOfMaximize: (id, { x, y }) => {
+    set((s) => ({
+      windows: s.windows.map((w) => {
+        if (w.id !== id) return w
+        const r = w.restore || { width: 960, height: 640 }
+        return {
+          ...w,
+          maximized: false,
+          snap: null,
+          width: r.width,
+          height: r.height,
+          x: Math.max(0, Math.round(x)),
+          y: Math.max(40, Math.round(y)),
+        }
+      }),
+    }))
+  },
+
+  // Snap a window into one half or quarter of the screen, so several apps can
+  // share the desktop. corner: 'tl' | 'tr' | 'bl' | 'br' | 'left' | 'right' | null
+  snapWindow: (id, corner) => {
+    const area = get().workArea()
+    const halfW = Math.floor(area.width / 2)
+    const halfH = Math.floor(area.height / 2)
+    const slots = {
+      tl: { x: area.x, y: area.y, width: halfW, height: halfH },
+      tr: { x: area.x + halfW, y: area.y, width: area.width - halfW, height: halfH },
+      bl: { x: area.x, y: area.y + halfH, width: halfW, height: area.height - halfH },
+      br: { x: area.x + halfW, y: area.y + halfH, width: area.width - halfW, height: area.height - halfH },
+      left: { x: area.x, y: area.y, width: halfW, height: area.height },
+      right: { x: area.x + halfW, y: area.y, width: area.width - halfW, height: area.height },
+    }
+    const target = slots[corner]
+    set((s) => ({
+      windows: s.windows.map((w) => {
+        if (w.id !== id) return w
+        if (!target) {
+          // Un-snap: back to the pre-snap bounds.
+          const r = w.restore || { x: w.x, y: w.y, width: w.width, height: w.height }
+          return { ...w, snap: null, maximized: false, ...r }
+        }
+        return {
+          ...w,
+          snap: corner,
+          maximized: false,
+          // Only remember the restore bounds on the first snap, so snapping
+          // corner to corner doesn't lose the original size.
+          restore: (w.snap || w.maximized) ? w.restore : { x: w.x, y: w.y, width: w.width, height: w.height },
+          ...target,
+        }
+      }),
+    }))
+    get().focusWindow(id)
+  },
+
+  // ─── VIRTUAL DESKTOPS ───────────────────────────────────────────────────────
+  desktops: [{ id: 1, name: 'Desktop 1' }],
+  activeDesktop: 1,
+  nextDesktopId: 2,
+
+  addDesktop: () => {
+    const { nextDesktopId, desktops } = get()
+    set({
+      desktops: [...desktops, { id: nextDesktopId, name: `Desktop ${desktops.length + 1}` }],
+      nextDesktopId: nextDesktopId + 1,
+      activeDesktop: nextDesktopId,
+    })
+    return nextDesktopId
+  },
+
+  switchDesktop: (id) => {
+    if (!get().desktops.some((d) => d.id === id)) return
+    set({ activeDesktop: id })
+  },
+
+  // Closing a desktop keeps its windows — they move to the one on its left so
+  // nothing is lost by tidying up. The last desktop cannot be removed.
+  removeDesktop: (id) => {
+    set((s) => {
+      if (s.desktops.length <= 1) return {}
+      const idx = s.desktops.findIndex((d) => d.id === id)
+      if (idx === -1) return {}
+      const remaining = s.desktops.filter((d) => d.id !== id)
+      const fallback = remaining[Math.max(0, idx - 1)].id
+      return {
+        desktops: remaining,
+        windows: s.windows.map((w) => (w.desktop === id ? { ...w, desktop: fallback } : w)),
+        activeDesktop: s.activeDesktop === id ? fallback : s.activeDesktop,
+      }
+    })
+  },
+
+  moveWindowToDesktop: (winId, desktopId) => {
+    set((s) => ({
+      windows: s.windows.map((w) => (w.id === winId ? { ...w, desktop: desktopId } : w)),
     }))
   },
 

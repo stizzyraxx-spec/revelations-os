@@ -39,7 +39,10 @@ export default function BottomTaskbar() {
   // listing below is profile-filtered. See useVisibleApps.js.
   const APP_REGISTRY = useVisibleApps()
 
-  const { windows, openWindow, openSubscription, focusWindow, minimizeWindow, restoreWindow, customApps } = useOSStore()
+  const {
+    windows, openWindow, openSubscription, focusWindow, minimizeWindow, restoreWindow, customApps,
+    desktops, activeDesktop, addDesktop, switchDesktop, removeDesktop,
+  } = useOSStore()
   const [startOpen, setStartOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [pinned] = useState(loadPinned)
@@ -62,12 +65,13 @@ export default function BottomTaskbar() {
     return () => { window.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey) }
   }, [startOpen])
 
-  // Build task buttons: every open window, then pinned apps with no open window.
-  const openByAppId = {}
-  windows.forEach((w) => { openByAppId[w.appId] = w })
+  // Build task buttons: windows on the desktop you are looking at, then pinned
+  // apps with no open window. Windows parked on another virtual desktop stay
+  // off this taskbar until you switch to it.
+  const deskWindows = windows.filter((w) => (w.desktop ?? 1) === activeDesktop)
   const taskItems = []
   const seen = new Set()
-  windows.forEach((w) => { seen.add(w.appId); taskItems.push({ appId: w.appId, window: w }) })
+  deskWindows.forEach((w) => { seen.add(w.appId); taskItems.push({ appId: w.appId, window: w }) })
   pinned.forEach((id) => { if (!seen.has(id)) taskItems.push({ appId: id, window: null }) })
 
   const filteredApps = useMemo(() => {
@@ -197,6 +201,55 @@ export default function BottomTaskbar() {
           <span style={{ fontSize: 13, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             Search apps
           </span>
+        </div>
+
+        <div style={{ width: 1, height: 26, background: 'rgba(255,255,255,0.1)', margin: '0 4px', flexShrink: 0 }} />
+
+        {/* Virtual desktops — click to switch, + to add, right-click to close.
+            Add as many as you like; each keeps its own windows. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+          {desktops.map((d, i) => {
+            const isActive = d.id === activeDesktop
+            const count = windows.filter((w) => (w.desktop ?? 1) === d.id).length
+            return (
+              <button
+                key={d.id}
+                onClick={() => switchDesktop(d.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  if (desktops.length > 1) removeDesktop(d.id)
+                }}
+                title={`${d.name}${count ? ` — ${count} open` : ''}${desktops.length > 1 ? ' · right-click to close' : ''}`}
+                style={{
+                  minWidth: 26, height: 26, padding: '0 7px', borderRadius: 7, cursor: 'pointer', flexShrink: 0,
+                  fontSize: 12, fontWeight: 600,
+                  color: isActive ? '#fff' : 'var(--text-muted)',
+                  background: isActive ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${isActive ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.08)'}`,
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {i + 1}
+                {count > 0 && (
+                  <span style={{ marginLeft: 4, fontSize: 9, opacity: 0.75 }}>•{count}</span>
+                )}
+              </button>
+            )
+          })}
+          <button
+            onClick={() => addDesktop()}
+            title="New desktop"
+            style={{
+              width: 26, height: 26, borderRadius: 7, cursor: 'pointer', flexShrink: 0,
+              fontSize: 15, lineHeight: 1, color: 'var(--text-muted)',
+              background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.16)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            +
+          </button>
         </div>
 
         <div style={{ width: 1, height: 26, background: 'rgba(255,255,255,0.1)', margin: '0 4px', flexShrink: 0 }} />

@@ -81,7 +81,10 @@ function PlaceholderApp({ appId }) {
 
 export default function WindowManager() {
   const windows = useOSStore(s => s.windows)
-  const visibleWindows = windows.filter(w => !w.minimized)
+  const activeDesktop = useOSStore(s => s.activeDesktop)
+  // Only the current virtual desktop's windows are on screen; the rest stay
+  // open on their own desktop.
+  const visibleWindows = windows.filter(w => !w.minimized && (w.desktop ?? 1) === activeDesktop)
 
   return (
     <div style={{ position:'absolute', inset:0, pointerEvents:'none' }}>

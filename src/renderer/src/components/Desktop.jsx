@@ -82,7 +82,7 @@ export default function Desktop() {
   // listing below is profile-filtered. See useVisibleApps.js.
   const APP_REGISTRY = useVisibleApps()
 
-  const { windows, addNotification, openWindow, openSubscription, toggleOrbLauncher, customApps } = useOSStore()
+  const { windows, addNotification, openWindow, openSubscription, toggleOrbLauncher, customApps, activeDesktop } = useOSStore()
   const [contextMenu, setContextMenu] = useState(null)
   const [iconMenu, setIconMenu] = useState(null)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -95,7 +95,9 @@ export default function Desktop() {
   const [displayModalOpen, setDisplayModalOpen] = useState(false)
   const [displayInfo, setDisplayInfo] = useState(null)
   const [displayMsg, setDisplayMsg] = useState('')
-  const hasWindows = windows.filter(w => !w.minimized).length > 0
+  // Only windows on the desktop you are looking at hide the icons — switching
+  // to an empty virtual desktop shows the wallpaper and shortcuts again.
+  const hasWindows = windows.some(w => !w.minimized && (w.desktop ?? 1) === activeDesktop)
 
   // Seed the default icons once per browser profile. Runs after APP_REGISTRY is
   // resolved so gated apps are filtered out, and re-runs if the signed-in
@@ -332,8 +334,11 @@ export default function Desktop() {
         <Widgets />
       </div>
 
-      {/* Window manager */}
-      <div style={{ position: 'absolute', inset: 0, top: 40, zIndex: 10 }}>
+      {/* Window manager. The layer must not take the mouse itself: it covers the
+          whole desktop above the icons, so with the default pointer-events every
+          click aimed at an icon was landing on this transparent div instead of
+          the icon. Windows re-enable it individually (AppWindow). */}
+      <div style={{ position: 'absolute', inset: 0, top: 40, zIndex: 10, pointerEvents: 'none' }}>
         <WindowManager />
       </div>
 

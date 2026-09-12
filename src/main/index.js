@@ -148,18 +148,28 @@ function expandHome(p) {
   return IS_WIN ? s.replace(/\//g, path.sep) : s
 }
 
+// Returns { resolvedPath, entries, error }. This used to return a bare array,
+// which the File Manager read as `result.entries` — always undefined, so the
+// app rendered an empty folder no matter what was on disk.
 ipcMain.handle('fs:scanDirectory', async (event, dirPath) => {
-  if (!rateOk('scandir')) return []
   const home = os.homedir()
+  const result = (resolvedPath, entries, error) => ({
+    resolvedPath,
+    entries: entries || [],
+    error: error || null,
+  })
+  if (!rateOk('scandir')) return result(dirPath, [], 'Too many requests — slow down')
   const resolved = path.resolve(expandHome(dirPath) || home)
   const allowed = IS_WIN ? win.fsAllowedRoots() : [home, '/Applications', '/tmp', '/Users', '/']
   // Windows paths are case-insensitive, so compare case-folded there.
   const probe = IS_WIN ? resolved.toLowerCase() : resolved
-  if (!allowed.some(p => probe.startsWith(IS_WIN ? p.toLowerCase() : p))) return []
+  if (!allowed.some(p => probe.startsWith(IS_WIN ? p.toLowerCase() : p))) {
+    return result(resolved, [], `Not permitted: ${resolved} is outside this machine's allowed locations`)
+  }
   try {
     const entries = await fs.promises.readdir(resolved, { withFileTypes: true })
     const filtered = entries.filter(e => !e.name.startsWith('.') || dirPath === home)
-    return await Promise.all(filtered.map(async e => {
+    const mapped = await Promise.all(filtered.map(async e => {
       let size = 0, modified = ''
       try {
         const s = await fs.promises.stat(path.join(resolved, e.name))
@@ -174,7 +184,10 @@ ipcMain.handle('fs:scanDirectory', async (event, dirPath) => {
         fullPath: path.join(resolved, e.name),
       }
     }))
-  } catch { return [] }
+    return result(resolved, mapped, null)
+  } catch (e) {
+    return result(resolved, [], e.message)
+  }
 })
 
 ipcMain.handle('fs:readFile', async (event, filePath) => {

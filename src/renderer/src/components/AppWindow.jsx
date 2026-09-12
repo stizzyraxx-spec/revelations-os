@@ -1,27 +1,43 @@
-import { useRef, useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useOSStore } from '../store'
 import { TASKBAR_HEIGHT } from './BottomTaskbar'
 
 export default function AppWindow({ win, ContentComponent }) {
-  const { closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow, setBounds } = useOSStore()
-  const [maximized, setMaximized] = useState(false)
-  const [preMaxState, setPreMaxState] = useState(null)
+  const {
+    closeWindow, minimizeWindow, focusWindow, moveWindow, setBounds,
+    toggleMaximize, snapWindow, popOutOfMaximize,
+    desktops, activeDesktop, moveWindowToDesktop,
+  } = useOSStore()
   const [contextMenu, setContextMenu] = useState(null)
-  const dragRef = useRef(null)
-  const resizeRef = useRef(null)
+  const [snapOpen, setSnapOpen] = useState(false)
+  // Maximized/snapped state lives on the window itself so it survives
+  // re-renders, minimise/restore and moving between desktops.
+  const maximized = !!win.maximized
 
   const DOCK_W = 0   // dock auto-hides, windows use full width
   const TAB_W  = 0   // tab auto-hides, windows use full width
 
   const handleTitleMouseDown = useCallback((e) => {
     if (e.target.closest('[data-no-drag]')) return
-    if (maximized) return
     e.preventDefault()
     focusWindow(win.id)
-    const startX = e.clientX - win.x
-    const startY = e.clientY - win.y
+
+    // Start from the window's current bounds — unless it is maximized, in which
+    // case it pops back to its restored size centred under the cursor and the
+    // drag continues from there.
+    let curX = win.x, curY = win.y, curW = win.width
+    if (maximized) {
+      const r = win.restore || { width: 960, height: 640 }
+      curW = r.width
+      curX = Math.max(0, Math.round(e.clientX - curW / 2))
+      curY = 40
+      popOutOfMaximize(win.id, { x: curX, y: curY })
+    }
+
+    const startX = e.clientX - curX
+    const startY = e.clientY - curY
     const onMove = (me) => {
-      const nx = Math.max(DOCK_W, Math.min(me.clientX - startX, window.innerWidth - TAB_W - win.width))
+      const nx = Math.max(DOCK_W, Math.min(me.clientX - startX, window.innerWidth - TAB_W - curW))
       const ny = Math.max(40, Math.min(me.clientY - startY, window.innerHeight - 60))
       moveWindow(win.id, nx, ny)
     }
@@ -31,7 +47,7 @@ export default function AppWindow({ win, ContentComponent }) {
     }
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)
-  }, [win, maximized, focusWindow, moveWindow])
+  }, [win, maximized, focusWindow, moveWindow, popOutOfMaximize])
 
   // Resize from any edge or corner. `dir` is a compass string (n/s/e/w/ne/…).
   // Dragging the north or west edge moves x/y as well as sizing, so we compute
@@ -64,19 +80,7 @@ export default function AppWindow({ win, ContentComponent }) {
     document.addEventListener('mouseup', onUp)
   }, [win, maximized, focusWindow, setBounds])
 
-  const toggleMax = () => {
-    if (maximized) {
-      moveWindow(win.id, preMaxState.x, preMaxState.y)
-      resizeWindow(win.id, preMaxState.width, preMaxState.height)
-      setMaximized(false)
-    } else {
-      setPreMaxState({ x: win.x, y: win.y, width: win.width, height: win.height })
-      moveWindow(win.id, DOCK_W, 40)
-      resizeWindow(win.id, window.innerWidth - DOCK_W - TAB_W, window.innerHeight - 40 - TASKBAR_HEIGHT)
-      setMaximized(true)
-    }
-    focusWindow(win.id)
-  }
+  const toggleMax = () => toggleMaximize(win.id)
 
   const handleContextMenu = (e) => {
     e.preventDefault()
@@ -143,6 +147,111 @@ export default function AppWindow({ win, ContentComponent }) {
         <div style={{ flex:1, textAlign:'center', fontSize:'0.78rem', fontWeight:500, color: win.focused ? 'var(--text-primary)' : 'var(--text-muted)', pointerEvents:'none', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
           {win.title}
         </div>
+
+        {/* Snap control — pick a quarter (or half) of the screen for this
+            window, so four apps can share the desktop at once. */}
+        <div data-no-drag style={{ position:'relative', flexShrink:0 }}>
+          <button
+            title="Snap to a corner"
+            onClick={(e) => { e.stopPropagation(); focusWindow(win.id); setSnapOpen(v => !v) }}
+            style={{
+              display:'flex', alignItems:'center', justifyContent:'center', width:22, height:18,
+              borderRadius:4, cursor:'pointer', padding:0,
+              background: snapOpen ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.06)',
+              border:'1px solid rgba(255,255,255,0.14)',
+            }}
+          >
+            <span style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr', gap:1, width:11, height:9 }}>
+              {[0,1,2,3].map(i => (
+                <span key={i} style={{ background: 'rgba(255,255,255,0.75)', borderRadius:0.5 }} />
+              ))}
+            </span>
+          </button>
+
+          {snapOpen && (
+            <>
+              <div style={{ position:'fixed', inset:0, zIndex:9997 }} onClick={(e) => { e.stopPropagation(); setSnapOpen(false) }} />
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                  position:'absolute', top:24, right:0, zIndex:9998, padding:8, borderRadius:10,
+                  background:'rgba(10,10,20,0.98)', border:'1px solid rgba(255,255,255,0.14)',
+                  boxShadow:'0 14px 34px rgba(0,0,0,0.6)',
+                }}
+              >
+                <div style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>
+                  Snap to
+                </div>
+                {/* A miniature of the screen: click the quarter you want. */}
+                <div style={{ display:'grid', gridTemplateColumns:'34px 34px', gridTemplateRows:'26px 26px', gap:3 }}>
+                  {[
+                    { key:'tl', title:'Top left' },
+                    { key:'tr', title:'Top right' },
+                    { key:'bl', title:'Bottom left' },
+                    { key:'br', title:'Bottom right' },
+                  ].map(q => (
+                    <button
+                      key={q.key}
+                      title={q.title}
+                      onClick={() => { snapWindow(win.id, q.key); setSnapOpen(false) }}
+                      style={{
+                        cursor:'pointer', borderRadius:4,
+                        background: win.snap === q.key ? 'var(--accent)' : 'rgba(255,255,255,0.09)',
+                        border:`1px solid ${win.snap === q.key ? 'var(--accent)' : 'rgba(255,255,255,0.16)'}`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style={{ display:'flex', gap:3, marginTop:5 }}>
+                  {[
+                    { key:'left', label:'◧' },
+                    { key:'right', label:'◨' },
+                    { key:null, label:'↙', title:'Restore' },
+                  ].map((h, i) => (
+                    <button
+                      key={i}
+                      title={h.title || `Snap ${h.key}`}
+                      onClick={() => { snapWindow(win.id, h.key); setSnapOpen(false) }}
+                      style={{
+                        flex:1, height:20, cursor:'pointer', borderRadius:4, fontSize:11,
+                        color:'var(--text-primary)',
+                        background: h.key && win.snap === h.key ? 'var(--accent)' : 'rgba(255,255,255,0.09)',
+                        border:'1px solid rgba(255,255,255,0.16)',
+                      }}
+                    >
+                      {h.label}
+                    </button>
+                  ))}
+                </div>
+
+                {desktops.length > 1 && (
+                  <>
+                    <div style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'9px 0 5px' }}>
+                      Move to desktop
+                    </div>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:3, maxWidth:74 }}>
+                      {desktops.map((d, i) => (
+                        <button
+                          key={d.id}
+                          title={d.name}
+                          onClick={() => { moveWindowToDesktop(win.id, d.id); setSnapOpen(false) }}
+                          style={{
+                            width:20, height:20, cursor:'pointer', borderRadius:4, fontSize:10,
+                            color:'var(--text-primary)',
+                            background: win.desktop === d.id ? 'var(--accent)' : 'rgba(255,255,255,0.09)',
+                            border:`1px solid ${d.id === activeDesktop ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.16)'}`,
+                          }}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -187,6 +296,11 @@ export default function AppWindow({ win, ContentComponent }) {
           <div className="context-menu-item" onClick={()=>{focusWindow(win.id);setContextMenu(null)}}>⬆ Bring to Front</div>
           <div className="context-menu-item" onClick={()=>{toggleMax();setContextMenu(null)}}>{maximized?'↙ Restore':'⛶ Maximize'}</div>
           <div className="context-menu-item" onClick={()=>{minimizeWindow(win.id);setContextMenu(null)}}>— Minimize</div>
+          <div className="context-menu-separator"/>
+          <div className="context-menu-item" onClick={()=>{snapWindow(win.id,'tl');setContextMenu(null)}}>◤ Snap Top Left</div>
+          <div className="context-menu-item" onClick={()=>{snapWindow(win.id,'tr');setContextMenu(null)}}>◥ Snap Top Right</div>
+          <div className="context-menu-item" onClick={()=>{snapWindow(win.id,'bl');setContextMenu(null)}}>◣ Snap Bottom Left</div>
+          <div className="context-menu-item" onClick={()=>{snapWindow(win.id,'br');setContextMenu(null)}}>◢ Snap Bottom Right</div>
           <div className="context-menu-separator"/>
           <div className="context-menu-item danger" onClick={()=>{closeWindow(win.id);setContextMenu(null)}}>✕ Close Window</div>
         </div>

@@ -260,18 +260,18 @@ export default function TopBar() {
 
       {/* Right section */}
       <div style={{ display:'flex', alignItems:'center', gap:10, WebkitAppRegion:'no-drag' }}>
-        <button onClick={() => openWindow({ appId: 'bluetooth', title: 'Bluetooth' })} title="Bluetooth" style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
+        <button onClick={() => openWindow({ appId: 'bluetooth', title: 'Bluetooth', width: 420, height: 520, maximized: false })} title="Bluetooth" style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
           <Bluetooth size={13} style={{ color:'var(--text-muted)' }}/>
         </button>
-        <button onClick={() => openWindow({ appId: 'wifi', title: 'Wi-Fi' })} title={online ? 'Wi-Fi — Connected' : 'Wi-Fi — Offline'} style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
+        <button onClick={() => openWindow({ appId: 'wifi', title: 'Wi-Fi', width: 420, height: 520, maximized: false })} title={online ? 'Wi-Fi — Connected' : 'Wi-Fi — Offline'} style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
           {online
             ? <Wifi size={13} style={{ color:'var(--text-muted)' }}/>
             : <WifiOff size={13} style={{ color:'#f59e0b' }}/>}
         </button>
-        <button onClick={() => openWindow({ appId: 'volume', title: 'Volume' })} title="Volume" style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
+        <button onClick={() => openWindow({ appId: 'volume', title: 'Volume', width: 420, height: 520, maximized: false })} title="Volume" style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center' }}>
           <Volume2 size={13} style={{ color:'var(--text-muted)' }}/>
         </button>
-        <button onClick={() => openWindow({ appId: 'battery', title: 'Battery' })} title={battery?.charging ? 'Battery — Charging' : 'Battery'} style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center', gap:3 }}>
+        <button onClick={() => openWindow({ appId: 'battery', title: 'Battery', width: 420, height: 520, maximized: false })} title={battery?.charging ? 'Battery — Charging' : 'Battery'} style={{ background:'none', border:'none', cursor:'pointer', padding:3, borderRadius:5, display:'flex', alignItems:'center', gap:3 }}>
           {battery?.charging
             ? <BatteryCharging size={13} style={{ color:'#22c55e' }}/>
             : <Battery size={13} style={{ color: battery && battery.level <= 20 ? '#ef4444' : '#22c55e' }}/>}

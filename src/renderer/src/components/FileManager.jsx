@@ -47,6 +47,14 @@ export default function FileManager() {
   const [search, setSearch] = useState('')
   const [contextMenu, setContextMenu] = useState(null)
   const [selected, setSelected] = useState(null)
+  // Real path main resolved '~' to, and who this machine/session belongs to.
+  const [resolved, setResolved] = useState('')
+  const [sysInfo, setSysInfo] = useState(null)
+  const osUser = useOSStore((s) => s.user?.name) || ''
+
+  useEffect(() => {
+    window.nexus?.getSystemInfo?.().then(info => { if (info) setSysInfo(info) }).catch(() => {})
+  }, [])
 
   const navigate = useCallback(async (newPath) => {
     setLoading(true)
@@ -56,15 +64,20 @@ export default function FileManager() {
     try {
       if (window.nexus?.scanDirectory) {
         const result = await window.nexus.scanDirectory(newPath)
-        if (result.error) { setError(result.error); setEntries([]) }
+        // Main returns { resolvedPath, entries, error }; older builds returned a
+        // bare array, which is why this used to render an empty folder.
+        const list = Array.isArray(result) ? result : (result?.entries || [])
+        const err = Array.isArray(result) ? null : result?.error
+        if (err) { setError(err); setEntries([]) }
         else {
-          const enriched = (result.entries || []).map((e) => ({
+          const enriched = list.map((e) => ({
             ...e,
-            ...( e.type === 'file' ? categorizeFile(e.name) : { icon: '📁', cat: 'folder' }),
+            ...(e.type === 'file' ? categorizeFile(e.name) : { icon: '📁', cat: 'folder' }),
           }))
           setEntries(enriched)
-          setPath(result.resolvedPath || newPath)
+          setResolved(Array.isArray(result) ? '' : (result?.resolvedPath || ''))
         }
+        setPath(newPath)
       } else {
         // Dev mode placeholder
         setEntries([
@@ -99,8 +112,13 @@ export default function FileManager() {
     if (histIdx < history.length - 1) { const idx = histIdx + 1; setHistIdx(idx); navigate(history[idx]) }
   }
 
+  // Main reports directories as 'folder'; the dev-mode placeholder uses 'dir'.
+  const isDir = (e) => e.type === 'folder' || e.type === 'dir'
+
   const openEntry = (entry) => {
-    if (entry.type === 'dir') goTo(`${path}/${entry.name}`)
+    // Navigate by the real path from main rather than re-joining the display
+    // path, which breaks on Windows separators.
+    if (isDir(entry)) goTo(entry.fullPath || `${path}/${entry.name}`)
     else setSelected(entry)
   }
 
@@ -108,11 +126,12 @@ export default function FileManager() {
     search ? entries.filter((e) => e.name.toLowerCase().includes(search.toLowerCase())) : entries,
     sortBy
   )
-  const dirs = filtered.filter((e) => e.type === 'dir')
-  const files = filtered.filter((e) => e.type !== 'dir')
+  const dirs = filtered.filter(isDir)
+  const files = filtered.filter((e) => !isDir(e))
   const sorted = [...dirs, ...files]
 
-  const breadcrumbs = path.replace(/^~/, 'Home').split('/').filter(Boolean)
+  // Windows paths arrive with backslashes; show them as breadcrumbs too.
+  const breadcrumbs = path.replace(/^~/, 'Home').replace(/\\/g, '/').split('/').filter(Boolean)
 
   return (
     <div style={{ height: '100%', display: 'flex', background: '#0a0a14' }} onClick={() => setContextMenu(null)}>
@@ -246,11 +265,23 @@ export default function FileManager() {
           )}
         </div>
 
-        {/* Status bar */}
-        <div style={{ padding: '4px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', color: 'var(--text-muted)', fontSize: 11, display: 'flex', gap: 16 }}>
+        {/* Status bar — counts plus exactly whose machine and account these
+            files come from, and the real path on disk. */}
+        <div style={{ padding: '4px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', color: 'var(--text-muted)', fontSize: 11, display: 'flex', gap: 14, alignItems: 'center' }}>
           <span>{sorted.length} items</span>
           <span>{dirs.length} folders, {files.length} files</span>
           {selected && <span>Selected: {selected.name} ({formatSize(selected.size)})</span>}
+          <span style={{ flex: 1 }} />
+          {resolved && (
+            <span title={resolved} style={{ maxWidth: '38%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'rtl' }}>
+              {resolved}
+            </span>
+          )}
+          {sysInfo && (
+            <span title={`Signed into Revelations as ${osUser} · machine account ${sysInfo.username} on ${sysInfo.hostname}`} style={{ flexShrink: 0, color: 'var(--text-secondary)' }}>
+              {osUser}@{sysInfo.hostname}
+            </span>
+          )}
         </div>
       </div>
 
@@ -259,18 +290,18 @@ export default function FileManager() {
         <div className="context-menu" style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 9999 }}>
           <div className="context-menu-item" onClick={() => {
             const e = contextMenu.entry
-            if (e.type === 'dir') goTo(`${path}/${e.name}`)
-            else useOSStore.getState().addNotification({ title: e.name, body: `${e.cat || 'File'} • ${formatSize(e.size)} — preview not yet supported`, type: 'info' })
+            if (isDir(e)) goTo(e.fullPath || `${path}/${e.name}`)
+            else window.nexus?.downloadOpen?.(e.fullPath)
             setContextMenu(null)
           }}>Open</div>
           <div className="context-menu-item" onClick={() => { navigator.clipboard?.writeText(contextMenu.entry.name); setContextMenu(null) }}>Copy Name</div>
           <div className="context-menu-separator" />
-          <div className="context-menu-item" onClick={() => { navigator.clipboard?.writeText(`${path}/${contextMenu.entry.name}`); setContextMenu(null) }}>Copy Path</div>
+          <div className="context-menu-item" onClick={() => { navigator.clipboard?.writeText(contextMenu.entry.fullPath || `${path}/${contextMenu.entry.name}`); setContextMenu(null) }}>Copy Path</div>
           <div className="context-menu-item" onClick={() => {
             const e = contextMenu.entry
             useOSStore.getState().addNotification({
               title: `Info: ${e.name}`,
-              body: `${e.type === 'dir' ? 'Folder' : e.cat || 'File'} • ${formatSize(e.size)} • Modified ${formatDate(e.modified)} • ${path}/${e.name}`,
+              body: `${isDir(e) ? 'Folder' : e.cat || 'File'} • ${formatSize(e.size)} • Modified ${formatDate(e.modified)} • ${e.fullPath || `${path}/${e.name}`}`,
               type: 'info',
             })
             setContextMenu(null)

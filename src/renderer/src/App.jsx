@@ -44,6 +44,28 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [user.loggedIn])
 
+  // Virtual desktops, Windows-style: Ctrl+Alt+← / → switch, Ctrl+Alt+D adds one.
+  useEffect(() => {
+    if (!user.loggedIn) return
+    const handler = (e) => {
+      if (!e.ctrlKey || !e.altKey) return
+      const s = useOSStore.getState()
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault()
+        const i = s.desktops.findIndex(d => d.id === s.activeDesktop)
+        const next = e.key === 'ArrowRight'
+          ? (i + 1) % s.desktops.length
+          : (i - 1 + s.desktops.length) % s.desktops.length
+        s.switchDesktop(s.desktops[next].id)
+      } else if (e.key.toLowerCase() === 'd') {
+        e.preventDefault()
+        s.addDesktop()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [user.loggedIn])
+
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
 
   useEffect(() => {

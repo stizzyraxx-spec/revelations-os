@@ -51,7 +51,8 @@ export default function Scrolls() {
   const load = useCallback(async (p, pushHistory = true) => {
     setLoading(true); setResults(null); setQuery('')
     try {
-      const list = await window.nexus?.scanDirectory?.(p)
+      const res = await window.nexus?.scanDirectory?.(p)
+      const list = Array.isArray(res) ? res : res?.entries
       setEntries(Array.isArray(list) ? sortEntries(list) : [])
       if (pushHistory) setHistory((h) => [...h, path])
       setPath(p)
@@ -87,7 +88,8 @@ export default function Scrolls() {
     while (queue.length && found.length < 400 && scanned < 1200 && (Date.now() - started) < 5000) {
       if (token !== searchAbort.current) return // superseded
       const dir = queue.shift(); scanned++
-      const list = await window.nexus?.scanDirectory?.(dir)
+      const res = await window.nexus?.scanDirectory?.(dir)
+      const list = Array.isArray(res) ? res : res?.entries
       if (!Array.isArray(list)) continue
       for (const e of list) {
         if (e.name.toLowerCase().includes(needle)) found.push(e)
