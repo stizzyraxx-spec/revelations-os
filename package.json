@@ -1,6 +1,6 @@
 {
   "name": "revelations-os",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Revelations OS — Ultimate Business Desktop",
   "main": "out/main/index.js",
   "scripts": {
