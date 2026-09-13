@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useOSStore } from '../store'
 import { APP_REGISTRY } from '../constants'
 import { useVisibleApps } from '../useVisibleApps'
@@ -190,12 +190,17 @@ export default function Desktop() {
     })
   }
 
+  // True between the end of a drag and the click event it produces, so dropping
+  // an icon never also launches it.
+  const draggedRef = useRef(false)
+
   // Drag an icon to a new spot. A press that never travels more than a few
-  // pixels is left alone so it still registers as a click / double-click.
+  // pixels is left alone so it still registers as a click.
   const startIconDrag = (e, id, from) => {
     if (e.button !== 0) return
     e.preventDefault()
     setSelectedIcon(id)
+    draggedRef.current = false
     const startX = e.clientX
     const startY = e.clientY
     let moved = false
@@ -205,6 +210,7 @@ export default function Desktop() {
       const dy = ev.clientY - startY
       if (!moved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return
       moved = true
+      draggedRef.current = true
       setDragging({ id, x: from.x + dx, y: from.y + dy })
     }
     const onUp = (ev) => {
@@ -289,9 +295,16 @@ export default function Desktop() {
               key={id}
               className="rx-icon-host"
               onMouseDown={(e) => startIconDrag(e, id, home)}
-              onDoubleClick={() => launchById(id)}
+              // A single click opens the app. Dragging also ends in a click
+              // event, so a drop is filtered out here rather than launching.
+              onClick={(e) => {
+                e.stopPropagation()
+                if (draggedRef.current) { draggedRef.current = false; return }
+                launchById(id)
+              }}
+              onDoubleClick={(e) => e.stopPropagation()}
               onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu(null); setSelectedIcon(id); setIconMenu({ id, x: e.clientX, y: e.clientY }) }}
-              title={`${app.name} — double-click to open, drag to move`}
+              title={`${app.name} — click to open, drag to move`}
               style={{
                 position: 'absolute', left: live.x, top: live.y,
                 width: 84, padding: '10px 4px', borderRadius: 10,
